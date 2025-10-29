@@ -24,7 +24,7 @@ import {
     toBase64,
     zeroize,
 } from './crypto';
-import type { VaultHeader, VaultManifest } from './types';
+import type { ManifestV1, VaultHeader } from './types';
 
 /**
  * Create a new vault file
@@ -49,9 +49,10 @@ export async function createVaultFile(
         const { kek, mak } = deriveSubKeys(masterKey, hkdfSalt);
 
         // Step 4: Create manifest
-        const manifest: VaultManifest = {
-            version_counter: 1,
-            book_index: [],
+        const manifest: ManifestV1 = {
+            version: 1,
+            items: [],
+            tags: [],
             chain_head: toBase64(chainSeed),
         };
 
@@ -193,7 +194,7 @@ export async function unlockVault(
     header: VaultHeader,
     encryptedManifest: Uint8Array,
     password: string
-): Promise<{ manifest: VaultManifest; kek: Uint8Array; mak: Uint8Array }> {
+): Promise<{ manifest: ManifestV1; kek: Uint8Array; mak: Uint8Array }> {
     // Step 1: Derive keys from password
     const kdfSalt = fromBase64(header.kdf.salt);
     const hkdfSalt = fromBase64(header.hkdf.salt);
@@ -219,7 +220,7 @@ export async function unlockVault(
 
     // Step 4: Parse manifest JSON
     const manifestText = new TextDecoder().decode(manifestBytes);
-    let manifest: VaultManifest;
+    let manifest: ManifestV1;
 
     try {
         manifest = JSON.parse(manifestText);
@@ -229,7 +230,7 @@ export async function unlockVault(
     }
 
     // Validate manifest structure
-    if (typeof manifest.version_counter !== 'number' || !Array.isArray(manifest.book_index)) {
+    if (typeof manifest.version !== 'number' || !Array.isArray(manifest.items)) {
         zeroize(masterKey, kek, mak, manifestBytes);
         throw new Error('Unable to unlock vault: invalid manifest structure');
     }
@@ -251,7 +252,7 @@ export async function unlockVault(
 export async function updateVaultManifest(
     fileHandle: FileSystemFileHandle,
     header: VaultHeader,
-    manifest: VaultManifest,
+    manifest: ManifestV1,
     mak: Uint8Array
 ): Promise<void> {
     // Serialize manifest
@@ -294,4 +295,3 @@ export async function updateVaultManifest(
     // Clean up
     zeroize(manifestBytes);
 }
-

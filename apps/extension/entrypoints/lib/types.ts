@@ -25,24 +25,35 @@ export interface VaultHeader {
 }
 
 /**
- * Vault Manifest (encrypted and stored in the vault file)
+ * ManifestV1 - In-memory decrypted structure
  */
-export interface VaultManifest {
-    version_counter: number;
-    book_index: BookmarkEntry[]; // Empty for milestone 1
-    chain_head: string; // base64 - HMAC chain seed
+export interface ManifestV1 {
+    version: number;              // mirrors server version
+    items: Bookmark[];            // editable list
+    tags?: Tag[];                 // optional centralized tag list
+    chain_head?: string;          // reserved (ignore for now)
 }
 
 /**
- * Bookmark entry (future milestone)
+ * Bookmark
  */
-export interface BookmarkEntry {
-    id: string;
+export interface Bookmark {
+    id: string;                   // nanoid
     url: string;
     title: string;
-    tags: string[];
-    created_at: string;
-    updated_at: string;
+    notes?: string;
+    tags: string[];               // tag ids
+    created_at: number;           // epoch ms
+    updated_at: number;           // epoch ms
+}
+
+/**
+ * Tag
+ */
+export interface Tag {
+    id: string;                   // nanoid
+    name: string;                 // display name
+    color?: string;               // optional UI hint
 }
 
 /**
@@ -50,11 +61,11 @@ export interface BookmarkEntry {
  */
 export interface UnlockedVault {
     header: VaultHeader;
-    manifest: VaultManifest;
+    manifest: ManifestV1;
     fileHandle: FileSystemFileHandle;
     // Session keys (kept in memory while unlocked)
     sessionKeys: {
-        kek: Uint8Array; // Key Encryption Key (not used in milestone 1, but derived)
+        kek: Uint8Array; // Key Encryption Key
         mak: Uint8Array; // Manifest Auth/Enc Key
     };
 }
@@ -80,4 +91,3 @@ export interface AppState {
     unlockedVault: UnlockedVault | null;
     cryptoReady: boolean;
 }
-

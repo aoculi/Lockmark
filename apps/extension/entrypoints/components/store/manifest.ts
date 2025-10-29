@@ -1,19 +1,19 @@
-import type { VaultManifest } from '../../lib/types';
+import type { ManifestV1 } from '../../lib/types';
 
 export type ManifestStatus = 'idle' | 'loaded' | 'dirty' | 'saving' | 'offline';
 
 export type ManifestStoreState = {
-    manifest: VaultManifest | null;
+    manifest: ManifestV1 | null;
     etag: string | null;
     serverVersion: number;
     status: ManifestStatus;
-    lastKnownServerSnapshot: VaultManifest | null; // For 3-way merge
+    lastKnownServerSnapshot: ManifestV1 | null; // For 3-way merge
 };
 
-export type ManifestUpdater = (manifest: VaultManifest) => VaultManifest;
+export type ManifestUpdater = (manifest: ManifestV1) => ManifestV1;
 
 export type LoadManifestData = {
-    manifest: VaultManifest;
+    manifest: ManifestV1;
     etag: string;
     version: number;
 };
@@ -115,7 +115,7 @@ class ManifestStore {
         this.notify();
     }
 
-    getSaveData(): { manifest: VaultManifest; etag: string; serverVersion: number } | null {
+    getSaveData(): { manifest: ManifestV1; etag: string; serverVersion: number } | null {
         if (!this.state.manifest || !this.state.etag) {
             return null;
         }

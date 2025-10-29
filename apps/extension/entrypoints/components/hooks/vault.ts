@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { threeWayMerge, type ThreeWayMergeInput } from '../../lib/conflictResolution';
 import { constructAadManifest } from '../../lib/constants';
 import { decryptAEAD, encryptAEAD, fromBase64, toBase64, zeroize } from '../../lib/crypto';
-import type { VaultManifest } from '../../lib/types';
+import type { ManifestV1 } from '../../lib/types';
 import { apiClient, type ApiError } from '../api';
 import { keystoreManager } from '../store';
 import { manifestStore, type ManifestStoreState } from '../store/manifest';
@@ -19,12 +19,6 @@ export type VaultMetadata = {
     bytes_total: number;
     has_manifest: boolean;
     updated_at: number;
-};
-
-export type ManifestQueryResponse = {
-    manifest: VaultManifest;
-    etag: string;
-    serverVersion: number;
 };
 
 export type ManifestApiResponse = {
@@ -45,7 +39,7 @@ export type ManifestSaveResponse = {
 };
 
 export type SaveManifestInput = {
-    manifest: VaultManifest;
+    manifest: ManifestV1;
     etag: string;
     serverVersion: number;
 };
@@ -180,7 +174,25 @@ export function useManifest() {
 
                 // Parse manifest JSON
                 const manifestText = new TextDecoder().decode(plaintext);
-                const manifest: VaultManifest = JSON.parse(manifestText);
+                let manifest: ManifestV1;
+
+                try {
+                    manifest = JSON.parse(manifestText);
+                    // Ensure manifest has required structure
+                    if (!manifest.items || !Array.isArray(manifest.items)) {
+                        manifest.items = [];
+                    }
+                    if (!manifest.version) {
+                        manifest.version = data.version;
+                    }
+                } catch (err) {
+                    // If parsing fails, treat as empty manifest
+                    manifest = {
+                        version: data.version,
+                        items: [],
+                        tags: [],
+                    };
+                }
 
                 // Load into manifest store
                 manifestStore.load({
@@ -192,10 +204,10 @@ export function useManifest() {
                 // No manifest yet - load empty manifest
                 manifestStore.load({
                     manifest: {
-                        version_counter: 0,
-                        book_index: [],
-                        chain_head: ''
-                    } as VaultManifest,
+                        version: 0,
+                        items: [],
+                        tags: [],
+                    },
                     etag: '',
                     version: 0
                 });
@@ -351,7 +363,26 @@ export function useManifest() {
             constructAadManifest(context.userId, context.vaultId)
         );
         const plaintext = decryptAEAD(ciphertextBytes, nonceBytes, mak, aadManifest);
-        const latestManifest: VaultManifest = JSON.parse(new TextDecoder().decode(plaintext));
+        const manifestText = new TextDecoder().decode(plaintext);
+        let latestManifest: ManifestV1;
+
+        try {
+            latestManifest = JSON.parse(manifestText);
+            // Ensure manifest has required structure
+            if (!latestManifest.items || !Array.isArray(latestManifest.items)) {
+                latestManifest.items = [];
+            }
+            if (!latestManifest.version) {
+                latestManifest.version = version;
+            }
+        } catch (err) {
+            // If parsing fails, treat as empty manifest
+            latestManifest = {
+                version,
+                items: [],
+                tags: [],
+            };
+        }
 
         // Security: Zeroize plaintext immediately after parsing
         zeroize(plaintext);

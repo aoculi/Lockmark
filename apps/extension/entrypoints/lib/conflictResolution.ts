@@ -1,25 +1,25 @@
-import type { VaultManifest } from './types';
+import type { ManifestV1 } from './types';
 
 export type ConflictResolution = {
-    merged: VaultManifest;
+    merged: ManifestV1;
     hasConflicts: boolean;
     conflicts: string[];
 };
 
 export type ThreeWayMergeInput = {
-    base: VaultManifest;
-    local: VaultManifest;
-    remote: VaultManifest;
+    base: ManifestV1;
+    local: ManifestV1;
+    remote: ManifestV1;
 };
 
 /**
- * Simple 3-way merge for VaultManifest
+ * Simple 3-way merge for ManifestV1
  *
  * Strategy:
  * - If both local and remote changed the same property, prefer remote and re-apply local changes that don't collide
- * - For arrays (book_index), merge by adding unique entries
+ * - For arrays (items, tags), merge by ID - prefer remote for conflicts
  * - For strings (chain_head), prefer remote if both changed
- * - For numbers (version_counter), use remote value
+ * - For numbers (version), use remote value
  */
 export function threeWayMerge(input: ThreeWayMergeInput): ConflictResolution {
     const { base, local, remote } = input;
@@ -27,16 +27,16 @@ export function threeWayMerge(input: ThreeWayMergeInput): ConflictResolution {
     let hasConflicts = false;
 
     // Start with remote as base (prefer remote for conflicts)
-    const merged: VaultManifest = { ...remote };
+    const merged: ManifestV1 = { ...remote };
 
-    // Check version_counter conflicts
-    if (base.version_counter !== local.version_counter &&
-        base.version_counter !== remote.version_counter &&
-        local.version_counter !== remote.version_counter) {
-        conflicts.push('version_counter');
+    // Check version conflicts
+    if (base.version !== local.version &&
+        base.version !== remote.version &&
+        local.version !== remote.version) {
+        conflicts.push('version');
         hasConflicts = true;
     }
-    // Use remote version_counter (already copied above)
+    // Use remote version (already copied above)
 
     // Check chain_head conflicts
     if (base.chain_head !== local.chain_head &&
@@ -47,40 +47,83 @@ export function threeWayMerge(input: ThreeWayMergeInput): ConflictResolution {
         // Prefer remote (already copied above)
     }
 
-    // Merge book_index arrays
-    const baseIndex = new Set(base.book_index || []);
-    const localIndex = new Set(local.book_index || []);
-    const remoteIndex = new Set(remote.book_index || []);
+    // Merge items (bookmarks) by ID
+    const baseItemIds = new Set(base.items?.map(item => item.id) || []);
+    const localItemIds = new Set(local.items?.map(item => item.id) || []);
+    const remoteItemIds = new Set(remote.items?.map(item => item.id) || []);
+    const localItemMap = new Map(local.items?.map(item => [item.id, item]) || []);
+    const remoteItemMap = new Map(remote.items?.map(item => [item.id, item]) || []);
 
-    // Find items that were added locally but not in remote
-    const localOnly = [...localIndex].filter(item => !baseIndex.has(item) && !remoteIndex.has(item));
+    // Start with remote items
+    const mergedItems = new Map(remoteItemMap);
 
-    // Find items that were removed locally but still in remote
-    const localRemoved = [...baseIndex].filter(item => !localIndex.has(item) && remoteIndex.has(item));
+    // Add local-only items (added locally, not in base or remote)
+    local.items?.forEach(item => {
+        if (!baseItemIds.has(item.id) && !remoteItemIds.has(item.id)) {
+            mergedItems.set(item.id, item);
+        }
+    });
 
-    // Find items that were added remotely but not in local
-    const remoteOnly = [...remoteIndex].filter(item => !baseIndex.has(item) && !localIndex.has(item));
+    // Remove items that were deleted locally (in base but not in local, but still in remote)
+    base.items?.forEach(item => {
+        if (!localItemIds.has(item.id) && remoteItemIds.has(item.id)) {
+            mergedItems.delete(item.id);
+        }
+    });
 
-    // Check for conflicts in book_index
-    const localChanges = [...localIndex].filter(item => !baseIndex.has(item));
-    const remoteChanges = [...remoteIndex].filter(item => !baseIndex.has(item));
-    const conflictingChanges = localChanges.filter(item => remoteChanges.includes(item));
+    // Check for conflicts (items modified in both local and remote)
+    base.items?.forEach(baseItem => {
+        const localItem = localItemMap.get(baseItem.id);
+        const remoteItem = remoteItemMap.get(baseItem.id);
+        if (localItem && remoteItem &&
+            JSON.stringify(baseItem) !== JSON.stringify(localItem) &&
+            JSON.stringify(baseItem) !== JSON.stringify(remoteItem) &&
+            JSON.stringify(localItem) !== JSON.stringify(remoteItem)) {
+            conflicts.push(`item:${baseItem.id}`);
+            hasConflicts = true;
+        }
+    });
 
-    if (conflictingChanges.length > 0) {
-        conflicts.push('book_index');
-        hasConflicts = true;
-    }
+    merged.items = Array.from(mergedItems.values());
 
-    // Build merged book_index
-    const mergedIndex = new Set(remoteIndex);
+    // Merge tags by ID
+    const baseTagIds = new Set(base.tags?.map(tag => tag.id) || []);
+    const localTagIds = new Set(local.tags?.map(tag => tag.id) || []);
+    const remoteTagIds = new Set(remote.tags?.map(tag => tag.id) || []);
+    const localTagMap = new Map(local.tags?.map(tag => [tag.id, tag]) || []);
+    const remoteTagMap = new Map(remote.tags?.map(tag => [tag.id, tag]) || []);
 
-    // Add local-only items
-    localOnly.forEach(item => mergedIndex.add(item));
+    // Start with remote tags
+    const mergedTags = new Map(remoteTagMap);
 
-    // Remove items that were removed locally
-    localRemoved.forEach(item => mergedIndex.delete(item));
+    // Add local-only tags
+    local.tags?.forEach(tag => {
+        if (!baseTagIds.has(tag.id) && !remoteTagIds.has(tag.id)) {
+            mergedTags.set(tag.id, tag);
+        }
+    });
 
-    merged.book_index = [...mergedIndex];
+    // Remove tags that were deleted locally
+    base.tags?.forEach(tag => {
+        if (!localTagIds.has(tag.id) && remoteTagIds.has(tag.id)) {
+            mergedTags.delete(tag.id);
+        }
+    });
+
+    // Check for tag conflicts
+    base.tags?.forEach(baseTag => {
+        const localTag = localTagMap.get(baseTag.id);
+        const remoteTag = remoteTagMap.get(baseTag.id);
+        if (localTag && remoteTag &&
+            JSON.stringify(baseTag) !== JSON.stringify(localTag) &&
+            JSON.stringify(baseTag) !== JSON.stringify(remoteTag) &&
+            JSON.stringify(localTag) !== JSON.stringify(remoteTag)) {
+            conflicts.push(`tag:${baseTag.id}`);
+            hasConflicts = true;
+        }
+    });
+
+    merged.tags = Array.from(mergedTags.values());
 
     return {
         merged,
@@ -120,12 +163,13 @@ export function resolveConflict(
 }
 
 /**
- * Check if two manifests are equivalent (ignoring version_counter)
+ * Check if two manifests are equivalent (ignoring version)
  */
-export function manifestsEqual(a: VaultManifest, b: VaultManifest): boolean {
+export function manifestsEqual(a: ManifestV1, b: ManifestV1): boolean {
     return (
         a.chain_head === b.chain_head &&
-        JSON.stringify(a.book_index || []) === JSON.stringify(b.book_index || [])
+        JSON.stringify(a.items || []) === JSON.stringify(b.items || []) &&
+        JSON.stringify(a.tags || []) === JSON.stringify(b.tags || [])
     );
 }
 
@@ -138,9 +182,10 @@ export function getConflictDescription(conflicts: string[]): string {
     }
 
     const descriptions: Record<string, string> = {
-        version_counter: 'Version number',
+        version: 'Version number',
         chain_head: 'Chain head',
-        book_index: 'Book index',
+        items: 'Bookmarks',
+        tags: 'Tags',
     };
 
     return conflicts.map(conflict => descriptions[conflict] || conflict).join(', ');
