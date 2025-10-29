@@ -1,9 +1,30 @@
 
+import { useEffect, useState } from 'react';
 import { useLogout } from '../../hooks/auth';
+import { keystoreManager } from '../../store';
 import styles from './styles.module.css';
 
 export default function Vault() {
     const logoutMutation = useLogout();
+    const [isUnlocked, setIsUnlocked] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
+
+    // Check keystore status on mount
+    useEffect(() => {
+        const checkKeystoreStatus = async () => {
+            try {
+                const unlocked = await keystoreManager.isUnlocked();
+                setIsUnlocked(unlocked);
+            } catch (error) {
+                console.error('Failed to check keystore status:', error);
+                setIsUnlocked(false);
+            } finally {
+                setIsChecking(false);
+            }
+        };
+
+        checkKeystoreStatus();
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -13,6 +34,16 @@ export default function Vault() {
             console.error('Logout failed:', err);
         }
     };
+
+    if (isChecking) {
+        return (
+            <div className={styles.container}>
+                <div className={styles.card}>
+                    <p>Checking vault status...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>
@@ -28,9 +59,20 @@ export default function Vault() {
             </div>
 
             <div className={styles.card}>
-                <p>Welcome to your secure vault!</p>
-                <p>Your session is active and secure.</p>
-                <p>All sensitive data is stored in memory only.</p>
+                {isUnlocked ? (
+                    <>
+                        <p className={styles.successMessage}>🔓 Vault Unlocked</p>
+                        <p>Your vault is unlocked and ready to use.</p>
+                        <p>All sensitive data is stored in memory only.</p>
+                        <p>Keys will be cleared when you close the extension or logout.</p>
+                    </>
+                ) : (
+                    <>
+                        <p className={styles.errorMessage}>🔒 Vault Locked</p>
+                        <p>Your vault is locked. Please login again to unlock it.</p>
+                        <p>This may happen if the extension was restarted or keys were cleared.</p>
+                    </>
+                )}
             </div>
         </div>
     );

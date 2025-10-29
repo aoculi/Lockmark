@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient, type ApiError } from '../api';
-import { authStore, sessionManager, type KdfParams } from '../store';
+import { authStore, keystoreManager, sessionManager, type KdfParams } from '../store';
+import { useUnlock } from './unlock';
 
 // Query keys
 const QUERY_KEYS = {
@@ -32,6 +33,7 @@ export type SessionResponse = {
 // Auth hooks
 export function useLogin() {
     const queryClient = useQueryClient();
+    const unlockMutation = useUnlock();
 
     return useMutation<LoginResponse, ApiError, LoginInput>({
         mutationKey: ['auth', 'login'],
@@ -86,6 +88,60 @@ export function useLogin() {
     });
 }
 
+/**
+ * Combined login + unlock hook
+ * Performs login and then immediately unlocks the vault
+ */
+export function useLoginAndUnlock() {
+    const queryClient = useQueryClient();
+    const loginMutation = useLogin();
+    const unlockMutation = useUnlock();
+
+    return useMutation<{ loginData: LoginResponse; unlockData: { success: boolean; isFirstUnlock: boolean } }, ApiError, LoginInput>({
+        mutationKey: ['auth', 'loginAndUnlock'],
+        mutationFn: async (input: LoginInput) => {
+            // First perform login
+            const loginData = await loginMutation.mutateAsync(input);
+
+            // Then perform unlock
+            const unlockData = await unlockMutation.mutateAsync({
+                password: input.password,
+                userId: loginData.user_id,
+                vaultId: loginData.user_id // Using user_id as vault_id for simplicity
+            });
+
+            return { loginData, unlockData };
+        },
+        onSuccess: async (data) => {
+            // Prefetch vault data after successful unlock
+            await queryClient.prefetchQuery({
+                queryKey: QUERY_KEYS.vault(),
+                queryFn: () => apiClient('/vault').then(r => r.data),
+            });
+
+            // Check if manifest exists before prefetching (to avoid 404 for new users)
+            const vaultData = queryClient.getQueryData<{ has_manifest?: boolean }>(QUERY_KEYS.vault());
+            if (vaultData?.has_manifest) {
+                await queryClient.prefetchQuery({
+                    queryKey: QUERY_KEYS.manifest(),
+                    queryFn: async () => {
+                        try {
+                            const response = await apiClient('/vault/manifest');
+                            return response.data;
+                        } catch (error: any) {
+                            // Handle 404 gracefully - manifest doesn't exist yet
+                            if (error?.status === 404) {
+                                return null;
+                            }
+                            throw error;
+                        }
+                    },
+                });
+            }
+        },
+    });
+}
+
 export function useLogout() {
     const queryClient = useQueryClient();
 
@@ -105,6 +161,8 @@ export function useLogout() {
             // Clear all auth data
             await sessionManager.clearSession();
             authStore.clear();
+            // Clear keystore (keys are already zeroized in background.ts)
+            await keystoreManager.zeroize();
             queryClient.clear();
         },
     });

@@ -30,3 +30,15 @@
     border-radius: 8px;
     background-color: #f9fafb;
 }
+
+.successMessage {
+    color: #059669;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.errorMessage {
+    color: #dc2626;
+    font-weight: 600;
+    margin-bottom: 12px;
+}

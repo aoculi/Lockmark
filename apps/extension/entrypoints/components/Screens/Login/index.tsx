@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useLogin } from '../../hooks/auth';
+import { useLoginAndUnlock } from '../../hooks/auth';
 import styles from './styles.module.css';
 
 interface LoginProps {
@@ -14,7 +14,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     });
     const [error, setError] = useState<string | string[] | null>(null);
 
-    const loginMutation = useLogin();
+    const loginMutation = useLoginAndUnlock();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,11 +26,13 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         }
 
         try {
-            await loginMutation.mutateAsync({
+            const result = await loginMutation.mutateAsync({
                 login: formData.login.trim(),
                 password: formData.password
             });
-            // Success - redirect to vault
+
+            // Success - both login and unlock completed
+            console.log('Login and unlock successful:', result);
             onLoginSuccess();
         } catch (err: any) {
             const baseMessage = err?.message || 'Login failed';
