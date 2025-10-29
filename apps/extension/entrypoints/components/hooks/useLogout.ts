@@ -2,7 +2,7 @@
  * Logout hook
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../api';
+import { apiClient } from '../../lib/api';
 import { authStore, keystoreManager, sessionManager } from '../store';
 
 export function useLogout() {

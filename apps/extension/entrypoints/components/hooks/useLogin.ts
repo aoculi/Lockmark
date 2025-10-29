@@ -2,7 +2,7 @@
  * Login hook
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, type ApiError } from '../api';
+import { apiClient, type ApiError } from '../../lib/api';
 import { authStore, sessionManager } from '../store';
 import { useUnlock } from './unlock';
 

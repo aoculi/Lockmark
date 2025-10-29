@@ -2,11 +2,11 @@
  * Manifest mutation hook - handles saving and conflict resolution
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient, type ApiError } from '../../lib/api';
 import { threeWayMerge, type ThreeWayMergeInput } from '../../lib/conflictResolution';
 import { constructAadManifest } from '../../lib/constants';
 import { decryptAEAD, encryptAEAD, fromBase64, toBase64, zeroize } from '../../lib/crypto';
 import type { ManifestV1 } from '../../lib/types';
-import { apiClient, type ApiError } from '../api';
 import { keystoreManager } from '../store';
 import { manifestStore } from '../store/manifest';
 import { useManifestQuery, type ManifestApiResponse } from './useManifestQuery';
