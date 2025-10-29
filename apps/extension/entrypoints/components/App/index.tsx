@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSession } from '../hooks/auth';
 import Login from '../Screens/Login';
 import Vault from '../Screens/Vault';
 import { sessionManager } from '../store';
@@ -8,15 +9,46 @@ type Route = '/login' | '/vault';
 export default function App() {
     const [route, setRoute] = useState<Route>('/login');
     const [flash, setFlash] = useState<string | null>(null);
+    const [isChecking, setIsChecking] = useState(true);
+    const sessionQuery = useSession();
 
-    // Initialize session and set initial route
+    // Check session on popup mount using GET /auth/session
     useEffect(() => {
-        const init = async () => {
-            const session = await sessionManager.getSession();
-            setRoute(session ? '/vault' : '/login');
+        const checkSession = async () => {
+            try {
+                const session = await sessionManager.getSession();
+
+                if (session) {
+                    // Validate session with server
+                    const sessionData = await sessionQuery.refetch();
+
+                    if (sessionData.data?.valid) {
+                        // Session is valid, proceed to vault
+                        setRoute('/vault');
+                    } else {
+                        // Session invalid, clear and show login
+                        await sessionManager.clearSession();
+                        setRoute('/login');
+                        setFlash('Session expired');
+                    }
+                } else {
+                    // No session, show login
+                    setRoute('/login');
+                }
+            } catch (error) {
+                // On error, assume invalid session
+                console.error('Session check failed:', error);
+                await sessionManager.clearSession();
+                setRoute('/login');
+                setFlash('Session check failed');
+            } finally {
+                setIsChecking(false);
+            }
         };
-        init();
-    }, []);
+
+        checkSession();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Only run on mount
 
     // Listen for auth events
     useEffect(() => {
@@ -33,6 +65,14 @@ export default function App() {
         setFlash(null);
         setRoute('/vault');
     };
+
+    if (isChecking) {
+        return (
+            <div style={{ padding: 20, textAlign: 'center' }}>
+                <p>Checking session...</p>
+            </div>
+        );
+    }
 
     return (
         <div>

@@ -81,15 +81,23 @@ export function useUnlock() {
                     const wmkBase64 = toBase64(wmk);
 
                     // POST /user/wmk with the chosen WMK format
+                    // Only called when WMK was initially missing
                     try {
-                        await apiClient('/user/wmk', {
+                        const response = await apiClient<{ ok: boolean }>('/user/wmk', {
                             method: 'POST',
                             body: { wrapped_mk: wmkBase64 }
                         });
+
+                        // Verify response format
+                        if (!response.data?.ok) {
+                            throw new Error('WMK upload failed: invalid response');
+                        }
                     } catch (error) {
                         // If WMK upload fails, we should still proceed with unlock
                         // The user can retry later or the server might handle it
                         console.warn('Failed to upload WMK to server:', error);
+                        // Note: We continue with unlock even if upload fails
+                        // The keys are already in memory and user can retry upload later
                     }
                 }
 
