@@ -42,27 +42,21 @@ export function generateRandomBytes(length: number): Uint8Array {
  * @returns Master Key (32 bytes)
  */
 export function deriveKeyFromPassword(password: string, salt: Uint8Array): Uint8Array {
-    try {
-        const sodium = getCryptoEnv();
+    const sodium = getCryptoEnv();
 
-        // Convert opslimit and memlimit constants to actual values
-        const opslimit = sodium.crypto_pwhash_OPSLIMIT_MODERATE;
-        const memlimit = sodium.crypto_pwhash_MEMLIMIT_MODERATE;
-        const algorithm = sodium.crypto_pwhash_ALG_ARGON2ID13;
+    // Convert opslimit and memlimit constants to actual values
+    const opslimit = sodium.crypto_pwhash_OPSLIMIT_MODERATE;
+    const memlimit = sodium.crypto_pwhash_MEMLIMIT_MODERATE;
+    const algorithm = sodium.crypto_pwhash_ALG_ARGON2ID13;
 
-        const masterKey = sodium.crypto_pwhash(
-            KDF.outLen,
-            password,
-            salt,
-            opslimit,
-            memlimit,
-            algorithm
-        );
-
-        return masterKey;
-    } catch (error) {
-        throw error;
-    }
+    return sodium.crypto_pwhash(
+        KDF.outLen,
+        password,
+        salt,
+        opslimit,
+        memlimit,
+        algorithm
+    );
 }
 
 /**
@@ -112,25 +106,21 @@ export function encryptAEAD(
     key: Uint8Array,
     aad: Uint8Array
 ): { nonce: Uint8Array; ciphertext: Uint8Array } {
-    try {
-        const sodium = getCryptoEnv();
+    const sodium = getCryptoEnv();
 
-        // Generate random nonce
-        const nonce = sodium.randombytes_buf(AEAD.nonceLen);
+    // Generate random nonce
+    const nonce = sodium.randombytes_buf(AEAD.nonceLen);
 
-        // Encrypt with AEAD
-        const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
-            plaintext,
-            aad,
-            null, // no secret nonce
-            nonce,
-            key
-        );
+    // Encrypt with AEAD
+    const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+        plaintext,
+        aad,
+        null, // no secret nonce
+        nonce,
+        key
+    );
 
-        return { nonce, ciphertext };
-    } catch (error) {
-        throw error;
-    }
+    return { nonce, ciphertext };
 }
 
 /**
@@ -226,4 +216,3 @@ export function deriveVaultKeys(
 
     return { kek, mak, masterKey };
 }
-

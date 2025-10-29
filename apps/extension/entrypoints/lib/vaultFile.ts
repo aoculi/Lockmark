@@ -17,12 +17,12 @@ import {
     decryptAEAD,
     deriveKeyFromPassword,
     deriveSubKeys,
+    deriveVaultKeys,
     encryptAEAD,
-    fromBase64,
     generateRandomBytes,
     generateUUID,
     toBase64,
-    zeroize,
+    zeroize
 } from './crypto';
 import type { ManifestV1, VaultHeader } from './types';
 
@@ -196,11 +196,7 @@ export async function unlockVault(
     password: string
 ): Promise<{ manifest: ManifestV1; kek: Uint8Array; mak: Uint8Array }> {
     // Step 1: Derive keys from password
-    const kdfSalt = fromBase64(header.kdf.salt);
-    const hkdfSalt = fromBase64(header.hkdf.salt);
-
-    const masterKey = deriveKeyFromPassword(password, kdfSalt);
-    const { kek, mak } = deriveSubKeys(masterKey, hkdfSalt);
+    const { kek, mak, masterKey } = deriveVaultKeys(password, header);
 
     // Step 2: Extract nonce and ciphertext
     const nonce = encryptedManifest.slice(0, AEAD.nonceLen);
