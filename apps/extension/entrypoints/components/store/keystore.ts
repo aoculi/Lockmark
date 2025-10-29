@@ -25,7 +25,13 @@ async function sendToBackground<T = any>(message: any): Promise<T> {
 
 /**
  * Keystore manager - single source of truth in background service worker
- * Keys are never persisted and are lost on popup close or SW suspend
+ *
+ * Security guarantees:
+ * - Keys are NEVER persisted (never stored in chrome.storage/IDB/OPFS)
+ * - Keys are NEVER stored in React Query cache
+ * - Keys are ONLY stored in memory in the background service worker
+ * - Keys are lost on popup close or SW suspend (by design)
+ * - Keys are zeroized when session is cleared or on logout
  */
 export class KeyStoreManager {
     /**

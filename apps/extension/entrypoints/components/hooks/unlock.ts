@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { constructAadWmk } from '../../lib/constants';
+import { AAD_LABELS, constructAadWmk } from '../../lib/constants';
 import { decryptAEAD, deriveKeyFromPassword, deriveSubKeys, encryptAEAD, fromBase64, toBase64, zeroize } from '../../lib/crypto';
 import { whenCryptoReady } from '../../lib/cryptoEnv';
 import { apiClient, type ApiError } from '../api';
@@ -19,13 +19,15 @@ export type UnlockResponse = {
 /**
  * Unlock hook that handles the complete unlock flow
  * C1-C6: Gather inputs, derive UEK, handle WMK cases, derive operational keys, commit to keystore
+ *
+ * Security: Keys (MK, KEK, MAK) are NEVER stored in React Query cache.
+ * They are stored ONLY in the background service worker keystore via keystoreManager.
+ * React Query only stores metadata (success, isFirstUnlock) - never keys.
  */
 export function useUnlock() {
     return useMutation<UnlockResponse, ApiError, UnlockInput>({
         mutationKey: ['auth', 'unlock'],
         mutationFn: async (input: UnlockInput) => {
-            const { password, userId, vaultId } = input;
-
             // C1. Gather inputs for unlock
             const kdf = authStore.getKdf();
             const wrappedMk = authStore.getWrappedMk();
@@ -38,11 +40,15 @@ export function useUnlock() {
             await whenCryptoReady();
 
             // C2. Derive UEK (client)
+            // Security: Extract password from input immediately before use
+            // JavaScript strings are immutable, so we can't zeroize them, but we minimize exposure
             const kdfSalt = fromBase64(kdf.salt);
-            const uek = deriveKeyFromPassword(password, kdfSalt);
+            const uek = deriveKeyFromPassword(input.password, kdfSalt);
 
-            // Immediately clear password from memory (best effort)
-            // Note: We can't clear the input parameter, but we clear our local reference
+            // Security: Password reference is now out of scope after UEK derivation
+            // The input.password string remains in memory (immutable), but we don't retain references
+            const { userId, vaultId } = input;
+
             let mk: Uint8Array;
             let isFirstUnlock = false;
 
@@ -57,8 +63,12 @@ export function useUnlock() {
 
                         const aadWmk = new TextEncoder().encode(constructAadWmk(userId, vaultId));
                         mk = decryptAEAD(ciphertext, nonce, uek, aadWmk);
+
+                        // Security: Zeroize UEK immediately after decrypting MK
+                        zeroize(uek);
                     } catch (error) {
                         // On failure → show generic error (do not reveal which part failed)
+                        zeroize(uek); // Zeroize UEK even on error
                         throw new Error('Unable to unlock');
                     }
                 } else {
@@ -73,6 +83,9 @@ export function useUnlock() {
                     // Wrap it: WMK = AEAD_UEK_ENC(MK, AAD_WMK, nonce=RNG(24B))
                     const aadWmk = new TextEncoder().encode(constructAadWmk(userId, vaultId));
                     const { nonce, ciphertext } = encryptAEAD(mk, uek, aadWmk);
+
+                    // Security: Zeroize UEK immediately after creating MK
+                    zeroize(uek);
 
                     // Create WMK format: nonce(24B) || ciphertext
                     const wmk = new Uint8Array(24 + ciphertext.length);
@@ -117,11 +130,12 @@ export function useUnlock() {
                 const { kek, mak } = deriveSubKeys(mk, kdfSalt);
 
                 // C5. Commit keys into memory
+                // Security: Use constant AAD labels from constants.ts
                 const aadContext: AadContext = {
                     userId,
                     vaultId,
-                    wmkLabel: 'wmk_v1',
-                    manifestLabel: 'manifest_v1'
+                    wmkLabel: AAD_LABELS.wmk,
+                    manifestLabel: AAD_LABELS.manifest
                 };
 
                 await keystoreManager.setKeys({
@@ -131,17 +145,19 @@ export function useUnlock() {
                     aadContext
                 });
 
-                // C5. Zeroize local temporaries
-                zeroize(uek, mk, kek, mak);
+                // C5. Zeroize local temporaries (MK, KEK, MAK) - UEK already zeroized above
+                zeroize(mk, kek, mak);
 
                 return {
                     success: true,
                     isFirstUnlock
                 };
 
-            } finally {
-                // Always zeroize UEK
+            } catch (error) {
+                // If UEK wasn't zeroized in the try block, zeroize it here
+                // (This is a safety net - UEK should already be zeroized above)
                 zeroize(uek);
+                throw error;
             }
         },
     });

@@ -57,7 +57,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             });
 
             // Success - both login and unlock completed
-            console.log('Login and unlock successful:', result);
+            // Security: Never log sensitive data (keys, tokens, etc.)
             onLoginSuccess();
         } catch (err: any) {
             // Handle WMK upload failure differently - keep session, allow retry

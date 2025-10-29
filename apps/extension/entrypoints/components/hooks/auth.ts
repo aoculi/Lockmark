@@ -43,8 +43,7 @@ export function useLogin() {
                 body: input,
             });
 
-            console.log('login response', response);
-            console.log('login response data', response.data);
+            // Security: Never log sensitive data (wrapped_mk, tokens, etc.)
             return response.data;
         },
         onSuccess: async (data) => {
