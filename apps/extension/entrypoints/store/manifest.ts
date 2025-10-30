@@ -1,4 +1,4 @@
-import type { ManifestV1 } from '../../lib/types';
+import type { ManifestV1 } from '../lib/types';
 
 export type ManifestStatus = 'idle' | 'loaded' | 'dirty' | 'saving' | 'offline';
 
@@ -14,7 +14,7 @@ export type ManifestUpdater = (manifest: ManifestV1) => ManifestV1;
 
 export type LoadManifestData = {
     manifest: ManifestV1;
-    etag: string;
+    etag: string | null;
     version: number;
 };
 
@@ -115,8 +115,19 @@ class ManifestStore {
         this.notify();
     }
 
-    getSaveData(): { manifest: ManifestV1; etag: string; serverVersion: number } | null {
-        if (!this.state.manifest || !this.state.etag) {
+    getSaveData(): { manifest: ManifestV1; etag: string | null; serverVersion: number } | null {
+        if (!this.state.manifest) {
+            return null;
+        }
+        // Allow initial create when serverVersion === 0 and etag is null
+        if (this.state.serverVersion === 0) {
+            return {
+                manifest: this.state.manifest,
+                etag: null,
+                serverVersion: this.state.serverVersion,
+            };
+        }
+        if (!this.state.etag) {
             return null;
         }
         return {

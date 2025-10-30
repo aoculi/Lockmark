@@ -14,7 +14,7 @@ import type { ManifestApiResponse } from './useManifestQuery';
 
 export type SaveManifestInput = {
     manifest: ManifestV1;
-    etag: string;
+    etag: string | null;
     serverVersion: number;
 };
 
@@ -73,11 +73,18 @@ export function useManifestMutation() {
                 aadManifest
             );
 
+            const isFirstWrite = input.serverVersion === 0;
+            const headers: Record<string, string> = {};
+            if (!isFirstWrite && input.etag) {
+                headers['If-Match'] = input.etag;
+            }
+
             const response = await apiClient<ManifestSaveResponse>('/vault/manifest', {
                 method: 'PUT',
-                headers: { 'If-Match': input.etag },
+                headers,
                 body: {
-                    version: input.serverVersion,
+                    // Server requires version = current + 1
+                    version: input.serverVersion + 1,
                     nonce: toBase64(nonce),
                     ciphertext: toBase64(ciphertext),
                 }
@@ -109,9 +116,13 @@ export function useManifestMutation() {
                     );
 
                     const retryNextVersion = retryData.serverVersion + 1;
+                    const retryHeaders: Record<string, string> = {};
+                    if (retryData.serverVersion > 0 && retryData.etag) {
+                        retryHeaders['If-Match'] = retryData.etag;
+                    }
                     const retryResponse = await apiClient<ManifestSaveResponse>('/vault/manifest', {
                         method: 'PUT',
-                        headers: { 'If-Match': retryData.etag },
+                        headers: retryHeaders,
                         body: {
                             version: retryNextVersion,
                             nonce: toBase64(nonce),
