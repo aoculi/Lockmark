@@ -1,16 +1,21 @@
 /**
  * Manifest operations hook - handles loading, saving, and state management
  */
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
+import { decryptManifest } from '../lib/manifestUtils';
+import { keystoreManager } from '../store/keystore';
 import { manifestStore, type ManifestStoreState } from '../store/manifest';
 import { useManifestMutation } from './useManifestMutation';
 import { useManifestQuery } from './useManifestQuery';
 
 export function useManifestOperations() {
+    const queryClient = useQueryClient();
     const query = useManifestQuery();
     const mutation = useManifestMutation();
     const [storeState, setStoreState] = useState<ManifestStoreState>(() => manifestStore.getState());
     const mutateRef = useRef<(() => void) | undefined>(undefined);
+    const isSavingRef = useRef(false);
 
     // Subscribe to store changes
     useEffect(() => {
@@ -25,7 +30,7 @@ export function useManifestOperations() {
         if (storeState.status === 'dirty' && mutateRef.current) {
             const timeoutId = setTimeout(() => {
                 // Only trigger mutate if not already saving
-                if (manifestStore.getState().status === 'dirty' && mutateRef.current && !mutation.isPending) {
+                if (manifestStore.getState().status === 'dirty' && mutateRef.current && !mutation.isPending && !isSavingRef.current) {
                     mutateRef.current();
                 }
             }, 800);
@@ -49,12 +54,53 @@ export function useManifestOperations() {
     // Set up mutation ref
     useEffect(() => {
         mutateRef.current = () => {
+            if (isSavingRef.current) return;
             const saveData = manifestStore.getSaveData();
             if (saveData) {
-                mutation.mutate(saveData);
+                isSavingRef.current = true;
+                manifestStore.setSaving();
+                mutation.mutate(saveData, {
+                    onSettled: () => {
+                        isSavingRef.current = false;
+                    },
+                });
             }
         };
     }, [mutation]);
+
+    // Bootstrap manifest on mount if keystore is unlocked and store is empty
+    useEffect(() => {
+        const bootstrap = async () => {
+            try {
+                const isUnlocked = await keystoreManager.isUnlocked();
+                const current = manifestStore.getState();
+                if (!isUnlocked || current.manifest) {
+                    return;
+                }
+
+                // Check react-query cache first, else fetch
+                const cached = queryClient.getQueryData<any>(['vault', 'manifest']);
+                const data = cached ?? (await (async () => {
+                    const result = await query.refetch();
+                    return result.data as any;
+                })());
+                if (data) {
+                    const manifest = await decryptManifest(data);
+                    manifestStore.load({ manifest, etag: data.etag, version: data.version });
+                } else {
+                    manifestStore.load({ manifest: { version: 0, items: [], tags: [] }, etag: null as unknown as string, version: 0 });
+                }
+            } catch (e: any) {
+                if (e?.status === 404) {
+                    manifestStore.load({ manifest: { version: 0, items: [], tags: [] }, etag: null as unknown as string, version: 0 });
+                }
+            }
+        };
+
+        bootstrap();
+        // We intentionally run this only once on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return { query, mutation, store: storeState };
 }

@@ -4,7 +4,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ApiError } from '../lib/api';
 import { decryptManifest } from '../lib/manifestUtils';
-import { prefetchVaultData } from '../lib/vaultPrefetch';
 import { manifestStore } from '../store/manifest';
 import { useUnlock } from './unlock';
 import { useLogin } from './useLogin';
@@ -35,9 +34,6 @@ export function useLoginAndUnlock() {
             return { loginData, unlockData };
         },
         onSuccess: async (data) => {
-            // Prefetch vault data after successful unlock
-            await prefetchVaultData(queryClient);
-
             // Prefetch manifest data
             const queryData = queryClient.getQueryData<any>(['vault', 'manifest']);
             if (queryData) {

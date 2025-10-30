@@ -66,74 +66,51 @@ export function useManifestMutation() {
                 throw new Error('Keys not available');
             }
 
-            const aadManifest = new TextEncoder().encode(constructAadManifest(aadContext.userId, aadContext.vaultId));
-            const { nonce, ciphertext } = encryptAEAD(
-                new TextEncoder().encode(JSON.stringify(input.manifest)),
-                mak,
-                aadManifest
-            );
+            const attemptSave = async (manifestInput: { manifest: ManifestV1; etag: string | null; serverVersion: number }) => {
+                const aadManifest = new TextEncoder().encode(constructAadManifest(aadContext.userId, aadContext.vaultId));
+                const { nonce, ciphertext } = encryptAEAD(
+                    new TextEncoder().encode(JSON.stringify(manifestInput.manifest)),
+                    mak,
+                    aadManifest
+                );
 
-            const isFirstWrite = input.serverVersion === 0;
-            const headers: Record<string, string> = {};
-            if (!isFirstWrite && input.etag) {
-                headers['If-Match'] = input.etag;
-            }
-
-            const response = await apiClient<ManifestSaveResponse>('/vault/manifest', {
-                method: 'PUT',
-                headers,
-                body: {
-                    // Server requires version = current + 1
-                    version: input.serverVersion + 1,
-                    nonce: toBase64(nonce),
-                    ciphertext: toBase64(ciphertext),
+                const isFirstWrite = manifestInput.serverVersion === 0;
+                const headers: Record<string, string> = {};
+                if (!isFirstWrite && manifestInput.etag) {
+                    headers['If-Match'] = manifestInput.etag;
                 }
-            });
 
-            zeroize(nonce, ciphertext);
-            return response.data;
-        },
-        onError: async (error, input, context) => {
-            if (error.status === 409) {
-                // Conflict - try to resolve and retry
-                const mak = await keystoreManager.getMAK();
-                const aadContext = await keystoreManager.getAadContext();
-                if (mak && aadContext) {
-                    await handleConflict(aadContext);
-
-                    // Retry with updated data
-                    const retryData = manifestStore.getSaveData();
-                    if (!retryData) {
-                        throw new Error('No data to retry');
-                    }
-
-                    // Re-encrypt with updated manifest
-                    const aadManifest = new TextEncoder().encode(constructAadManifest(aadContext.userId, aadContext.vaultId));
-                    const { nonce, ciphertext } = encryptAEAD(
-                        new TextEncoder().encode(JSON.stringify(retryData.manifest)),
-                        mak,
-                        aadManifest
-                    );
-
-                    const retryNextVersion = retryData.serverVersion + 1;
-                    const retryHeaders: Record<string, string> = {};
-                    if (retryData.serverVersion > 0 && retryData.etag) {
-                        retryHeaders['If-Match'] = retryData.etag;
-                    }
-                    const retryResponse = await apiClient<ManifestSaveResponse>('/vault/manifest', {
+                try {
+                    const response = await apiClient<ManifestSaveResponse>('/vault/manifest', {
                         method: 'PUT',
-                        headers: retryHeaders,
+                        headers,
                         body: {
-                            version: retryNextVersion,
+                            version: manifestInput.serverVersion + 1,
                             nonce: toBase64(nonce),
                             ciphertext: toBase64(ciphertext),
                         }
                     });
                     zeroize(nonce, ciphertext);
-                    return retryResponse.data;
+                    return response.data;
+                } catch (err: any) {
+                    zeroize(nonce, ciphertext);
+                    throw err;
                 }
+            };
+
+            try {
+                return await attemptSave(input);
+            } catch (error: any) {
+                if (error?.status === 409) {
+                    await handleConflict(aadContext);
+                    const retryData = manifestStore.getSaveData();
+                    if (!retryData) {
+                        throw new Error('No data to retry');
+                    }
+                    return await attemptSave(retryData);
+                }
+                throw error;
             }
-            throw error;
         },
         onSuccess: (data) => {
             manifestStore.ackSaved({ etag: data.etag, version: data.version });

@@ -39,7 +39,6 @@ export default function Vault() {
                 const unlocked = await keystoreManager.isUnlocked();
                 setIsUnlocked(unlocked);
             } catch (error) {
-                // Don't log sensitive data - just set state
                 setIsUnlocked(false);
             } finally {
                 setIsChecking(false);
@@ -66,15 +65,17 @@ export default function Vault() {
     }, [mutation.isSuccess, mutation.isError]);
 
     const handleSave = async () => {
-        if (store.status === 'dirty' || store.status === 'offline') {
-            try {
-                const saveData = manifestStore.getSaveData();
-                if (saveData) {
-                    await mutation.mutateAsync(saveData);
-                }
-            } catch (error) {
-                // Error handling done in useEffect
+        if (!(store.status === 'dirty' || store.status === 'offline')) return;
+        if (mutation.isPending) return;
+        try {
+            const saveData = manifestStore.getSaveData();
+            if (saveData) {
+                // mark saving to prevent debounce-triggered autosave overlap
+                manifestStore.setSaving();
+                await mutation.mutateAsync(saveData);
             }
+        } catch (error) {
+            // handled in useEffect
         }
     };
 
