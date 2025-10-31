@@ -31,6 +31,7 @@ export default function Vault() {
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [isAddingBookmark, setIsAddingBookmark] = useState(false);
   const [isManagingTags, setIsManagingTags] = useState(false);
+  const [currentTagId, setCurrentTagId] = useState<string | null>("all");
 
   // Check keystore status on mount
   useEffect(() => {
@@ -63,6 +64,10 @@ export default function Vault() {
       }
     }
   }, [mutation.isSuccess, mutation.isError]);
+
+  const onSelectTag = (id: string) => {
+    setCurrentTagId(id);
+  };
 
   const handleSave = async () => {
     if (!(store.status === "dirty" || store.status === "offline")) return;
@@ -144,58 +149,62 @@ export default function Vault() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.left}>
-        <Tags />
-      </div>
-      <div className={styles.right}>
-        <VaultHeader onSave={handleSave} />
-        <MessageBanner message={message} onRetry={handleRetry} />
-        <div className={styles.card}>
-          {isUnlocked ? (
-            <>
-              {store.manifest && (
-                <>
-                  <Toolbar
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    onAddBookmark={handleAddBookmark}
-                    isManagingTags={isManagingTags}
-                    onToggleTagManager={() =>
-                      setIsManagingTags(!isManagingTags)
-                    }
-                  />
+      {isUnlocked && store.manifest ? (
+        <>
+          {/* MODAL: Edit tags */}
+          {/* MODAL: Add bookmark */}
+          {/* MODAL: Edit bookmark */}
 
-                  <BookmarkList
-                    bookmarks={bookmarks}
-                    tags={tags}
-                    searchQuery={searchQuery}
-                    onEdit={handleEditBookmark}
-                    onDelete={handleDeleteBookmark}
-                  />
+          <div className={styles.left}>
+            {/* Sort tags button? */}
+            <Tags currentTagId={currentTagId} onSelectTag={onSelectTag} />
+            {/* STATUS in gray */}
+          </div>
+          <div className={styles.right}>
+            {/*
+            header: search bar, add bookmark button
+            Error message
+            Bookmark list
+              */}
 
-                  {(isAddingBookmark || editingBookmark) && (
-                    <BookmarkEditModal
-                      bookmark={editingBookmark}
-                      tags={tags}
-                      onSave={handleSaveBookmark}
-                      onCancel={handleCancelEdit}
-                    />
-                  )}
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <p className={styles.errorMessage}>🔒 Vault Locked</p>
-              <p>Your vault is locked. Please login again to unlock it.</p>
-              <p>
-                This may happen if the extension was restarted or keys were
-                cleared.
-              </p>
-            </>
-          )}
-        </div>
-      </div>
+            <VaultHeader onSave={handleSave} />
+            <MessageBanner message={message} onRetry={handleRetry} />
+
+            <Toolbar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onAddBookmark={handleAddBookmark}
+              isManagingTags={isManagingTags}
+              onToggleTagManager={() => setIsManagingTags(!isManagingTags)}
+            />
+
+            <BookmarkList
+              bookmarks={bookmarks}
+              tags={tags}
+              searchQuery={searchQuery}
+              onEdit={handleEditBookmark}
+              onDelete={handleDeleteBookmark}
+            />
+
+            {(isAddingBookmark || editingBookmark) && (
+              <BookmarkEditModal
+                bookmark={editingBookmark}
+                tags={tags}
+                onSave={handleSaveBookmark}
+                onCancel={handleCancelEdit}
+              />
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className={styles.errorMessage}>🔒 Vault Locked</p>
+          <p>Your vault is locked. Please login again to unlock it.</p>
+          <p>
+            This may happen if the extension was restarted or keys were cleared.
+          </p>
+        </>
+      )}
     </div>
   );
 }

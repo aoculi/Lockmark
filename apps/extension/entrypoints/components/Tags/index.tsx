@@ -8,10 +8,15 @@ import Tag from "./Tag";
 
 import styles from "./styles.module.css";
 
-export default function Tags() {
+export default function Tags({
+  currentTagId,
+  onSelectTag,
+}: {
+  currentTagId: string | null;
+  onSelectTag: (id: string) => void;
+}) {
   const { tags, createTag, renameTag, deleteTag } = useTags();
   const [message, setMessage] = useState<string | null>(null);
-  const [currentTagId, setCurrentTagId] = useState<string | null>("all");
 
   const onAddTag = () => {
     const name = prompt("Enter tag name:");
@@ -56,10 +61,6 @@ export default function Tags() {
         setTimeout(() => setMessage(null), 5000);
       }
     }
-  };
-
-  const onSelectTag = (id: string) => {
-    setCurrentTagId(id);
   };
 
   return (
