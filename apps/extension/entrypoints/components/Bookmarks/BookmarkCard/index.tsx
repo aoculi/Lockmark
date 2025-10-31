@@ -1,12 +1,10 @@
-/**
- * Individual bookmark card component
- */
-import { Button, Text } from "@radix-ui/themes";
+import { Button, DropdownMenu, Text } from "@radix-ui/themes";
+import { EllipsisVertical } from "lucide-react";
+
 import { getTagName } from "../../../lib/bookmarkUtils";
 import { formatDate, getHostname } from "../../../lib/formatUtils";
 import type { Bookmark, Tag } from "../../../lib/types";
 
-import { EllipsisVertical } from "lucide-react";
 import styles from "./styles.module.css";
 
 type Props = {
@@ -54,9 +52,22 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
         </Text>
       </div>
 
-      <Button variant="ghost" onClick={() => onEdit(bookmark)} title="Edit">
-        <EllipsisVertical height={16} width={14} />
-      </Button>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <Button variant="soft" size="1">
+            <EllipsisVertical height={16} width={14} />
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onClick={() => onEdit(bookmark)}>
+            Edit
+          </DropdownMenu.Item>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Item onClick={() => onDelete(bookmark.id)} color="red">
+            Delete
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
     </a>
   );
 }

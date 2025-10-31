@@ -8,10 +8,3 @@
   display: flex;
   flex-direction: column;
 }
-
-.emptyState {
-  color: #9ca3af;
-  font-style: italic;
-  text-align: center;
-  padding: 20px;
-}

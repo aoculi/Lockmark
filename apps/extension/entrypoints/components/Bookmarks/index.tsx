@@ -4,6 +4,7 @@ import BookmarkHeader from "./BookmarkHeader";
 import { BookmarkList } from "./BookmarkList";
 import { MessageBanner } from "./MessageBanner";
 
+import { BookmarkModal } from "./BookmarkModal";
 import styles from "./styles.module.css";
 
 export default function Bookmarks({
@@ -20,17 +21,44 @@ export default function Bookmarks({
   const { bookmarks, addBookmark, updateBookmark, deleteBookmark } =
     useBookmarks();
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
-  const [isAddingBookmark, setIsAddingBookmark] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBookmark, setSelectedBookmark] = useState<Bookmark | null>(
+    null
+  );
 
-  const handleEditBookmark = (bookmark: Bookmark) => {
-    setEditingBookmark(bookmark);
-    setIsAddingBookmark(false);
+  const handleShowBookmarkModal = (bookmark: Bookmark) => {
+    setIsModalOpen(true);
+    setSelectedBookmark(bookmark);
   };
 
-  const handleAddBookmark = () => {
-    setIsAddingBookmark(true);
-    setEditingBookmark(null);
+  const handleCloseBookmarkModal = () => {
+    setIsModalOpen(false);
+    setSelectedBookmark(null);
+  };
+
+  const handleShowCreateBookmarkModal = () => {
+    setIsModalOpen(true);
+    setSelectedBookmark(null);
+  };
+
+  const handleSaveBookmark = (data: {
+    url: string;
+    title: string;
+    tags: string[];
+  }) => {
+    try {
+      if (selectedBookmark) {
+        updateBookmark(selectedBookmark.id, data);
+      } else {
+        addBookmark(data);
+      }
+    } catch (error) {
+      // Show validation error
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to save bookmark";
+      setMessage(errorMessage);
+      // setTimeout(() => setMessage(null), 5000);
+    }
   };
 
   const handleDeleteBookmark = (id: string) => {
@@ -48,10 +76,17 @@ export default function Bookmarks({
 
   return (
     <div className={styles.container}>
+      <BookmarkModal
+        isOpen={isModalOpen}
+        bookmark={selectedBookmark}
+        onClose={handleCloseBookmarkModal}
+        onSave={handleSaveBookmark}
+      />
+
       <BookmarkHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onAddBookmark={handleAddBookmark}
+        onAddBookmark={handleShowCreateBookmarkModal}
       />
 
       <MessageBanner message={message} onRetry={onRetry} />
@@ -60,7 +95,7 @@ export default function Bookmarks({
         bookmarks={bookmarks}
         tags={tags}
         searchQuery={searchQuery}
-        onEdit={handleEditBookmark}
+        onEdit={handleShowBookmarkModal}
         onDelete={handleDeleteBookmark}
       />
     </div>

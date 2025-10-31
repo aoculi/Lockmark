@@ -35,11 +35,11 @@ export function BookmarkList({
       </Text>
 
       {filteredBookmarks.length === 0 ? (
-        <p className={styles.emptyState}>
+        <Text size="1" color="gray" style={{ padding: "20px 20px 0" }}>
           {bookmarks.length === 0
             ? 'No bookmarks yet. Click "Add Bookmark" to get started.'
             : "No bookmarks match your search."}
-        </p>
+        </Text>
       ) : (
         <div className={styles.list}>
           {filteredBookmarks.map((bookmark: Bookmark) => (
