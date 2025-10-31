@@ -1,6 +1,6 @@
-import { Button, Text } from "@radix-ui/themes";
-import { Plus } from "lucide-react";
-import { useState } from "react";
+import { Button, DropdownMenu, Text } from "@radix-ui/themes";
+import { ArrowUpDown, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { useTags } from "@/entrypoints/hooks/useTags";
 import type { Bookmark, Tag as EntityTag } from "@/entrypoints/lib/types";
@@ -20,6 +20,7 @@ export default function Tags({
 }) {
   const { tags, createTag, renameTag, deleteTag } = useTags();
   const [message, setMessage] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<"name" | "count">("name");
 
   const onAddTag = () => {
     const name = prompt("Enter tag name:");
@@ -66,6 +67,26 @@ export default function Tags({
     }
   };
 
+  {
+    /* MODAL: Edit tags */
+  }
+
+  const sortedTags = useMemo(() => {
+    const tagsWithCounts = tags.map((tag) => ({
+      tag,
+      count: bookmarks.filter((bookmark) => bookmark.tags.includes(tag.id))
+        .length,
+    }));
+
+    if (sortMode === "name") {
+      return tagsWithCounts.sort((a, b) =>
+        a.tag.name.localeCompare(b.tag.name)
+      );
+    } else {
+      return tagsWithCounts.sort((a, b) => b.count - a.count);
+    }
+  }, [tags, bookmarks, sortMode]);
+
   return (
     <div className={styles.container}>
       <div className={styles.content}>
@@ -74,12 +95,34 @@ export default function Tags({
             Tags
           </Text>
 
-          <Button onClick={onAddTag} variant="ghost">
-            <Plus strokeWidth={1} />
-          </Button>
-        </div>
+          <div className={styles.headerActions}>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                <Button variant="ghost">
+                  <ArrowUpDown strokeWidth={1} />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content>
+                <DropdownMenu.Item
+                  onClick={() => setSortMode("name")}
+                  disabled={sortMode === "name"}
+                >
+                  Sort by name
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onClick={() => setSortMode("count")}
+                  disabled={sortMode === "count"}
+                >
+                  Sort by bookmark count
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
 
-        {/* Sort tags button? by name, by length*/}
+            <Button onClick={onAddTag} variant="ghost">
+              <Plus strokeWidth={1} />
+            </Button>
+          </div>
+        </div>
 
         <div className={styles.list}>
           <Tag
@@ -94,16 +137,13 @@ export default function Tags({
             <p className={styles.emptyState}>No tags yet</p>
           )}
 
-          {tags.length > 0 &&
-            tags.map((tag) => (
+          {sortedTags.length > 0 &&
+            sortedTags.map(({ tag, count }) => (
               <Tag
                 key={tag.id}
                 onClick={() => onSelectTag(tag.id)}
                 name={tag.name}
-                count={
-                  bookmarks.filter((bookmark) => bookmark.tags.includes(tag.id))
-                    .length
-                }
+                count={count}
                 all={false}
                 active={currentTagId === tag.id}
               />

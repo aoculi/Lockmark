@@ -22,6 +22,11 @@
   align-items: center;
 }
 
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
 .list {
   display: flex;
   flex-direction: column;
