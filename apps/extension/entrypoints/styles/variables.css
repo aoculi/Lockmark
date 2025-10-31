@@ -1,18 +1,14 @@
 :root {
-	/* Legacy variables */
-	--text: #fff;
-	--text-light: #6e8b9c;
+  /* Legacy variables */
+  --text: #fff;
+  --text-light: #6e8b9c;
 
-	--border: #e4e4e7;
-	--border-radius: 5px;
+  --border: #e4e4e7;
+  --border-radius: 5px;
 
-	--primary: #9894f5;
+  --primary: #9894f5;
 
-	--background: #191927;
-	--background-light: #333340;
-	--background-dark: #f4f4f4;
-
-	/* Form */
-	--field-background: #22222f;
-	--field-border: #2f2f3b;
+  --background: #191927;
+  --background-light: #333340;
+  --background-dark: #141420;
 }

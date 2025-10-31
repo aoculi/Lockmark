@@ -1,28 +1,18 @@
 .container {
-    padding: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
 }
 
-.card {
-    padding: 20px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background-color: #f9fafb;
+.left {
+  flex: 1.5;
+  overflow-y: auto;
+  background-color: var(--background-dark);
 }
 
-.successMessage {
-    color: #059669;
-    font-weight: 600;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.errorMessage {
-    color: #dc2626;
-    font-weight: 600;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.right {
+  flex: 2;
+  background-color: var(--background);
 }

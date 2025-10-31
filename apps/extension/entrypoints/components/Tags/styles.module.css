@@ -1,0 +1,39 @@
+.container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tag {
+  width: 100%;
+  display: flex;
+  justify-content: space-between !important;
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer !important;
+}
+
+.tagLabel,
+.tagEnd {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.tag.inactive {
+  background-color: var(--background-dark);
+}
