@@ -1,0 +1,21 @@
+.container {
+  padding: 20px;
+}
+
+.title {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 18px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.emptyState {
+  color: #9ca3af;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}

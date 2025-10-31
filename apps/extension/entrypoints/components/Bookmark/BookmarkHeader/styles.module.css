@@ -1,0 +1,12 @@
+.container {
+  padding: 10px 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+
+.searchBar {
+  flex: 1;
+}

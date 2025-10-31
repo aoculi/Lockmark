@@ -6,6 +6,7 @@ import { useTags } from "@/entrypoints/hooks/useTags";
 import type { Tag as EntityTag } from "@/entrypoints/lib/types";
 import Tag from "./Tag";
 
+import { StatusIndicator } from "../StatusIndicator";
 import styles from "./styles.module.css";
 
 export default function Tags({
@@ -65,39 +66,46 @@ export default function Tags({
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <Text size="4" color="violet">
-          Tags
-        </Text>
+      <div className={styles.content}>
+        <div className={styles.header}>
+          <Text size="4" color="violet">
+            Tags
+          </Text>
 
-        <Button onClick={onAddTag} variant="ghost">
-          <Plus strokeWidth={1} />
-        </Button>
+          <Button onClick={onAddTag} variant="ghost">
+            <Plus strokeWidth={1} />
+          </Button>
+        </div>
+
+        {/* Sort tags button? */}
+
+        <div className={styles.list}>
+          <Tag
+            name="All tags"
+            count={100}
+            all={true}
+            active={currentTagId === "all"}
+            onClick={() => onSelectTag("all")}
+          />
+
+          {tags.length === 0 && (
+            <p className={styles.emptyState}>No tags yet</p>
+          )}
+
+          {tags.length > 0 &&
+            tags.map((tag) => (
+              <Tag
+                key={tag.id}
+                onClick={() => onSelectTag(tag.id)}
+                name={tag.name}
+                count={100}
+                all={false}
+                active={currentTagId === tag.id}
+              />
+            ))}
+        </div>
       </div>
-
-      <div className={styles.list}>
-        <Tag
-          name="All tags"
-          count={100}
-          all={true}
-          active={currentTagId === "all"}
-          onClick={() => onSelectTag("all")}
-        />
-
-        {tags.length === 0 && <p className={styles.emptyState}>No tags yet</p>}
-
-        {tags.length > 0 &&
-          tags.map((tag) => (
-            <Tag
-              key={tag.id}
-              onClick={() => onSelectTag(tag.id)}
-              name={tag.name}
-              count={100}
-              all={false}
-              active={currentTagId === tag.id}
-            />
-          ))}
-      </div>
+      <StatusIndicator />
     </div>
   );
 }

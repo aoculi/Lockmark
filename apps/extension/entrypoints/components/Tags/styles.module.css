@@ -2,6 +2,17 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--background-dark);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 

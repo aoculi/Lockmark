@@ -7,14 +7,10 @@ import { manifestStore } from "@/entrypoints/store/manifest";
 import { useEffect, useState } from "react";
 import { useBookmarks, useTags } from "../../../hooks/bookmarks";
 import { useManifest } from "../../../hooks/vault";
-import type { Bookmark } from "../../../lib/types";
-import { BookmarkEditModal } from "../../BookmarkEditModal";
-import { BookmarkList } from "../../BookmarkList";
-import { MessageBanner } from "../../MessageBanner";
-import { Toolbar } from "../../Toolbar";
-import { VaultHeader } from "../../VaultHeader";
+import type { Bookmark as BookMarkEntity } from "../../../lib/types";
 
 import { Text } from "@radix-ui/themes";
+import Bookmark from "../../Bookmark";
 import Tags from "../../Tags";
 import styles from "./styles.module.css";
 
@@ -28,7 +24,9 @@ export default function Vault() {
   const [isChecking, setIsChecking] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const [editingBookmark, setEditingBookmark] = useState<BookMarkEntity | null>(
+    null
+  );
   const [isAddingBookmark, setIsAddingBookmark] = useState(false);
   const [isManagingTags, setIsManagingTags] = useState(false);
   const [currentTagId, setCurrentTagId] = useState<string | null>("all");
@@ -93,11 +91,6 @@ export default function Vault() {
     setEditingBookmark(null);
   };
 
-  const handleEditBookmark = (bookmark: Bookmark) => {
-    setEditingBookmark(bookmark);
-    setIsAddingBookmark(false);
-  };
-
   const handleSaveBookmark = (data: {
     url: string;
     title: string;
@@ -126,19 +119,6 @@ export default function Vault() {
     setIsAddingBookmark(false);
   };
 
-  const handleDeleteBookmark = (id: string) => {
-    if (confirm("Are you sure you want to delete this bookmark?")) {
-      try {
-        deleteBookmark(id);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Failed to delete bookmark";
-        setMessage(errorMessage);
-        setTimeout(() => setMessage(null), 5000);
-      }
-    }
-  };
-
   if (isChecking) {
     return (
       <div className={styles.container}>
@@ -155,46 +135,33 @@ export default function Vault() {
           {/* MODAL: Add bookmark */}
           {/* MODAL: Edit bookmark */}
 
-          <div className={styles.left}>
-            {/* Sort tags button? */}
-            <Tags currentTagId={currentTagId} onSelectTag={onSelectTag} />
-            {/* STATUS in gray */}
-          </div>
-          <div className={styles.right}>
-            {/*
-            header: search bar, add bookmark button
-            Error message
-            Bookmark list
-              */}
+          <Tags currentTagId={currentTagId} onSelectTag={onSelectTag} />
 
-            <VaultHeader onSave={handleSave} />
-            <MessageBanner message={message} onRetry={handleRetry} />
+          <Bookmark
+            tags={tags}
+            message={message}
+            setMessage={setMessage}
+            onRetry={handleRetry}
+          />
 
-            <Toolbar
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onAddBookmark={handleAddBookmark}
-              isManagingTags={isManagingTags}
-              onToggleTagManager={() => setIsManagingTags(!isManagingTags)}
-            />
+          {/* <VaultHeader onSave={handleSave} />
 
-            <BookmarkList
-              bookmarks={bookmarks}
+          <Toolbar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onAddBookmark={handleAddBookmark}
+            isManagingTags={isManagingTags}
+            onToggleTagManager={() => setIsManagingTags(!isManagingTags)}
+          />
+
+          {(isAddingBookmark || editingBookmark) && (
+            <BookmarkEditModal
+              bookmark={editingBookmark}
               tags={tags}
-              searchQuery={searchQuery}
-              onEdit={handleEditBookmark}
-              onDelete={handleDeleteBookmark}
+              onSave={handleSaveBookmark}
+              onCancel={handleCancelEdit}
             />
-
-            {(isAddingBookmark || editingBookmark) && (
-              <BookmarkEditModal
-                bookmark={editingBookmark}
-                tags={tags}
-                onSave={handleSaveBookmark}
-                onCancel={handleCancelEdit}
-              />
-            )}
-          </div>
+          )} */}
         </>
       ) : (
         <>
