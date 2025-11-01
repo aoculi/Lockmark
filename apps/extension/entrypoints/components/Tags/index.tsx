@@ -75,7 +75,6 @@ export default function Tags({
   };
 
   const onDeleteTag = (id: string) => {
-    // TODO: remove the tag from all bookmarks
     if (
       confirm(
         "Are you sure you want to delete this tag? It will be removed from all bookmarks."

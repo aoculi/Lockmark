@@ -2,8 +2,10 @@
  * Bookmarks list component
  */
 import { Text } from "@radix-ui/themes";
+import { useEffect, useMemo, useState } from "react";
 import { filterBookmarks } from "../../../lib/bookmarkUtils";
 import type { Bookmark, Tag } from "../../../lib/types";
+import { settingsStore } from "../../../store/settings";
 import { BookmarkCard } from "../BookmarkCard";
 import styles from "./styles.module.css";
 
@@ -22,7 +24,40 @@ export function BookmarkList({
   onEdit,
   onDelete,
 }: Props) {
-  const filteredBookmarks = filterBookmarks(bookmarks, tags, searchQuery);
+  const [showHiddenTags, setShowHiddenTags] = useState(false);
+
+  // Subscribe to settings changes
+  useEffect(() => {
+    const currentState = settingsStore.getState();
+    setShowHiddenTags(currentState.showHiddenTags);
+
+    const unsubscribe = settingsStore.subscribe(() => {
+      const state = settingsStore.getState();
+      setShowHiddenTags(state.showHiddenTags);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // Create a set of hidden tag IDs for efficient lookup
+  const hiddenTagIds = useMemo(() => {
+    return new Set(tags.filter((tag) => tag.hidden).map((tag) => tag.id));
+  }, [tags]);
+
+  // Filter bookmarks based on search and hidden tags
+  const filteredBookmarks = useMemo(() => {
+    let filtered = filterBookmarks(bookmarks, tags, searchQuery);
+
+    // Filter out bookmarks with hidden tags when showHiddenTags is false
+    if (!showHiddenTags) {
+      filtered = filtered.filter((bookmark) => {
+        // Check if bookmark has any hidden tag
+        return !bookmark.tags.some((tagId) => hiddenTagIds.has(tagId));
+      });
+    }
+
+    return filtered;
+  }, [bookmarks, tags, searchQuery, showHiddenTags, hiddenTagIds]);
 
   return (
     <div className={styles.container}>

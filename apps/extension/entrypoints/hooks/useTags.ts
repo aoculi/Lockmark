@@ -88,15 +88,10 @@ export function useTags() {
     (id: string) => {
       if (!store.manifest) return;
 
-      // Remove tag from manifest
+      // Remove tag from manifest and from all bookmarks atomically
       manifestStore.apply((manifest) => ({
         ...manifest,
         tags: (manifest.tags || []).filter((tag: Tag) => tag.id !== id),
-      }));
-
-      // Remove tag from all bookmarks
-      manifestStore.apply((manifest) => ({
-        ...manifest,
         items: (manifest.items || []).map((bookmark: Bookmark) => ({
           ...bookmark,
           tags: bookmark.tags.filter((tagId: string) => tagId !== id),
