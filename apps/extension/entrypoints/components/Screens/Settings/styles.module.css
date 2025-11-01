@@ -1,0 +1,35 @@
+.container {
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.content {
+  padding: 100px;
+  position: relative;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  z-index: 2;
+}
+
+.backButton {
+  align-self: flex-start;
+  margin-bottom: -20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.form button {
+  margin-top: 10px;
+  cursor: pointer;
+}

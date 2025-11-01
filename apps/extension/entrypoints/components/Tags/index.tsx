@@ -1,10 +1,12 @@
 import { Button, DropdownMenu, Text } from "@radix-ui/themes";
 import { ListFilter, LockKeyhole, Menu, Plus, Settings } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useLogout } from "@/entrypoints/hooks/auth";
 import { useTags } from "@/entrypoints/hooks/useTags";
 import type { Bookmark, Tag as EntityTag } from "@/entrypoints/lib/types";
+import { settingsStore } from "@/entrypoints/store/settings";
+import { useNavigation } from "../App";
 import { StatusIndicator } from "../StatusIndicator";
 import Tag from "./Tag";
 import { TagModal } from "./TagModal";
@@ -22,10 +24,25 @@ export default function Tags({
 }) {
   const logoutMutation = useLogout();
   const { tags, createTag, renameTag, deleteTag } = useTags();
+  const { navigate } = useNavigation();
   const [message, setMessage] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<"name" | "count">("name");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTag, setCurrentTag] = useState<EntityTag | null>(null);
+  const [showHiddenTags, setShowHiddenTags] = useState(false);
+
+  // Subscribe to settings changes
+  useEffect(() => {
+    const currentState = settingsStore.getState();
+    setShowHiddenTags(currentState.showHiddenTags);
+
+    const unsubscribe = settingsStore.subscribe(() => {
+      const state = settingsStore.getState();
+      setShowHiddenTags(state.showHiddenTags);
+    });
+
+    return unsubscribe;
+  }, []);
 
   const onAddTag = () => {
     setCurrentTag(null);
@@ -83,6 +100,10 @@ export default function Tags({
     }
   };
 
+  const handleSettings = () => {
+    navigate("/settings");
+  };
+
   const sortedTags = useMemo(() => {
     let tagsWithCounts = tags.map((tag) => ({
       tag,
@@ -90,7 +111,10 @@ export default function Tags({
         .length,
     }));
 
-    tagsWithCounts = tagsWithCounts.filter((tag) => !tag.tag.hidden);
+    // Filter hidden tags based on settings
+    if (!showHiddenTags) {
+      tagsWithCounts = tagsWithCounts.filter((tag) => !tag.tag.hidden);
+    }
 
     if (sortMode === "name") {
       return tagsWithCounts.sort((a, b) =>
@@ -99,7 +123,7 @@ export default function Tags({
     } else {
       return tagsWithCounts.sort((a, b) => b.count - a.count);
     }
-  }, [tags, bookmarks, sortMode]);
+  }, [tags, bookmarks, sortMode, showHiddenTags]);
 
   return (
     <div className={styles.container}>
@@ -113,7 +137,7 @@ export default function Tags({
                 </Button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content>
-                <DropdownMenu.Item>
+                <DropdownMenu.Item onClick={handleSettings}>
                   <Settings strokeWidth={1} size={18} /> Settings
                 </DropdownMenu.Item>
                 <DropdownMenu.Item onClick={handleLogout}>

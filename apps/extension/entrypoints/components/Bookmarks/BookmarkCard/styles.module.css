@@ -17,6 +17,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .header {
@@ -24,6 +25,15 @@
   justify-content: space-between;
   align-items: start;
   margin-bottom: 8px;
+}
+
+.tagsContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .tags {
@@ -41,4 +51,8 @@
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+}
+
+.updatedText {
+  text-align: right;
 }
