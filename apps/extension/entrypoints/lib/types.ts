@@ -53,6 +53,7 @@ export interface Tag {
   id: string; // nanoid
   name: string; // display name
   color?: string; // optional UI hint
+  hidden?: boolean; // whether tag is hidden (default: false)
 }
 
 /**

@@ -1,4 +1,11 @@
-import { Button, Dialog, Flex, TextField } from "@radix-ui/themes";
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  Flex,
+  Text,
+  TextField,
+} from "@radix-ui/themes";
 import { Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -16,9 +23,10 @@ export const TagModal = ({
   isOpen: boolean;
   tag: Tag | null;
   onClose: () => void;
-  onSave: (data: { name: string }) => void;
+  onSave: (data: { name: string; hidden: boolean }) => void;
 }) => {
   const [name, setName] = useState(tag?.name || "");
+  const [hidden, setHidden] = useState(tag?.hidden ?? false);
   const nameField = useRef<HTMLInputElement>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -28,6 +36,7 @@ export const TagModal = ({
   useEffect(() => {
     if (isOpen) {
       setName(tag?.name || "");
+      setHidden(tag?.hidden ?? false);
       setErrors({});
       setIsLoading(false);
       setTimeout(() => {
@@ -62,6 +71,7 @@ export const TagModal = ({
       await Promise.resolve(
         onSave({
           name: name.trim(),
+          hidden: hidden,
         })
       );
 
@@ -84,9 +94,9 @@ export const TagModal = ({
       return true;
     }
 
-    // For existing tags, check if name changed
-    return name.trim() !== tag.name;
-  }, [name, tag]);
+    // For existing tags, check if name or hidden changed
+    return name.trim() !== tag.name || hidden !== (tag.hidden ?? false);
+  }, [name, hidden, tag]);
 
   if (!isOpen) return null;
 
@@ -132,6 +142,18 @@ export const TagModal = ({
           {errors.name && (
             <span className={styles.fieldError}>{errors.name}</span>
           )}
+
+          <Text as="label" size="2">
+            <Flex gap="2">
+              <Checkbox
+                checked={hidden}
+                onCheckedChange={(checked: boolean | "indeterminate") =>
+                  setHidden(checked === true)
+                }
+              />
+              Hide tag from list
+            </Flex>
+          </Text>
         </Flex>
       </Dialog.Content>
     </Dialog.Root>

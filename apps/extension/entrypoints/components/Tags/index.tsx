@@ -1,13 +1,14 @@
 import { Button, DropdownMenu, Text } from "@radix-ui/themes";
-import { ListFilter, Plus } from "lucide-react";
+import { ListFilter, LockKeyhole, Menu, Plus, Settings } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useLogout } from "@/entrypoints/hooks/auth";
 import { useTags } from "@/entrypoints/hooks/useTags";
 import type { Bookmark, Tag as EntityTag } from "@/entrypoints/lib/types";
+import { StatusIndicator } from "../StatusIndicator";
 import Tag from "./Tag";
 import { TagModal } from "./TagModal";
 
-import { StatusIndicator } from "../StatusIndicator";
 import styles from "./styles.module.css";
 
 export default function Tags({
@@ -19,6 +20,7 @@ export default function Tags({
   currentTagId: string | null;
   onSelectTag: (id: string) => void;
 }) {
+  const logoutMutation = useLogout();
   const { tags, createTag, renameTag, deleteTag } = useTags();
   const [message, setMessage] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<"name" | "count">("name");
@@ -35,14 +37,14 @@ export default function Tags({
     setIsModalOpen(true);
   };
 
-  const handleSaveTag = async (data: { name: string }) => {
+  const handleSaveTag = async (data: { name: string; hidden: boolean }) => {
     try {
       if (currentTag) {
         // Editing existing tag
-        await renameTag(currentTag.id, data.name);
+        await renameTag(currentTag.id, data.name, data.hidden);
       } else {
         // Creating new tag
-        await createTag({ name: data.name });
+        await createTag({ name: data.name, hidden: data.hidden ?? false });
       }
       setIsModalOpen(false);
       setCurrentTag(null);
@@ -73,12 +75,22 @@ export default function Tags({
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (err) {
+      // Error handling done via logoutMutation.error in UI
+    }
+  };
+
   const sortedTags = useMemo(() => {
-    const tagsWithCounts = tags.map((tag) => ({
+    let tagsWithCounts = tags.map((tag) => ({
       tag,
       count: bookmarks.filter((bookmark) => bookmark.tags.includes(tag.id))
         .length,
     }));
+
+    tagsWithCounts = tagsWithCounts.filter((tag) => !tag.tag.hidden);
 
     if (sortMode === "name") {
       return tagsWithCounts.sort((a, b) =>
@@ -93,9 +105,30 @@ export default function Tags({
     <div className={styles.container}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <Text size="4" color="violet">
-            Tags
-          </Text>
+          <div className={styles.headerLeft}>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                <Button variant="soft" className={styles.menuButton}>
+                  <Menu strokeWidth={1} size={18} />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content>
+                <DropdownMenu.Item>
+                  <Settings strokeWidth={1} size={18} /> Settings
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onClick={handleLogout}>
+                  <LockKeyhole strokeWidth={1} size={18} />
+                  {logoutMutation.isPending
+                    ? "Logging out..."
+                    : "Lock extension"}
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
+
+            <Text size="4" color="violet">
+              Tags
+            </Text>
+          </div>
 
           <Button onClick={onAddTag} variant="ghost">
             <Plus strokeWidth={1} />
@@ -114,7 +147,7 @@ export default function Tags({
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button variant="ghost">
-                <ListFilter strokeWidth={1} />
+                <ListFilter strokeWidth={1} size={18} />
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
