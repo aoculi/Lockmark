@@ -55,7 +55,10 @@ export default function Vault() {
     setCurrentTagId(id);
   };
 
-  if (isChecking) {
+  // Show loading if still checking, or if unlocked but manifest not loaded yet
+  const isManifestLoading = isUnlocked && !store.manifest;
+
+  if (isChecking || isManifestLoading) {
     return (
       <div className={styles.container}>
         <Text>Checking vault status...</Text>
@@ -76,13 +79,13 @@ export default function Vault() {
           <Bookmarks tags={tags} message={message} setMessage={setMessage} />
         </>
       ) : (
-        <>
+        <div>
           <p className={styles.errorMessage}>🔒 Vault Locked</p>
           <p>Your vault is locked. Please login again to unlock it.</p>
           <p>
             This may happen if the extension was restarted or keys were cleared.
           </p>
-        </>
+        </div>
       )}
     </div>
   );
