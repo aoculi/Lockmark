@@ -2,8 +2,13 @@ import { defineConfig } from "wxt";
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
-  modules: ["@wxt-dev/module-react"],
+  modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
+  autoIcons: {
+    developmentIndicator: false,
+  },
   manifest: {
+    name: "LockMark",
+    description: "Secure Bookmarks Vault",
     host_permissions: ["http://127.0.0.1:3000/*", "http://localhost:3000/*"],
     permissions: ["storage", "tabs"],
     content_security_policy: {
