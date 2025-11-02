@@ -2,12 +2,13 @@ import { sessionManager } from "@/entrypoints/store/session";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "../../hooks/auth";
 import Login from "../Screens/Login";
+import Register from "../Screens/Register";
 import Settings from "../Screens/Settings";
 import Vault from "../Screens/Vault";
 
 import styles from "./styles.module.css";
 
-type Route = "/login" | "/vault" | "/settings";
+type Route = "/login" | "/register" | "/vault" | "/settings";
 
 type NavigationContextType = {
   navigate: (route: Route) => void;
@@ -83,6 +84,12 @@ export default function App() {
     setRoute("/vault");
   };
 
+  // Function to handle successful registration
+  const handleRegisterSuccess = () => {
+    setFlash(null);
+    setRoute("/vault");
+  };
+
   const navigate = (newRoute: Route) => {
     setRoute(newRoute);
   };
@@ -99,6 +106,8 @@ export default function App() {
     switch (route) {
       case "/login":
         return <Login onLoginSuccess={handleLoginSuccess} />;
+      case "/register":
+        return <Register onRegisterSuccess={handleRegisterSuccess} />;
       case "/settings":
         return <Settings />;
       case "/vault":

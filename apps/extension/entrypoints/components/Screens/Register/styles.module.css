@@ -41,11 +41,11 @@
   cursor: pointer;
 }
 
-.registerLink {
+.loginLink {
   margin-top: 20px;
   text-align: center;
 }
 
-.registerLink button:hover {
+.loginLink button:hover {
   cursor: pointer !important;
 }

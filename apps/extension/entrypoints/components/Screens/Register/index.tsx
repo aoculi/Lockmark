@@ -2,17 +2,17 @@ import { Button, Callout, Heading, TextField } from "@radix-ui/themes";
 import { AlertCircle, KeyRound, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useLoginAndUnlock } from "../../../hooks/auth";
+import { useRegisterAndLogin } from "../../../hooks/auth";
 import { whenCryptoReady } from "../../../lib/cryptoEnv";
 import { useNavigation } from "../../App";
 
 import styles from "./styles.module.css";
 
-interface LoginProps {
-  onLoginSuccess: () => void;
+interface RegisterProps {
+  onRegisterSuccess: () => void;
 }
 
-export default function Login({ onLoginSuccess }: LoginProps) {
+export default function Register({ onRegisterSuccess }: RegisterProps) {
   const [formData, setFormData] = useState({
     login: "",
     password: "",
@@ -21,7 +21,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [cryptoReady, setCryptoReady] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  const loginMutation = useLoginAndUnlock();
+  const registerMutation = useRegisterAndLogin();
   const { navigate } = useNavigation();
 
   // Check sodium ready state
@@ -58,14 +58,13 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     }
 
     try {
-      const result = await loginMutation.mutateAsync({
+      await registerMutation.mutateAsync({
         login: formData.login.trim(),
         password: formData.password,
       });
 
-      // Success - both login and unlock completed
-      // Security: Never log sensitive data (keys, tokens, etc.)
-      onLoginSuccess();
+      // Success - registration, login, and unlock completed
+      onRegisterSuccess();
     } catch (err: any) {
       // Handle WMK upload failure differently - keep session, allow retry
       const apiError = err as {
@@ -81,7 +80,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       }
 
       // Handle other errors
-      const baseMessage = apiError.message || "Login failed";
+      const baseMessage = apiError.message || "Registration failed";
       const details = apiError.details as Record<string, string[]> | undefined;
 
       if (details && typeof details === "object" && !details.wmkUploadFailed) {
@@ -107,7 +106,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   };
 
   const initializing =
-    loginMutation.isPending || !cryptoReady || isInitializing;
+    registerMutation.isPending || !cryptoReady || isInitializing;
 
   const disabled =
     initializing || !formData.login.trim() || !formData.password.trim();
@@ -145,7 +144,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             name="login"
             value={formData.login}
             onChange={handleChange}
-            disabled={loginMutation.isPending}
+            disabled={registerMutation.isPending}
             autoFocus
           >
             <TextField.Slot>
@@ -160,7 +159,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            disabled={loginMutation.isPending}
+            disabled={registerMutation.isPending}
           >
             <TextField.Slot>
               <KeyRound height="16" width="16" />
@@ -170,15 +169,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           <Button type="submit" disabled={disabled}>
             {isInitializing
               ? "Initializing..."
-              : loginMutation.isPending
-              ? "Logging in..."
-              : "Unlock Vault"}
+              : registerMutation.isPending
+              ? "Creating account..."
+              : "Create Account"}
           </Button>
         </form>
 
-        <div className={styles.registerLink}>
-          <Button variant="ghost" onClick={() => navigate("/register")}>
-            Not registered? Create an account
+        <div className={styles.loginLink}>
+          <Button variant="ghost" onClick={() => navigate("/login")}>
+            Already have an account? Sign in
           </Button>
         </div>
       </div>
