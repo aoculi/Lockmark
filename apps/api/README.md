@@ -1,157 +1,89 @@
 # Bookmarks API
 
-A secure, Proton-grade bookmark management API built with Bun and Hono. Features end-to-end encryption design with client-side key derivation.
+A secure, local-first bookmarks backend built with Bun and Hono. It provides authentication, encrypted vault storage primitives, and a simple SQLite database via Drizzle.
 
-## Features
+## Getting Started (Quick Setup)
 
-- 🔐 **Secure Authentication**: Argon2id password hashing with high memory/time costs
-- 🔑 **Client-Side Encryption**: KDF parameters for User Encryption Key (UEK) derivation
-- 🚀 **Fast Runtime**: Built on Bun for maximum performance
-- 🛡️ **Security First**: Loopback-only binding, no password logging, PHC string storage
-- ✅ **Type-Safe**: Full TypeScript with Zod validation
-- 📦 **SQLite**: Embedded database with Drizzle ORM
-
-## Stack
-
-- **Runtime**: Bun
-- **Framework**: Hono (lightweight web framework)
-- **Database**: SQLite with Drizzle ORM
-- **Validation**: Zod with @hono/zod-validator
-- **Cryptography**:
-  - `@node-rs/argon2` - Argon2id password hashing
-  - `jose` - JWT for sessions (future)
-  - `nanoid` - Secure ID generation
-  - `@noble/hashes` - SHA-256 utilities (future)
-
-## Security Architecture
-
-### Password Handling
-- **Argon2id AUTH**: 256 MB memory, 3 iterations (server-side verification)
-- **Argon2id KDF**: 512 MB memory, 3 iterations (client-side UEK derivation)
-- **Salts**: 32 bytes random per user for both AUTH and KDF
-- **Storage**: PHC string format with embedded salt and parameters
-
-### Network Security
-- Binds to `127.0.0.1` only (loopback)
-- Intended for use behind TLS-terminating reverse proxy
-- No direct internet exposure
-
-## Installation
+Run the following from `apps/api` to install dependencies, generate a secure JWT secret, initialize the database, and start the server:
 
 ```bash
-# Install dependencies
+# 1) Install dependencies
 bun install
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env and set JWT_SECRET to a secure random value
+# 2) Create .env with database and a strong JWT secret
+echo "DATABASE_URL=sqlite.db" > .env
+bun run generate:secret | grep '^JWT_SECRET=' >> .env
 
-# Run database migrations
+# 3) Run database migrations
 bun run db:migrate
-```
 
-## Development
-
-```bash
-# Start development server (hot reload enabled)
+# 4) Start the API (hot reload)
 bun run dev
 ```
 
-Server will start on `http://127.0.0.1:3000`
+The server binds to `127.0.0.1` on port `3500` by default:
 
+- Base URL: `http://127.0.0.1:3500`
 
-## Database
+## Scripts
 
 ```bash
-# Generate new migration
-bun run db:generate
+# Generate a secure JWT secret (prints a JWT_SECRET=... line)
+bun run generate:secret
 
-# Run migrations
-bun run db:migrate
+# Database migrations
+bun run db:generate      # Generate a new migration
+bun run db:migrate       # Apply migrations
+bun run db:generate:run  # Generate and immediately apply
 
-# Generate and run migrations
-bun run db:generate:run
+# Development server
+bun run dev
 ```
-
 
 ## Environment Variables
 
 ```bash
-# Database
 DATABASE_URL=sqlite.db
-
-# JWT Secret (REQUIRED)
-# Generate: openssl rand -base64 32
-JWT_SECRET=your-super-secret-jwt-key
-
-# Server (optional)
-PORT=3000
+JWT_SECRET=hex-encoded-32-bytes-secret   # Use output from generate:secret
+HOST=127.0.0.1                           # Optional
+PORT=3500                                # Optional
 ```
 
-## Security Notes
+## Available Routes
 
-### What the Server Stores
-- User ID, login (email/username)
-- Argon2id AUTH hash (for password verification)
-- KDF parameters (for client-side UEK derivation)
-- Timestamps
+Base URL: `http://127.0.0.1:3500`
 
-### What the Server Never Stores
-- Plain text passwords
-- User Encryption Key (UEK)
-- Master Key (MK)
-- Unencrypted user data
+```text
+# Auth
+POST   /auth/register
+POST   /auth/login
+POST   /auth/logout            (requires Bearer token)
+GET    /auth/session           (requires Bearer token)
 
-### Client-Side Workflow
-1. Register user → receive KDF parameters
-2. Derive UEK from password using KDF parameters
-3. Generate Master Key (MK)
-4. Encrypt MK with UEK → Wrapped Master Key (WMK)
-5. Store WMK on server (future endpoint)
-6. Use MK to encrypt/decrypt bookmarks
+# User
+POST   /user/wmk               (requires Bearer token)
 
-## API Endpoints
+# Vault
+GET    /vault                  (requires Bearer token)
+GET    /vault/manifest         (requires Bearer token)
+HEAD   /vault/manifest         (requires Bearer token)
+PUT    /vault/manifest         (requires Bearer token; If-Match for updates)
 
-See [docs/API.md](docs/API.md) for complete API documentation.
+# Bookmarks
+GET    /bookmarks              (requires Bearer token; query params: cursor, limit, includeDeleted, updatedAfter)
+POST   /bookmarks              (requires Bearer token)
+GET    /bookmarks/:id          (requires Bearer token)
+PUT    /bookmarks/:id          (requires Bearer token; If-Match header)
+DELETE /bookmarks/:id          (requires Bearer token; If-Match header)
+GET    /bookmarks/:id/tags     (requires Bearer token)
 
-### Available Endpoints
+# Tags
+GET    /tags                   (requires Bearer token; query params: cursor, limit, includeDeleted, updatedAfter, byToken)
+POST   /tags                   (requires Bearer token)
+GET    /tags/:id               (requires Bearer token)
+PUT    /tags/:id               (requires Bearer token; If-Match header)
 
-#### Authentication
-- `POST /auth/register` - Register a new user
-- `POST /auth/login` - Login and get JWT token
-- `POST /auth/logout` - Revoke current session
-- `GET /auth/session` - Check session validity
-
-#### User
-- `POST /user/wmk` - Upload/update wrapped master key
-
-#### Vault
-- `GET /vault` - Get vault metadata (lazy creation)
-- `GET /vault/manifest` - Fetch encrypted manifest blob
-- `HEAD /vault/manifest` - Check manifest ETag/version (cache freshness)
-- `PUT /vault/manifest` - Create/update manifest with optimistic concurrency
-
-## Testing
-
-```bash
-# Run all tests
-bun test
-
-# Run specific test file
-bun test tests/routes/vault/vault.test.ts
-
-# Watch mode
-bun test --watch
+# Bookmark-Tag links
+POST   /bookmark-tags          (requires Bearer token)
+DELETE /bookmark-tags          (requires Bearer token)
 ```
-
-## Future Roadmap
-
-- [ ] Manifest upload/download endpoints
-- [ ] Bookmark CRUD operations
-- [ ] PAKE authentication (OPAQUE)
-- [ ] Audit logging
-- [ ] Multi-device synchronization
-
-## License
-
-Proprietary - Secure bookmark management system
