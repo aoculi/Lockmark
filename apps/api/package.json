@@ -1,6 +1,7 @@
 {
   "name": "api",
   "type": "module",
+  "version": "0.0.2",
   "scripts": {
     "db:generate": "bunx drizzle-kit generate --dialect sqlite --schema ./src/database/schema.ts",
     "db:generate:run": "bun run db:generate && bun run db:migrate",
