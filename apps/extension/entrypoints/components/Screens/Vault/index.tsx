@@ -99,7 +99,12 @@ export default function Vault() {
         onSelectTag={onSelectTag}
       />
 
-      <Bookmarks tags={tags} message={message} setMessage={setMessage} />
+      <Bookmarks
+        tags={tags}
+        message={message}
+        setMessage={setMessage}
+        currentTagId={currentTagId}
+      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ type Props = {
   bookmarks: Bookmark[];
   tags: Tag[];
   searchQuery: string;
+  currentTagId: string | null;
   onEdit: (bookmark: Bookmark) => void;
   onDelete: (id: string) => void;
 };
@@ -20,6 +21,7 @@ export function BookmarkList({
   bookmarks,
   tags,
   searchQuery,
+  currentTagId,
   onEdit,
   onDelete,
 }: Props) {
@@ -47,9 +49,16 @@ export function BookmarkList({
     return new Set(tags.filter((tag) => tag.hidden).map((tag) => tag.id));
   }, [tags]);
 
-  // Filter bookmarks based on search and hidden tags
+  // Filter bookmarks based on search, selected tag, and hidden tags
   const filteredBookmarks = useMemo(() => {
     let filtered = filterBookmarks(bookmarks, tags, searchQuery);
+
+    // Filter by selected tag (if not "all" or null)
+    if (currentTagId && currentTagId !== "all") {
+      filtered = filtered.filter((bookmark) =>
+        bookmark.tags.includes(currentTagId)
+      );
+    }
 
     // Filter out bookmarks with hidden tags when showHiddenTags is false
     if (!showHiddenTags) {
@@ -60,7 +69,14 @@ export function BookmarkList({
     }
 
     return filtered;
-  }, [bookmarks, tags, searchQuery, showHiddenTags, hiddenTagIds]);
+  }, [
+    bookmarks,
+    tags,
+    searchQuery,
+    currentTagId,
+    showHiddenTags,
+    hiddenTagIds,
+  ]);
 
   return (
     <div className={styles.container}>

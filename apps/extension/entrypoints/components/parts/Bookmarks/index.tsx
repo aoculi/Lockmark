@@ -15,10 +15,12 @@ export default function Bookmarks({
   message,
   setMessage,
   tags,
+  currentTagId,
 }: {
   message: string | null;
   setMessage: (message: string | null) => void;
   tags: Tag[];
+  currentTagId: string | null;
 }) {
   const { bookmarks, addBookmark, updateBookmark, deleteBookmark } =
     useBookmarks();
@@ -179,6 +181,7 @@ export default function Bookmarks({
             bookmarks={bookmarks}
             tags={tags}
             searchQuery={searchQuery}
+            currentTagId={currentTagId}
             onEdit={handleShowBookmarkModal}
             onDelete={handleDeleteBookmark}
           />
