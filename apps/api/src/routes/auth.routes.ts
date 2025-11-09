@@ -6,9 +6,17 @@ import { config } from "../config";
 import { ERROR_MESSAGES, ERROR_NAMES, logError } from "../libs/errors";
 import { createValidationErrorHandler } from "../libs/validation";
 import { requireAuth } from "../middleware/auth.middleware";
-import { rateLimitAuth } from "../middleware/rate-limit.middleware";
+import {
+  rateLimitAuth,
+  rateLimitRefresh,
+} from "../middleware/rate-limit.middleware";
 import * as sessionRepository from "../repositories/session.repository";
-import { loginUser, logoutUser, registerUser } from "../services/auth.service";
+import {
+  loginUser,
+  logoutUser,
+  refreshSession,
+  registerUser,
+} from "../services/auth.service";
 
 const auth = new Hono();
 
@@ -237,6 +245,57 @@ auth.get("/session", requireAuth, async (c) => {
     );
   } catch (error) {
     logError("Session check error", error);
+    return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500);
+  }
+});
+
+/**
+ * POST /auth/refresh
+ *
+ * Refresh JWT token and extend session expiration
+ * - Verifies current Bearer token
+ * - Generates new JWT token with same jwtId
+ * - Extends session expiration in database
+ * - Returns new token and expiration
+ * - Rate limited: 30 attempts per 5 minutes per user
+ *
+ * Auth: Authorization: Bearer <token>
+ *
+ * Response 200:
+ *   {
+ *     "token": "<new JWT>",
+ *     "expires_at": 1730000000000
+ *   }
+ *
+ * Errors:
+ *   - 401: Invalid, expired, or revoked token
+ *   - 429: Too many refresh requests
+ *   - 500: Server error
+ */
+auth.post("/refresh", requireAuth, rateLimitRefresh, async (c) => {
+  try {
+    // Get user info from authenticated context
+    const userId = (c.req.raw as any).userId as string;
+    const jwtId = (c.req.raw as any).jwtId as string;
+
+    // Refresh session through auth service
+    const result = await refreshSession(jwtId);
+
+    // Return new token and expiration
+    return c.json(
+      {
+        token: result.token,
+        expires_at: result.expiresAt,
+      },
+      200
+    );
+  } catch (error) {
+    // Handle known errors
+    if (error instanceof Error && error.name === ERROR_NAMES.UNAUTHORIZED) {
+      return c.json({ error: ERROR_MESSAGES.INVALID_SESSION }, 401);
+    }
+
+    logError("Token refresh error", error);
     return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500);
   }
 });

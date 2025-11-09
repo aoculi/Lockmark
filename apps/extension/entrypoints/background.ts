@@ -158,6 +158,10 @@ export default defineBackground(() => {
   let session: { token: string; userId: string; expiresAt: number } | null =
     null;
   let autoLockTimer: number | null = null;
+  let lastRefreshAttempt: number = 0; // Track last refresh attempt
+  let refreshInProgress: Promise<void> | null = null; // Track ongoing refresh
+  let timerResetInProgress: boolean = false; // Track if timer reset is in progress
+  const MIN_REFRESH_INTERVAL = 60 * 1000; // Minimum 1 minute between refresh attempts
   const keystore = new KeyStore();
 
   /**
@@ -177,27 +181,185 @@ export default defineBackground(() => {
   }
 
   /**
+   * Attempt to refresh JWT token if needed
+   * - Throttles refresh attempts (max once per minute)
+   * - Updates session if refresh succeeds
+   * - Returns existing promise if refresh is already in progress
+   */
+  async function attemptTokenRefresh(): Promise<void> {
+    if (!session || !keystore.isUnlocked()) {
+      return;
+    }
+
+    const now = Date.now();
+
+    // Throttle refresh attempts
+    if (now - lastRefreshAttempt < MIN_REFRESH_INTERVAL) {
+      // If a refresh is already in progress, wait for it
+      if (refreshInProgress) {
+        return refreshInProgress;
+      }
+      return;
+    }
+
+    // If a refresh is already in progress, wait for it instead of starting a new one
+    if (refreshInProgress) {
+      return refreshInProgress;
+    }
+
+    lastRefreshAttempt = now;
+
+    // Create a promise for this refresh attempt
+    refreshInProgress = (async () => {
+      try {
+        // Get API URL from settings
+        const settingsResult = await new Promise<any>((resolve) => {
+          if (!chrome.storage?.local) {
+            resolve(null);
+            return;
+          }
+          chrome.storage.local.get(STORAGE_KEYS.SETTINGS, (result) => {
+            if (chrome.runtime.lastError) {
+              resolve(null);
+              return;
+            }
+            resolve(result[STORAGE_KEYS.SETTINGS] || getDefaultSettings());
+          });
+        });
+
+        if (!settingsResult?.apiUrl || settingsResult.apiUrl.trim() === "") {
+          // API URL not configured, skip refresh
+          return;
+        }
+
+        const apiUrl = settingsResult.apiUrl.trim();
+        const refreshUrl = `${apiUrl}/auth/refresh`;
+
+        // Make refresh request
+        const response = await fetch(refreshUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.token}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "omit",
+          mode: "cors",
+        });
+
+        if (!response.ok) {
+          // Refresh failed, but don't interrupt user experience
+          // The token will eventually expire and user will need to re-login
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.token && typeof data.expires_at === "number") {
+          // Update session with new token and expiration
+          setSession({
+            token: data.token,
+            userId: session.userId,
+            expiresAt: data.expires_at,
+          });
+        }
+      } catch (error) {
+        // Silently fail - don't interrupt user experience
+        // The token will eventually expire and user will need to re-login
+        console.log("Token refresh failed:", error);
+      } finally {
+        // Clear the in-progress flag
+        refreshInProgress = null;
+      }
+    })();
+
+    return refreshInProgress;
+  }
+
+  /**
    * Reset the auto-lock timer based on current settings
    * This is called when:
    * - Session is set
    * - Settings change
    * - User activity (keystore operations)
+   * - Popup opens (keystore:isUnlocked check)
+   * @param skipRefresh - If true, skip token refresh (used when session was just updated)
    */
-  function resetAutoLockTimer() {
+  function resetAutoLockTimer(skipRefresh: boolean = false) {
     clearAutoLockTimer();
 
     // Only set timer if keystore is unlocked and session exists
     if (!keystore.isUnlocked() || !session) {
+      timerResetInProgress = false;
       return;
     }
 
-    // Get timeout asynchronously and set timer
-    getAutoLockTimeout().then((timeout) => {
-      autoLockTimer = setTimeout(() => {
-        autoLockTimer = null;
-        lockKeystore();
-      }, timeout) as unknown as number;
-    });
+    // Helper function to set the timer with current session
+    const setTimer = () => {
+      getAutoLockTimeout().then((timeout) => {
+        // Session might have been cleared while we were waiting
+        if (!session) {
+          timerResetInProgress = false;
+          return;
+        }
+
+        // Calculate time remaining until JWT expiration
+        const now = Date.now();
+        const timeUntilJwtExpiration = session.expiresAt - now;
+
+        // Use the minimum of configured timeout and JWT expiration time
+        // This ensures the timer never exceeds the JWT expiration
+        const actualTimeout = Math.min(
+          timeout,
+          Math.max(0, timeUntilJwtExpiration)
+        );
+
+        // Only set timer if there's time remaining
+        if (actualTimeout > 0) {
+          autoLockTimer = setTimeout(() => {
+            autoLockTimer = null;
+            lockKeystore();
+          }, actualTimeout) as unknown as number;
+        } else {
+          // JWT is expired or about to expire, lock immediately
+          lockKeystore();
+        }
+        timerResetInProgress = false;
+      });
+    };
+
+    if (skipRefresh) {
+      // Session was just updated, no need to refresh again
+      // This is called from setSession() after a refresh
+      // Set the timer with the new session expiration
+      timerResetInProgress = false; // Mark that we're handling the reset now
+      setTimer();
+    } else {
+      // Attempt to refresh token if needed, then set timer after refresh completes
+      // This ensures the timer is set with the updated session expiration
+      if (timerResetInProgress) {
+        return;
+      }
+      timerResetInProgress = true;
+      attemptTokenRefresh()
+        .then(() => {
+          // After token refresh (whether it succeeded or not), set the timer
+          // Session might have been updated during refresh via setSession()
+          // If setSession() already reset the timer, don't reset again
+          if (!timerResetInProgress) {
+            // Timer was already reset by setSession(), don't reset again
+            return;
+          }
+          setTimer();
+        })
+        .catch(() => {
+          // If refresh fails, still set timer with current session
+          if (!timerResetInProgress) {
+            // Timer was already reset, don't reset again
+            return;
+          }
+          setTimer();
+        });
+    }
   }
 
   function broadcast(message: any) {
@@ -215,7 +377,9 @@ export default defineBackground(() => {
   }) {
     session = next;
     // Reset auto-lock timer when session is set
-    resetAutoLockTimer();
+    // Skip refresh since we just updated the session (likely from a refresh)
+    // This will set the timer with the new expiration time
+    resetAutoLockTimer(true);
     broadcast({
       type: "session:updated",
       payload: { userId: next.userId, expiresAt: next.expiresAt },
@@ -313,7 +477,13 @@ export default defineBackground(() => {
         break;
       }
       case "keystore:isUnlocked": {
-        sendResponse({ ok: true, unlocked: keystore.isUnlocked() });
+        const unlocked = keystore.isUnlocked();
+        // Reset auto-lock timer when popup opens and keystore is unlocked
+        // This gives the user the full timeout period when they use the extension
+        if (unlocked) {
+          resetAutoLockTimer();
+        }
+        sendResponse({ ok: true, unlocked });
         break;
       }
       case "keystore:zeroize": {

@@ -26,7 +26,7 @@ export default function Vault() {
   const [currentTagId, setCurrentTagId] = useState<string | null>("all");
 
   // Initialize keystore state and listen for lock events
-  // Note: App component handles initial mount check and redirect,
+  // Note: Screens component handles initial mount check and redirect,
   // so this component should only render if keystore is unlocked
   useEffect(() => {
     const initializeKeystore = async () => {

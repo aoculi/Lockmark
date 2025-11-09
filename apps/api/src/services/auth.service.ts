@@ -50,6 +50,11 @@ export interface LoginUserOutput {
   wrapped_mk: string | null;
 }
 
+export interface RefreshSessionOutput {
+  token: string;
+  expiresAt: number;
+}
+
 /**
  * Register a new user
  * - Checks login availability
@@ -194,5 +199,56 @@ export const logoutUser = async (jwtId: string): Promise<void> => {
   } catch (error) {
     logError("Session revocation failed", error);
     throw new Error("Failed to revoke session");
+  }
+};
+
+/**
+ * Refresh session token and extend expiration
+ * - Verifies session exists and is not revoked
+ * - Generates new JWT token with same jwtId
+ * - Updates session expiration in database
+ * @param jwtId - JWT ID from the verified token
+ * @throws Error if session is invalid or refresh fails
+ */
+export const refreshSession = async (
+  jwtId: string
+): Promise<RefreshSessionOutput> => {
+  // Get current session
+  const session = await sessionRepository.findSessionByJwtId(jwtId);
+
+  if (!session) {
+    throw createUnauthorizedError();
+  }
+
+  if (session.revokedAt !== null) {
+    throw createUnauthorizedError();
+  }
+
+  // Check if session has already expired
+  if (session.expiresAt < Date.now()) {
+    throw createUnauthorizedError();
+  }
+
+  // Calculate new expiration (extend by configured JWT expiration time)
+  const newExpiresAt = getExpirationTimestamp();
+
+  // Generate new JWT token with same jwtId and userId
+  // This allows seamless refresh without creating a new session
+  const token = await generateToken(session.userId, jwtId);
+
+  // Update session expiration in database
+  try {
+    await sessionRepository.updateSessionExpiration(jwtId, newExpiresAt);
+
+    // Log successful refresh (no sensitive data)
+    console.log(`Session refreshed: ${jwtId}`);
+
+    return {
+      token,
+      expiresAt: newExpiresAt,
+    };
+  } catch (error) {
+    logError("Session refresh failed", error);
+    throw new Error("Failed to refresh session");
   }
 };

@@ -1,7 +1,7 @@
 // Session repository - handles all database operations for sessions
-import { eq, lt } from 'drizzle-orm';
-import { db } from '../database/db';
-import { NewSession, sessions } from '../database/schema';
+import { eq, lt } from "drizzle-orm";
+import { db } from "../database/db";
+import { NewSession, sessions } from "../database/schema";
 
 /**
  * Find a session by session ID
@@ -9,13 +9,13 @@ import { NewSession, sessions } from '../database/schema';
  * @returns Session record or undefined if not found
  */
 export async function findSessionById(sessionId: string) {
-    const result = await db
-        .select()
-        .from(sessions)
-        .where(eq(sessions.sessionId, sessionId))
-        .limit(1);
+  const result = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.sessionId, sessionId))
+    .limit(1);
 
-    return result[0];
+  return result[0];
 }
 
 /**
@@ -24,13 +24,13 @@ export async function findSessionById(sessionId: string) {
  * @returns Session record or undefined if not found
  */
 export async function findSessionByJwtId(jwtId: string) {
-    const result = await db
-        .select()
-        .from(sessions)
-        .where(eq(sessions.jwtId, jwtId))
-        .limit(1);
+  const result = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.jwtId, jwtId))
+    .limit(1);
 
-    return result[0];
+  return result[0];
 }
 
 /**
@@ -39,9 +39,9 @@ export async function findSessionByJwtId(jwtId: string) {
  * @returns The created session record
  */
 export async function createSession(sessionData: NewSession) {
-    await db.insert(sessions).values(sessionData);
+  await db.insert(sessions).values(sessionData);
 
-    return findSessionById(sessionData.sessionId);
+  return findSessionById(sessionData.sessionId);
 }
 
 /**
@@ -49,12 +49,12 @@ export async function createSession(sessionData: NewSession) {
  * @param sessionId - The session ID to revoke
  */
 async function revokeSession(sessionId: string): Promise<void> {
-    const now = Date.now();
+  const now = Date.now();
 
-    await db
-        .update(sessions)
-        .set({ revokedAt: now })
-        .where(eq(sessions.sessionId, sessionId));
+  await db
+    .update(sessions)
+    .set({ revokedAt: now })
+    .where(eq(sessions.sessionId, sessionId));
 }
 
 /**
@@ -62,12 +62,12 @@ async function revokeSession(sessionId: string): Promise<void> {
  * @param jwtId - The JWT ID to revoke
  */
 export async function revokeSessionByJwtId(jwtId: string): Promise<void> {
-    const now = Date.now();
+  const now = Date.now();
 
-    await db
-        .update(sessions)
-        .set({ revokedAt: now })
-        .where(eq(sessions.jwtId, jwtId));
+  await db
+    .update(sessions)
+    .set({ revokedAt: now })
+    .where(eq(sessions.jwtId, jwtId));
 }
 
 /**
@@ -76,9 +76,7 @@ export async function revokeSessionByJwtId(jwtId: string): Promise<void> {
  * @returns Number of deleted sessions
  */
 async function deleteExpiredSessions(beforeTimestamp: number): Promise<void> {
-    await db
-        .delete(sessions)
-        .where(lt(sessions.expiresAt, beforeTimestamp));
+  await db.delete(sessions).where(lt(sessions.expiresAt, beforeTimestamp));
 }
 
 /**
@@ -87,9 +85,17 @@ async function deleteExpiredSessions(beforeTimestamp: number): Promise<void> {
  * @returns Array of session records
  */
 async function findSessionsByUserId(userId: string) {
-    return db
-        .select()
-        .from(sessions)
-        .where(eq(sessions.userId, userId));
+  return db.select().from(sessions).where(eq(sessions.userId, userId));
 }
 
+/**
+ * Update session expiration time
+ * @param jwtId - The JWT ID to update
+ * @param expiresAt - New expiration timestamp
+ */
+export async function updateSessionExpiration(
+  jwtId: string,
+  expiresAt: number
+): Promise<void> {
+  await db.update(sessions).set({ expiresAt }).where(eq(sessions.jwtId, jwtId));
+}
