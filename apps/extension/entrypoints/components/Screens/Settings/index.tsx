@@ -8,14 +8,14 @@ import {
 } from "@radix-ui/themes";
 import { useEffect, useMemo, useState } from "react";
 
+import Menu from "@/entrypoints/components/parts/Menu";
 import { sessionManager } from "@/entrypoints/store/session";
 import {
   settingsStore,
   type AutoLockTimeout,
 } from "@/entrypoints/store/settings";
-import { useNavigation } from "../../App";
+import { useNavigation } from "..";
 
-import Menu from "../../Menu";
 import styles from "./styles.module.css";
 
 export default function Settings() {

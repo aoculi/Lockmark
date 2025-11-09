@@ -2,11 +2,11 @@ import { Button, Callout, Heading, TextField } from "@radix-ui/themes";
 import { AlertCircle, KeyRound, Loader2, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useLoginAndUnlock } from "../../../hooks/auth";
-import { whenCryptoReady } from "../../../lib/cryptoEnv";
-import { useNavigation } from "../../App";
+import { useLoginAndUnlock } from "@/entrypoints/components/hooks/auth";
+import Menu from "@/entrypoints/components/parts/Menu";
+import { whenCryptoReady } from "@/entrypoints/lib/cryptoEnv";
+import { useNavigation } from "..";
 
-import Menu from "../../Menu";
 import styles from "./styles.module.css";
 
 interface LoginProps {

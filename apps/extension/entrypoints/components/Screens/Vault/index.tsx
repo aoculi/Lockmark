@@ -1,13 +1,16 @@
 import { Text } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 
+import {
+  useBookmarks,
+  useTags,
+} from "@/entrypoints/components/hooks/bookmarks";
+import { useManifest } from "@/entrypoints/components/hooks/vault";
+import Bookmarks from "@/entrypoints/components/parts/Bookmarks";
+import Tags from "@/entrypoints/components/parts/Tags";
 import { keystoreManager } from "@/entrypoints/store/keystore";
 import { sessionManager } from "@/entrypoints/store/session";
-import { useBookmarks, useTags } from "../../../hooks/bookmarks";
-import { useManifest } from "../../../hooks/vault";
-import { useNavigation } from "../../App";
-import Bookmarks from "../../Bookmarks";
-import Tags from "../../Tags";
+import { useNavigation } from "..";
 
 import styles from "./styles.module.css";
 
