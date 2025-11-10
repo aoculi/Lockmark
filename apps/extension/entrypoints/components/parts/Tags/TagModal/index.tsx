@@ -1,4 +1,3 @@
-import { Flex } from "@radix-ui/themes";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -105,7 +104,7 @@ export const TagModal = ({
       open={isOpen}
       onClose={onClose}
     >
-      <Flex direction="column" gap="3">
+      <div className={styles.content}>
         <Input
           ref={nameField}
           error={errors.name}
@@ -120,17 +119,15 @@ export const TagModal = ({
         />
 
         <Text as="label" size="2">
-          <Flex gap="2">
-            <Checkbox
-              checked={hidden}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setHidden(e.target.checked)
-              }
-            />
-            Hide tag from list
-          </Flex>
+          <Checkbox
+            checked={hidden}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setHidden(e.target.checked)
+            }
+          />
+          Hide tag from list
         </Text>
-      </Flex>
+      </div>
 
       <div className={styles.actions}>
         <Button onClick={handleSubmit} disabled={!hasChanges || isLoading}>

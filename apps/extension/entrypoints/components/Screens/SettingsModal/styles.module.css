@@ -1,3 +1,10 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
 .field {
   display: flex;
   flex-direction: column;

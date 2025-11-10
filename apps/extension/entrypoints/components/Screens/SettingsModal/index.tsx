@@ -1,4 +1,3 @@
-import { Flex } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 
 import { useNavigation } from "@/entrypoints/components/Screens";
@@ -113,7 +112,7 @@ export const SettingsModal = ({
       open={isOpen}
       onClose={onClose}
     >
-      <Flex direction="column" gap="5" mb="4">
+      <div className={styles.content}>
         <div className={styles.field}>
           <Text as="label" size="3" weight="medium">
             API Base URL
@@ -159,19 +158,17 @@ export const SettingsModal = ({
         </div>
 
         <div className={styles.field}>
-          <Text as="label" size="3">
-            <Flex gap="2" align="center">
-              <Checkbox
-                checked={fields.showHiddenTags}
-                onChange={(e) =>
-                  setFields({ ...fields, showHiddenTags: e.target.checked })
-                }
-              />
-              Display hidden tags
-            </Flex>
+          <Text as="label" size="2">
+            <Checkbox
+              checked={fields.showHiddenTags}
+              onChange={(e) =>
+                setFields({ ...fields, showHiddenTags: e.target.checked })
+              }
+            />
+            Display hidden tags
           </Text>
         </div>
-      </Flex>
+      </div>
 
       <div className={styles.actions}>
         <div className={styles.version}>

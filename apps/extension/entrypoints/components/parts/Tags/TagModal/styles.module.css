@@ -2,6 +2,12 @@
   padding: 20px;
 }
 
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

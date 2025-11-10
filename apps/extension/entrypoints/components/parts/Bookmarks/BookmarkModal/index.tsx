@@ -1,4 +1,3 @@
-import { Flex } from "@radix-ui/themes";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -147,7 +146,7 @@ export const BookmarkModal = ({
       open={isOpen}
       onClose={onClose}
     >
-      <Flex direction="column" gap="3" mb="4">
+      <div className={styles.content}>
         <Input
           error={errors.url}
           ref={urlField}
@@ -182,7 +181,7 @@ export const BookmarkModal = ({
         {errors.tags && (
           <span className={styles.fieldError}>{errors.tags}</span>
         )}
-      </Flex>
+      </div>
 
       <div className={styles.actions}>
         <Button onClick={handleSubmit} disabled={!hasChanges || isLoading}>

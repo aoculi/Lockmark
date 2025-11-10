@@ -1,6 +1,7 @@
 .checkboxContainer {
   position: relative;
   height: 15px;
+  margin-right: 10px;
 }
 
 .checkboxContainer input[type="checkbox"] {
