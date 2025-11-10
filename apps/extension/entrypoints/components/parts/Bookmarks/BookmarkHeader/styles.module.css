@@ -1,15 +1,33 @@
 .container {
-  padding: 5px 10px;
+  position: relative;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 41px;
   border-bottom: 1px solid var(--border);
-  gap: 10px;
 }
 
-.searchBar {
-  flex: 1;
+.searchBarContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 20px;
 }
+
+.searchInput {
+  position: absolute;
+  inset: 0;
+  border: none;
+  margin: 0;
+  padding: 0 0 0 45px;
+  background: none;
+  box-shadow: none;
+  outline: none;
+  z-index: 0;
+}
+
 .addBookmarkButton {
   width: 35px !important;
   height: 35px !important;
@@ -28,4 +46,11 @@
 }
 .addBookmarkButton:hover {
   background-color: var(--violet-10);
+}
+
+.quickAddButton {
+  position: absolute !important;
+  right: 12px !important;
+  z-index: 3 !important;
+  cursor: pointer !important;
 }

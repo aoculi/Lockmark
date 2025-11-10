@@ -4,6 +4,20 @@
   position: relative;
 }
 
+.special {
+  background: radial-gradient(
+    circle,
+    var(--background-1) 0%,
+    var(--background-3) 70%
+  );
+
+  position: absolute;
+  z-index: -1;
+  top: -80%;
+  width: 800px;
+  height: 800px;
+}
+
 .menu {
   position: absolute;
   top: 10px;
@@ -23,26 +37,13 @@
   z-index: 2;
 }
 
-.special {
-  background: radial-gradient(
-    circle,
-    var(--background-1) 0%,
-    var(--background-3) 70%
-  );
-
-  z-index: 1;
-  position: absolute;
-  top: -50%;
-  left: -25%;
-  width: 150%;
-  height: 100%;
-}
-
 .form {
   display: flex;
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  z-index: 2;
+  position: relative;
 }
 .form button {
   margin-top: 20px;

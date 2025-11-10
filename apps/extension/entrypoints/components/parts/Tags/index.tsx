@@ -129,8 +129,14 @@ export default function Tags({
           </Text>
         </div>
 
-        <IconButton onClick={onAddTag} size="1">
-          <Plus strokeWidth={1} size={16} />
+        <IconButton
+          onClick={onAddTag}
+          size="1"
+          color="gray"
+          variant="solid"
+          highContrast
+        >
+          <Plus strokeWidth={1} size={18} />
         </IconButton>
         <Background tone="light" isActive={true} />
       </div>

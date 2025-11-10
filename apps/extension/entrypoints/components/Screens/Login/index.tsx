@@ -32,6 +32,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   return (
     <div className={styles.container}>
       <div className={styles.special} />
+
       <div className={styles.menu}>
         <Menu />
       </div>
@@ -57,6 +58,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             </div>
           </Callout.Root>
         )}
+
         <form onSubmit={handleSubmit} className={styles.form}>
           <TextField.Root
             size="3"

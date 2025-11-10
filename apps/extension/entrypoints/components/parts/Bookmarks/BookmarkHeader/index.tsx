@@ -1,6 +1,7 @@
-import { Button, TextField } from "@radix-ui/themes";
-import { Plus, Search, Zap } from "lucide-react";
+import { IconButton } from "@radix-ui/themes";
+import { Plus, Search } from "lucide-react";
 
+import Background from "@/entrypoints/components/ui/Background";
 import styles from "./styles.module.css";
 
 export default function BookmarkHeader({
@@ -16,24 +17,32 @@ export default function BookmarkHeader({
 }) {
   return (
     <div className={styles.container}>
-      <TextField.Root
-        className={styles.searchBar}
-        placeholder="Search bookmarks..."
-        value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
+      <div className={styles.searchBarContainer}>
+        <Search strokeWidth={1} size={16} />
+        <input
+          type="text"
+          placeholder="Search bookmarks..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className={styles.searchInput}
+        />
+      </div>
+
+      <IconButton
+        onClick={onQuickAdd}
+        className={styles.quickAddButton}
+        color="gray"
+        variant="solid"
+        highContrast
+        size="1"
       >
-        <TextField.Slot>
-          <Search height="16" width="16" />
-        </TextField.Slot>
-      </TextField.Root>
+        <Plus strokeWidth={1} size={18} />
+      </IconButton>
 
-      <Button onClick={onQuickAdd} className={styles.quickAddButton}>
-        <Zap strokeWidth={1} />
-      </Button>
-
-      <Button onClick={onAddBookmark} className={styles.addBookmarkButton}>
+      <Background tone="dark" isActive={true} />
+      {/* <Button onClick={onAddBookmark} className={styles.addBookmarkButton}>
         <Plus strokeWidth={1} />
-      </Button>
+      </Button> */}
     </div>
   );
 }
