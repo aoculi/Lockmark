@@ -41,12 +41,12 @@
   border-radius: 100px !important;
   border: none !important;
   padding: 5px !important;
-  background-color: var(--violet-9);
+  background-color: var(--primary);
   color: var(--text) !important;
   font-size: 16px !important;
   font-weight: 600 !important;
   transition: background-color 0.2s ease !important;
 }
 .addBookmarkButton:hover {
-  background-color: var(--violet-10);
+  background-color: var(--primary);
 }

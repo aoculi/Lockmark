@@ -5,6 +5,7 @@ import Button from "@/entrypoints/components/ui/Button";
 import { Checkbox } from "@/entrypoints/components/ui/Checkbox";
 import { Drawer } from "@/entrypoints/components/ui/Drawer";
 import Input from "@/entrypoints/components/ui/Input";
+import Select from "@/entrypoints/components/ui/Select";
 import Text from "@/entrypoints/components/ui/Text";
 import {
   settingsStore,
@@ -133,8 +134,7 @@ export const SettingsModal = ({
           <Text as="label" size="3" weight="medium">
             Auto-lock Timeout
           </Text>
-          <select
-            className={styles.select}
+          <Select
             value={fields.autoLockTimeout}
             onChange={(e) =>
               setFields((prev: any) => ({
@@ -150,7 +150,7 @@ export const SettingsModal = ({
             <option value="20min">20 minutes</option>
             <option value="30min">30 minutes</option>
             <option value="1h">1 hour</option>
-          </select>
+          </Select>
 
           <Text size="2" color="light">
             Automatically lock the vault after inactivity
