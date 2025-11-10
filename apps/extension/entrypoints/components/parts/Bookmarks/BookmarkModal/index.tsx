@@ -1,9 +1,10 @@
-import { Flex, TextField } from "@radix-ui/themes";
+import { Flex } from "@radix-ui/themes";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import Button from "@/entrypoints/components/ui/Button";
 import { Drawer } from "@/entrypoints/components/ui/Drawer";
+import Input from "@/entrypoints/components/ui/Input";
 import { TagSelectorField } from "@/entrypoints/components/ui/TagSelectorField";
 import type { Bookmark, Tag } from "@/entrypoints/lib/types";
 import { MAX_TAGS_PER_ITEM } from "@/entrypoints/lib/validation";
@@ -147,9 +148,10 @@ export const BookmarkModal = ({
       onClose={onClose}
     >
       <Flex direction="column" gap="3" mb="4">
-        <TextField.Root
+        <Input
+          error={errors.url}
           ref={urlField}
-          size="3"
+          size="lg"
           type="url"
           placeholder="https://example.com"
           value={url}
@@ -159,10 +161,9 @@ export const BookmarkModal = ({
           }}
         />
 
-        {errors.url && <span className={styles.fieldError}>{errors.url}</span>}
-
-        <TextField.Root
-          size="3"
+        <Input
+          error={errors.title}
+          size="lg"
           type="text"
           value={title}
           onChange={(e) => {
@@ -171,10 +172,6 @@ export const BookmarkModal = ({
           }}
           placeholder="Bookmark title"
         />
-
-        {errors.title && (
-          <span className={styles.fieldError}>{errors.title}</span>
-        )}
 
         <TagSelectorField
           tags={tags}

@@ -1,10 +1,11 @@
-import { Flex, TextField } from "@radix-ui/themes";
+import { Flex } from "@radix-ui/themes";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import Button from "@/entrypoints/components/ui/Button";
 import { Checkbox } from "@/entrypoints/components/ui/Checkbox";
 import { Drawer } from "@/entrypoints/components/ui/Drawer";
+import Input from "@/entrypoints/components/ui/Input";
 import Text from "@/entrypoints/components/ui/Text";
 import type { Tag } from "@/entrypoints/lib/types";
 import { validateTagName } from "@/entrypoints/lib/validation";
@@ -105,9 +106,10 @@ export const TagModal = ({
       onClose={onClose}
     >
       <Flex direction="column" gap="3">
-        <TextField.Root
+        <Input
           ref={nameField}
-          size="3"
+          error={errors.name}
+          size="lg"
           type="text"
           placeholder="Tag name"
           value={name}
@@ -116,10 +118,6 @@ export const TagModal = ({
             if (errors.name) setErrors({ ...errors, name: "" });
           }}
         />
-
-        {errors.name && (
-          <span className={styles.fieldError}>{errors.name}</span>
-        )}
 
         <Text as="label" size="2">
           <Flex gap="2">

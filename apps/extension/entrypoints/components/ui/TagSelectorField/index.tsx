@@ -1,10 +1,10 @@
-import { TextField } from "@radix-ui/themes";
 import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import Button from "@/entrypoints/components/ui/Button";
+import Input from "@/entrypoints/components/ui/Input";
 import type { Tag } from "@/entrypoints/lib/types";
 
-import Button from "../Button";
 import styles from "./styles.module.css";
 
 export const TagSelectorField = ({
@@ -104,10 +104,10 @@ export const TagSelectorField = ({
 
   return (
     <div ref={containerRef} className={styles.container}>
-      <TextField.Root
+      <Input
         ref={inputRef}
         className={styles.textFieldRoot}
-        size="3"
+        size="lg"
         placeholder="Search tags..."
         value={searchQuery}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,29 +117,27 @@ export const TagSelectorField = ({
         onFocus={() => setIsOpen(true)}
         onKeyDown={handleKeyDown}
       >
-        <TextField.Slot>
-          <Search height="16" width="16" />
+        <Search size={16} />
 
-          <div className={styles.inputContent}>
-            {/* Selected tags displayed as badges */}
-            {selectedTagObjects.length > 0 && (
-              <div className={styles.selectedTags}>
-                {selectedTagObjects.map((tag) => (
-                  <Button
-                    key={tag.id}
-                    color="light"
-                    size="sm"
-                    onClick={(e) => handleRemoveTag(tag.id, e)}
-                  >
-                    <span className={styles.tagName}>{tag.name}</span>
-                    <X className={styles.removeIcon} height="12" width="12" />
-                  </Button>
-                ))}
-              </div>
-            )}
-          </div>
-        </TextField.Slot>
-      </TextField.Root>
+        <div className={styles.inputContent}>
+          {/* Selected tags displayed as badges */}
+          {selectedTagObjects.length > 0 && (
+            <div className={styles.selectedTags}>
+              {selectedTagObjects.map((tag) => (
+                <Button
+                  key={tag.id}
+                  color="light"
+                  size="sm"
+                  onClick={(e) => handleRemoveTag(tag.id, e)}
+                >
+                  <span className={styles.tagName}>{tag.name}</span>
+                  <X className={styles.removeIcon} height="12" width="12" />
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      </Input>
 
       {/* Autocomplete suggestions */}
       {isOpen && filteredTags.length > 0 && (

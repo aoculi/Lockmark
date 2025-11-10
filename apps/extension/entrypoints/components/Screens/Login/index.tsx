@@ -1,10 +1,11 @@
-import { Callout, TextField } from "@radix-ui/themes";
+import { Callout } from "@radix-ui/themes";
 import { AlertCircle, KeyRound, Loader2, Mail } from "lucide-react";
 
 import { useLoginAndUnlock } from "@/entrypoints/components/hooks/auth";
 import { useAuthForm } from "@/entrypoints/components/hooks/useAuthForm";
 import Menu from "@/entrypoints/components/parts/Menu";
 import Button from "@/entrypoints/components/ui/Button";
+import Input from "@/entrypoints/components/ui/Input";
 import Text from "@/entrypoints/components/ui/Text";
 import { useNavigation } from "..";
 
@@ -64,8 +65,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <TextField.Root
-            size="3"
+          <Input
+            size="lg"
             placeholder="Email or username"
             name="login"
             value={formData.login}
@@ -73,13 +74,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             disabled={loginMutation.isPending}
             autoFocus
           >
-            <TextField.Slot>
-              <Mail height="16" width="16" />
-            </TextField.Slot>
-          </TextField.Root>
+            <Mail size={16} />
+          </Input>
 
-          <TextField.Root
-            size="3"
+          <Input
+            size="lg"
             placeholder="Password"
             type="password"
             name="password"
@@ -87,10 +86,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             onChange={handleChange}
             disabled={loginMutation.isPending}
           >
-            <TextField.Slot>
-              <KeyRound height="16" width="16" />
-            </TextField.Slot>
-          </TextField.Root>
+            <KeyRound size={16} />
+          </Input>
 
           <Button disabled={disabled}>
             {initializing && <Loader2 className={styles.spinner} />}
