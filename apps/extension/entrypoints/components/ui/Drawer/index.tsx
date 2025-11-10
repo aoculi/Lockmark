@@ -1,9 +1,9 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { IconButton } from "@radix-ui/themes";
 import { X } from "lucide-react";
 
 import Text from "@/entrypoints/components/ui/Text";
 
+import Button from "../Button";
 import styles from "./styles.module.css";
 
 export function Drawer({
@@ -37,15 +37,15 @@ export function Drawer({
               </Text>
             )}
           </div>
-          <IconButton
-            color="gray"
+          <Button
+            asIcon={true}
+            color="light"
             variant="solid"
-            highContrast
-            size="1"
+            size="sm"
             onClick={onClose}
           >
-            <X strokeWidth={1} size={14} />
-          </IconButton>
+            <X strokeWidth={1} size={18} />
+          </Button>
         </div>
         {children}
       </Dialog.Content>

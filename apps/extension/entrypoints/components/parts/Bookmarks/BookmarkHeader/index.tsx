@@ -1,7 +1,7 @@
-import { IconButton } from "@radix-ui/themes";
 import { Plus, Search } from "lucide-react";
 
 import Background from "@/entrypoints/components/ui/Background";
+import Button from "@/entrypoints/components/ui/Button";
 
 import styles from "./styles.module.css";
 
@@ -27,16 +27,16 @@ export default function BookmarkHeader({
         />
       </div>
 
-      <IconButton
+      <Button
         onClick={onQuickAdd}
-        className={styles.quickAddButton}
-        color="gray"
+        color="light"
         variant="solid"
-        highContrast
-        size="1"
+        size="sm"
+        asIcon={true}
+        style={{ position: "absolute", right: "12px", zIndex: 3 }}
       >
         <Plus strokeWidth={1} size={18} />
-      </IconButton>
+      </Button>
 
       <Background tone="dark" isActive={true} />
     </div>

@@ -1,4 +1,4 @@
-import { DropdownMenu, IconButton } from "@radix-ui/themes";
+import { DropdownMenu } from "@radix-ui/themes";
 import { ListFilter, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -6,9 +6,10 @@ import { useTags } from "@/entrypoints/components/hooks/useTags";
 import Menu from "@/entrypoints/components/parts/Menu";
 import { StatusIndicator } from "@/entrypoints/components/parts/StatusIndicator";
 import Background from "@/entrypoints/components/ui/Background";
+import Button from "@/entrypoints/components/ui/Button";
+import Text from "@/entrypoints/components/ui/Text";
 import type { Bookmark, Tag as EntityTag, Tag } from "@/entrypoints/lib/types";
 import { settingsStore } from "@/entrypoints/store/settings";
-import Text from "../../ui/Text";
 import TagComponent from "./Tag";
 import { TagModal } from "./TagModal";
 
@@ -130,15 +131,15 @@ export default function Tags({
           </Text>
         </div>
 
-        <IconButton
+        <Button
           onClick={onAddTag}
-          size="1"
-          color="gray"
+          asIcon={true}
+          size="sm"
+          color="light"
           variant="solid"
-          highContrast
         >
           <Plus strokeWidth={1} size={18} />
-        </IconButton>
+        </Button>
         <Background tone="light" isActive={true} />
       </div>
 
@@ -158,9 +159,9 @@ export default function Tags({
 
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
-              <IconButton variant="soft" size="1" color="gray">
+              <Button asIcon={true} size="sm" color="dark">
                 <ListFilter strokeWidth={1} size={16} />
-              </IconButton>
+              </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
               <DropdownMenu.Item

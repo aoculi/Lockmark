@@ -50,10 +50,3 @@
 .addBookmarkButton:hover {
   background-color: var(--violet-10);
 }
-
-.quickAddButton {
-  position: absolute !important;
-  right: 12px !important;
-  z-index: 3 !important;
-  cursor: pointer !important;
-}

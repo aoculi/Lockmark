@@ -1,8 +1,9 @@
-import { DropdownMenu, IconButton } from "@radix-ui/themes";
+import { DropdownMenu } from "@radix-ui/themes";
 import { EllipsisVertical, LineSquiggle } from "lucide-react";
 
-import Interactible from "../../ui/Interactible";
-import Text from "../../ui/Text";
+import Button from "@/entrypoints/components/ui/Button";
+import Interactible from "@/entrypoints/components/ui/Interactible";
+import Text from "@/entrypoints/components/ui/Text";
 
 import styles from "./styles.module.css";
 
@@ -46,13 +47,9 @@ export default function Tag({
         <div className={styles.dropdownMenu}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
-              <IconButton
-                variant="ghost"
-                size="1"
-                className={styles.menuButton}
-              >
-                <EllipsisVertical size={16} color="gray" strokeWidth={1} />
-              </IconButton>
+              <Button variant="ghost" size="sm" asIcon={true} color="dark">
+                <EllipsisVertical size={18} color="gray" strokeWidth={1} />
+              </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
               {onEdit && (
