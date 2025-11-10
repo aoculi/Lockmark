@@ -1,5 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { Button, Text } from "@radix-ui/themes";
+import { IconButton, Text } from "@radix-ui/themes";
 import { X } from "lucide-react";
 
 import styles from "./styles.module.css";
@@ -35,14 +35,15 @@ export function Drawer({
               </Text>
             )}
           </div>
-          <Button
+          <IconButton
+            color="gray"
             variant="solid"
+            highContrast
             size="1"
             onClick={onClose}
-            className={styles.closeButton}
           >
             <X strokeWidth={1} size={14} />
-          </Button>
+          </IconButton>
         </div>
         {children}
       </Dialog.Content>
