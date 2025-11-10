@@ -1,8 +1,9 @@
-import { Checkbox, Flex, TextField } from "@radix-ui/themes";
+import { Flex, TextField } from "@radix-ui/themes";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import Button from "@/entrypoints/components/ui/Button";
+import { Checkbox } from "@/entrypoints/components/ui/Checkbox";
 import { Drawer } from "@/entrypoints/components/ui/Drawer";
 import Text from "@/entrypoints/components/ui/Text";
 import type { Tag } from "@/entrypoints/lib/types";
@@ -124,8 +125,8 @@ export const TagModal = ({
           <Flex gap="2">
             <Checkbox
               checked={hidden}
-              onCheckedChange={(checked: boolean | "indeterminate") =>
-                setHidden(checked === true)
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setHidden(e.target.checked)
               }
             />
             Hide tag from list

@@ -1,8 +1,9 @@
-import { Checkbox, Flex, TextField } from "@radix-ui/themes";
+import { Flex, TextField } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 
 import { useNavigation } from "@/entrypoints/components/Screens";
 import Button from "@/entrypoints/components/ui/Button";
+import { Checkbox } from "@/entrypoints/components/ui/Checkbox";
 import { Drawer } from "@/entrypoints/components/ui/Drawer";
 import Text from "@/entrypoints/components/ui/Text";
 import {
@@ -159,10 +160,9 @@ export const SettingsModal = ({
           <Text as="label" size="3">
             <Flex gap="2" align="center">
               <Checkbox
-                className={styles.checkbox}
                 checked={fields.showHiddenTags}
-                onCheckedChange={(checked) =>
-                  setFields({ ...fields, showHiddenTags: checked === true })
+                onChange={(e) =>
+                  setFields({ ...fields, showHiddenTags: e.target.checked })
                 }
               />
               Display hidden tags

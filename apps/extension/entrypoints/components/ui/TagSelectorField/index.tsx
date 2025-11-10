@@ -127,7 +127,7 @@ export const TagSelectorField = ({
                 {selectedTagObjects.map((tag) => (
                   <Button
                     key={tag.id}
-                    variant="ghost"
+                    color="light"
                     size="sm"
                     onClick={(e) => handleRemoveTag(tag.id, e)}
                   >
