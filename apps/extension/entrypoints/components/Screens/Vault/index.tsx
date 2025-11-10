@@ -1,4 +1,3 @@
-import { Text } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 
 import { useBookmarks } from "@/entrypoints/components/hooks/useBookmarks";
@@ -6,6 +5,7 @@ import { useManifestOperations } from "@/entrypoints/components/hooks/useManifes
 import { useTags } from "@/entrypoints/components/hooks/useTags";
 import Bookmarks from "@/entrypoints/components/parts/Bookmarks";
 import Tags from "@/entrypoints/components/parts/Tags";
+import Text from "@/entrypoints/components/ui/Text";
 import { keystoreManager } from "@/entrypoints/store/keystore";
 import { sessionManager } from "@/entrypoints/store/session";
 import { useNavigation } from "..";

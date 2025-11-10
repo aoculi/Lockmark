@@ -1,6 +1,6 @@
-import { Text } from "@radix-ui/themes";
 import { useEffect, useMemo, useState } from "react";
 
+import Text from "@/entrypoints/components/ui/Text";
 import { filterBookmarks } from "@/entrypoints/lib/bookmarkUtils";
 import type { Bookmark, Tag } from "@/entrypoints/lib/types";
 import { settingsStore } from "@/entrypoints/store/settings";
@@ -80,7 +80,7 @@ export function BookmarkList({
 
   return (
     <div className={styles.container}>
-      <Text size="2" color="gray" style={{ padding: "20px 20px 0" }}>
+      <Text size="2" color="light" style={{ padding: "20px 20px 0" }}>
         Bookmarks ({filteredBookmarks.length}
         {filteredBookmarks.length !== bookmarks.length
           ? ` of ${bookmarks.length}`
@@ -89,7 +89,7 @@ export function BookmarkList({
       </Text>
 
       {filteredBookmarks.length === 0 ? (
-        <Text size="1" color="gray" style={{ padding: "20px 20px 0" }}>
+        <Text size="2" color="light" style={{ padding: "20px 20px 0" }}>
           {bookmarks.length === 0
             ? 'No bookmarks yet. Click "Add Bookmark" to get started.'
             : "No bookmarks match your search."}

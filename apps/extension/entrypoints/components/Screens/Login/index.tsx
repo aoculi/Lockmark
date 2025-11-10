@@ -1,10 +1,11 @@
-import { Button, Callout, Heading, TextField } from "@radix-ui/themes";
+import { Button, Callout, TextField } from "@radix-ui/themes";
 import { AlertCircle, KeyRound, Loader2, Mail } from "lucide-react";
 
 import { useLoginAndUnlock } from "@/entrypoints/components/hooks/auth";
 import { useAuthForm } from "@/entrypoints/components/hooks/useAuthForm";
 import Menu from "@/entrypoints/components/parts/Menu";
 import { useNavigation } from "..";
+import Text from "../../ui/Text";
 
 import styles from "./styles.module.css";
 
@@ -38,7 +39,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       </div>
 
       <div className={styles.content}>
-        <Heading size="8">LockMark</Heading>
+        <Text as="h1" size="6" weight="medium">
+          LockMark
+        </Text>
 
         {error && (
           <Callout.Root color="red">

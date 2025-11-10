@@ -1,4 +1,4 @@
-import { DropdownMenu, IconButton, Text } from "@radix-ui/themes";
+import { DropdownMenu, IconButton } from "@radix-ui/themes";
 import { ListFilter, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -8,6 +8,7 @@ import { StatusIndicator } from "@/entrypoints/components/parts/StatusIndicator"
 import Background from "@/entrypoints/components/ui/Background";
 import type { Bookmark, Tag as EntityTag, Tag } from "@/entrypoints/lib/types";
 import { settingsStore } from "@/entrypoints/store/settings";
+import Text from "../../ui/Text";
 import TagComponent from "./Tag";
 import { TagModal } from "./TagModal";
 
@@ -124,7 +125,7 @@ export default function Tags({
         <div className={styles.headerLeft}>
           <Menu isConnected={true} />
 
-          <Text size="2" color="gray">
+          <Text size="2" color="light" weight="medium">
             Lockmark
           </Text>
         </div>
@@ -151,7 +152,7 @@ export default function Tags({
         />
 
         <div className={styles.contentActions}>
-          <Text size="1" weight="medium" color="gray">
+          <Text size="2" weight="medium" color="light">
             Tags
           </Text>
 

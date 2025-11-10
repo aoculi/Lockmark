@@ -1,6 +1,7 @@
-import { Button, DropdownMenu, Text } from "@radix-ui/themes";
+import { Button, DropdownMenu } from "@radix-ui/themes";
 import { EllipsisVertical } from "lucide-react";
 
+import Text from "@/entrypoints/components/ui/Text";
 import { getTagName } from "@/entrypoints/lib/bookmarkUtils";
 import { formatDate, getHostname } from "@/entrypoints/lib/formatUtils";
 import type { Bookmark, Tag } from "@/entrypoints/lib/types";
@@ -30,10 +31,10 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
       )}
 
       <div className={styles.content}>
-        <Text size="4" weight="regular">
+        <Text size="3" weight="regular">
           {bookmark.title || "(Untitled)"}
         </Text>
-        <Text size="2" color="gray">
+        <Text size="2" color="light">
           {getHostname(bookmark.url)}
         </Text>
 
@@ -48,7 +49,7 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
             </div>
           )}
 
-          <Text size="1" color="gray" className={styles.updatedText}>
+          <Text size="1" color="light" style={{ textAlign: "right" }}>
             Updated: {formatDate(bookmark.updated_at)}
           </Text>
         </div>

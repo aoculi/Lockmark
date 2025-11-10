@@ -28,6 +28,9 @@
   z-index: 0;
 }
 
+.searchInput::placeholder {
+  font-size: 14px;
+}
 .addBookmarkButton {
   width: 35px !important;
   height: 35px !important;

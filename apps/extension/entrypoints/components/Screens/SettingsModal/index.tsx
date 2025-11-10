@@ -1,8 +1,9 @@
-import { Button, Checkbox, Flex, Text, TextField } from "@radix-ui/themes";
+import { Button, Checkbox, Flex, TextField } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 
 import { useNavigation } from "@/entrypoints/components/Screens";
 import { Drawer } from "@/entrypoints/components/ui/Drawer";
+import Text from "@/entrypoints/components/ui/Text";
 import {
   settingsStore,
   type AutoLockTimeout,
@@ -109,9 +110,9 @@ export const SettingsModal = ({
       open={isOpen}
       onClose={onClose}
     >
-      <Flex direction="column" gap="4" mb="4">
+      <Flex direction="column" gap="5" mb="4">
         <div className={styles.field}>
-          <Text as="label" size="2" weight="medium">
+          <Text as="label" size="3" weight="medium">
             API Base URL
           </Text>
           <TextField.Root
@@ -120,13 +121,13 @@ export const SettingsModal = ({
             value={fields.apiUrl}
             onChange={(e) => setFields({ ...fields, apiUrl: e.target.value })}
           />
-          <Text size="1" color="gray">
+          <Text size="2" color="light">
             Enter the base URL for the API endpoint
           </Text>
         </div>
 
         <div className={styles.field}>
-          <Text as="label" size="2" weight="medium">
+          <Text as="label" size="3" weight="medium">
             Auto-lock Timeout
           </Text>
           <select
@@ -148,13 +149,13 @@ export const SettingsModal = ({
             <option value="1h">1 hour</option>
           </select>
 
-          <Text size="1" color="gray">
+          <Text size="2" color="light">
             Automatically lock the vault after inactivity
           </Text>
         </div>
 
         <div className={styles.field}>
-          <Text as="label" size="2">
+          <Text as="label" size="3">
             <Flex gap="2" align="center">
               <Checkbox
                 className={styles.checkbox}

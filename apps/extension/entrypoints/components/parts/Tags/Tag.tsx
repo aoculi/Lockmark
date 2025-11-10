@@ -1,7 +1,9 @@
-import { DropdownMenu, IconButton, Text } from "@radix-ui/themes";
+import { DropdownMenu, IconButton } from "@radix-ui/themes";
 import { EllipsisVertical, LineSquiggle } from "lucide-react";
 
 import Interactible from "../../ui/Interactible";
+import Text from "../../ui/Text";
+
 import styles from "./styles.module.css";
 
 export default function Tag({
@@ -31,12 +33,10 @@ export default function Tag({
       >
         <div className={styles.tagLabel}>
           {all && <LineSquiggle height={16} width={16} />}
-          <Text size="2" weight="regular">
-            {name}
-          </Text>
+          <Text size="2">{name}</Text>
         </div>
         <div className={`${styles.tagEnd} ${!all ? styles.countItem : ""}`}>
-          <Text size="1" color="gray">
+          <Text size="2" weight="medium" color="light">
             {count}
           </Text>
         </div>

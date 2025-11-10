@@ -1,6 +1,8 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { IconButton, Text } from "@radix-ui/themes";
+import { IconButton } from "@radix-ui/themes";
 import { X } from "lucide-react";
+
+import Text from "@/entrypoints/components/ui/Text";
 
 import styles from "./styles.module.css";
 
@@ -30,7 +32,7 @@ export function Drawer({
           <div>
             <Dialog.Title>{title}</Dialog.Title>
             {description && (
-              <Text size="2" weight="medium" mb="4">
+              <Text size="2" weight="medium">
                 {description}
               </Text>
             )}

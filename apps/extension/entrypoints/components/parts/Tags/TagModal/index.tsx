@@ -1,11 +1,12 @@
-import { Button, Checkbox, Flex, Text, TextField } from "@radix-ui/themes";
+import { Button, Checkbox, Flex, TextField } from "@radix-ui/themes";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Drawer } from "@/entrypoints/components/ui/Drawer";
+import Text from "@/entrypoints/components/ui/Text";
 import type { Tag } from "@/entrypoints/lib/types";
 import { validateTagName } from "@/entrypoints/lib/validation";
 
-import { Drawer } from "@/entrypoints/components/ui/Drawer";
 import styles from "./styles.module.css";
 
 export const TagModal = ({

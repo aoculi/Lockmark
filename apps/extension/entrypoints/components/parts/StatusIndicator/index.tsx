@@ -1,9 +1,5 @@
-/**
- * Status indicator component
- */
-import { Text } from "@radix-ui/themes";
-
 import { useManifestOperations } from "@/entrypoints/components/hooks/useManifestOperations";
+import Text from "../../ui/Text";
 
 export function StatusIndicator() {
   const { store } = useManifestOperations();
@@ -24,7 +20,7 @@ export function StatusIndicator() {
   };
 
   return (
-    <Text size="1" color="gray">
+    <Text size="1" color="light">
       {getStatusText()}
     </Text>
   );
