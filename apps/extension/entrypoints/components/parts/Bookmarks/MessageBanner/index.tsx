@@ -1,5 +1,5 @@
-import { useManifestSize } from "@/entrypoints/components/hooks/bookmarks";
-import { useManifest } from "@/entrypoints/components/hooks/vault";
+import { useManifestOperations } from "@/entrypoints/components/hooks/useManifestOperations";
+import { useManifestSize } from "@/entrypoints/components/hooks/validation";
 import { ManifestSizeWarning } from "@/entrypoints/components/parts/ManifestSizeWarning";
 
 import styles from "./styles.module.css";
@@ -10,7 +10,7 @@ type Props = {
 };
 
 export function MessageBanner({ message, onRetry }: Props) {
-  const { store, query } = useManifest();
+  const { store, query } = useManifestOperations();
 
   const { showWarning: showSizeWarning } = useManifestSize(store.manifest);
 

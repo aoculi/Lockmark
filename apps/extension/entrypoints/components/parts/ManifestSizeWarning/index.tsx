@@ -1,7 +1,7 @@
 /**
  * Manifest size warning component
  */
-import { useManifestSize } from "@/entrypoints/components/hooks/bookmarks";
+import { useManifestSize } from "@/entrypoints/components/hooks/validation";
 import type { ManifestV1 } from "@/entrypoints/lib/types";
 import styles from "./styles.module.css";
 

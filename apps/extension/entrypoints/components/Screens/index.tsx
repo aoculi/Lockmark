@@ -52,7 +52,7 @@ export default function Screens() {
         // If keystore is locked, redirect to login (even if session is valid)
         if (!isUnlocked) {
           setRoute("/login");
-          setFlash("Vault locked - please login again");
+          // setFlash("Vault locked - please login again");
           setIsChecking(false);
           return;
         }

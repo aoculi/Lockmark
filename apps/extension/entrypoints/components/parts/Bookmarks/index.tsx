@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import { useBookmarks } from "@/entrypoints/components/hooks/bookmarks";
-import { useManifest } from "@/entrypoints/components/hooks/vault";
+import { useBookmarks } from "@/entrypoints/components/hooks/useBookmarks";
+import { useManifestOperations } from "@/entrypoints/components/hooks/useManifestOperations";
 import type { Bookmark, Tag } from "@/entrypoints/lib/types";
 import { manifestStore } from "@/entrypoints/store/manifest";
 import BookmarkHeader from "./BookmarkHeader";
@@ -24,7 +24,7 @@ export default function Bookmarks({
 }) {
   const { bookmarks, addBookmark, updateBookmark, deleteBookmark } =
     useBookmarks();
-  const { mutation, store } = useManifest();
+  const { mutation, store } = useManifestOperations();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);

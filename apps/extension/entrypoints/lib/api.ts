@@ -25,11 +25,6 @@ export type ApiError = {
   details?: unknown;
 };
 
-export type RefreshResponse = {
-  token: string;
-  expires_at: number;
-};
-
 async function getApiUrl(): Promise<string> {
   const settings = await settingsStore.getState();
   if (!settings.apiUrl || settings.apiUrl.trim() === "") {
@@ -139,10 +134,4 @@ export async function apiClient<T = unknown>(
     data: data as T,
     status: response.status,
   };
-}
-
-export async function refreshToken(): Promise<ApiSuccess<RefreshResponse>> {
-  return apiClient<RefreshResponse>("/auth/refresh", {
-    method: "POST",
-  });
 }

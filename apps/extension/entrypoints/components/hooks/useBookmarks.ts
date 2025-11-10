@@ -3,11 +3,11 @@ import { useCallback } from "react";
 import { generateId } from "@/entrypoints/lib/id";
 import type { Bookmark } from "@/entrypoints/lib/types";
 import { manifestStore } from "@/entrypoints/store/manifest";
+import { useManifestOperations } from "./useManifestOperations";
 import { useBookmarkValidation } from "./validation";
-import { useManifest } from "./vault";
 
 export function useBookmarks() {
-  const { store } = useManifest();
+  const { store } = useManifestOperations();
   const { validateBookmark } = useBookmarkValidation();
 
   const addBookmark = useCallback(

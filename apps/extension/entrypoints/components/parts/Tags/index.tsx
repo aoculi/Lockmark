@@ -2,7 +2,7 @@ import { Button, DropdownMenu, Text } from "@radix-ui/themes";
 import { ListFilter, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { useTags } from "@/entrypoints/components/hooks/bookmarks";
+import { useTags } from "@/entrypoints/components/hooks/useTags";
 import Menu from "@/entrypoints/components/parts/Menu";
 import { StatusIndicator } from "@/entrypoints/components/parts/StatusIndicator";
 import type { Bookmark, Tag as EntityTag, Tag } from "@/entrypoints/lib/types";

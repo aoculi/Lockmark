@@ -3,11 +3,11 @@ import { useCallback } from "react";
 import { generateId } from "@/entrypoints/lib/id";
 import type { Bookmark, Tag } from "@/entrypoints/lib/types";
 import { manifestStore } from "@/entrypoints/store/manifest";
+import { useManifestOperations } from "./useManifestOperations";
 import { useTagValidation } from "./validation";
-import { useManifest } from "./vault";
 
 export function useTags() {
-  const { store } = useManifest();
+  const { store } = useManifestOperations();
   const { validateTag } = useTagValidation();
 
   const createTag = useCallback(

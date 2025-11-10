@@ -1,11 +1,9 @@
 import { Text } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 
-import {
-  useBookmarks,
-  useTags,
-} from "@/entrypoints/components/hooks/bookmarks";
-import { useManifest } from "@/entrypoints/components/hooks/vault";
+import { useBookmarks } from "@/entrypoints/components/hooks/useBookmarks";
+import { useManifestOperations } from "@/entrypoints/components/hooks/useManifestOperations";
+import { useTags } from "@/entrypoints/components/hooks/useTags";
 import Bookmarks from "@/entrypoints/components/parts/Bookmarks";
 import Tags from "@/entrypoints/components/parts/Tags";
 import { keystoreManager } from "@/entrypoints/store/keystore";
@@ -15,7 +13,7 @@ import { useNavigation } from "..";
 import styles from "./styles.module.css";
 
 export default function Vault() {
-  const { mutation, store } = useManifest();
+  const { mutation, store } = useManifestOperations();
   const { bookmarks } = useBookmarks();
   const { tags } = useTags();
   const { navigate } = useNavigation();

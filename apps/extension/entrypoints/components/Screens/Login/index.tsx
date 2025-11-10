@@ -1,10 +1,9 @@
 import { Button, Callout, Heading, TextField } from "@radix-ui/themes";
 import { AlertCircle, KeyRound, Loader2, Mail } from "lucide-react";
-import { useEffect, useState } from "react";
 
 import { useLoginAndUnlock } from "@/entrypoints/components/hooks/auth";
+import { useAuthForm } from "@/entrypoints/components/hooks/useAuthForm";
 import Menu from "@/entrypoints/components/parts/Menu";
-import { whenCryptoReady } from "@/entrypoints/lib/cryptoEnv";
 import { useNavigation } from "..";
 
 import styles from "./styles.module.css";
@@ -14,112 +13,21 @@ interface LoginProps {
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
-  const [formData, setFormData] = useState({
-    login: "",
-    password: "",
-  });
-  const [error, setError] = useState<string | string[] | null>(null);
-  const [cryptoReady, setCryptoReady] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-
   const loginMutation = useLoginAndUnlock();
-  const { navigate, setFlash, openSettings } = useNavigation();
+  const { navigate } = useNavigation();
 
-  // Check sodium ready state
-  useEffect(() => {
-    const checkCryptoReady = async () => {
-      try {
-        await whenCryptoReady();
-        setCryptoReady(true);
-      } catch (error) {
-        console.error("Failed to initialize crypto:", error);
-        setError(
-          "Failed to initialize encryption. Please refresh the extension."
-        );
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    checkCryptoReady();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFlash(null);
-    setError(null);
-
-    if (!cryptoReady) {
-      setError("Encryption not ready. Please wait...");
-      return;
-    }
-
-    if (!formData.login.trim() || !formData.password.trim()) {
-      setError("Please fill in all fields");
-      return;
-    }
-
-    try {
-      const result = await loginMutation.mutateAsync({
-        login: formData.login.trim(),
-        password: formData.password,
-      });
-
-      // Success - both login and unlock completed
-      // Security: Never log sensitive data (keys, tokens, etc.)
-      onLoginSuccess();
-    } catch (err: any) {
-      // Handle API URL configuration error
-      const apiError = err as {
-        status?: number;
-        message?: string;
-        details?: Record<string, any>;
-      };
-
-      if (apiError.status === -1 && apiError.message?.includes("API URL")) {
-        setFlash(apiError.message);
-        openSettings();
-        return;
-      }
-
-      // Handle WMK upload failure differently - keep session, allow retry
-      if (apiError.details?.wmkUploadFailed) {
-        // WMK upload failed - show error but keep session
-        setError("Could not initialize vault. Please try again.");
-        return;
-      }
-
-      // Handle other errors
-      const baseMessage = apiError.message || "Login failed";
-      const details = apiError.details as Record<string, string[]> | undefined;
-
-      if (details && typeof details === "object" && !details.wmkUploadFailed) {
-        const lines: string[] = [];
-        for (const [field, messages] of Object.entries(details)) {
-          if (Array.isArray(messages) && messages.length > 0) {
-            lines.push(`${field}: ${messages.join(", ")}`);
-          }
-        }
-        setError(lines.length > 0 ? [baseMessage, ...lines] : baseMessage);
-      } else {
-        setError(baseMessage);
-      }
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const initializing =
-    loginMutation.isPending || !cryptoReady || isInitializing;
-
-  const disabled =
-    initializing || !formData.login.trim() || !formData.password.trim();
+  const {
+    formData,
+    error,
+    isInitializing,
+    initializing,
+    disabled,
+    handleSubmit,
+    handleChange,
+  } = useAuthForm({
+    onSuccess: onLoginSuccess,
+    mutation: loginMutation,
+  });
 
   return (
     <div className={styles.container}>

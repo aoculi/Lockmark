@@ -3,10 +3,10 @@
  */
 import { Text } from "@radix-ui/themes";
 
-import { useManifest } from "@/entrypoints/components/hooks/vault";
+import { useManifestOperations } from "@/entrypoints/components/hooks/useManifestOperations";
 
 export function StatusIndicator() {
-  const { store } = useManifest();
+  const { store } = useManifestOperations();
 
   const getStatusText = () => {
     switch (store.status) {
