@@ -1,9 +1,9 @@
-import { Search, X } from "lucide-react";
+import { Tag, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import Button from "@/entrypoints/components/ui/Button";
 import Input from "@/entrypoints/components/ui/Input";
-import type { Tag } from "@/entrypoints/lib/types";
+import type { Tag as EntityTag } from "@/entrypoints/lib/types";
 
 import styles from "./styles.module.css";
 
@@ -12,7 +12,7 @@ export const TagSelectorField = ({
   selectedTags,
   onChange,
 }: {
-  tags: Tag[];
+  tags: EntityTag[];
   selectedTags: string[];
   onChange: (selectedTags: string[]) => void;
 }) => {
@@ -106,9 +106,8 @@ export const TagSelectorField = ({
     <div ref={containerRef} className={styles.container}>
       <Input
         ref={inputRef}
-        className={styles.textFieldRoot}
         size="lg"
-        placeholder="Search tags..."
+        placeholder={selectedTagObjects.length > 0 ? "" : "Select tags..."}
         value={searchQuery}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           setSearchQuery(e.target.value);
@@ -117,7 +116,7 @@ export const TagSelectorField = ({
         onFocus={() => setIsOpen(true)}
         onKeyDown={handleKeyDown}
       >
-        <Search size={16} />
+        <Tag size={16} />
 
         <div className={styles.inputContent}>
           {/* Selected tags displayed as badges */}
@@ -146,10 +145,9 @@ export const TagSelectorField = ({
             {filteredTags.map((tag, index) => (
               <Button
                 key={tag.id}
-                variant="ghost"
-                className={`${styles.suggestionItem} ${
-                  index === highlightedIndex ? styles.highlighted : ""
-                }`}
+                variant={index === highlightedIndex ? "solid" : "solid"}
+                color={index === highlightedIndex ? "primary" : "dark"}
+                className={`${styles.suggestionItem}`}
                 onClick={() => handleSelectTag(tag.id)}
                 onMouseEnter={() => setHighlightedIndex(index)}
               >

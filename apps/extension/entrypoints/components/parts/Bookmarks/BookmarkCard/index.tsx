@@ -19,45 +19,47 @@ type Props = {
 export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
   const picture = null;
   return (
-    <a
-      className={styles.card}
-      href={bookmark.url}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {picture && (
-        <div className={styles.picture}>
-          <img src={picture} alt={bookmark?.title} />
-        </div>
-      )}
+    <div className={styles.component}>
+      <a
+        className={styles.card}
+        href={bookmark.url}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {picture && (
+          <div className={styles.picture}>
+            <img src={picture} alt={bookmark?.title} />
+          </div>
+        )}
 
-      <div className={styles.content}>
-        <Text size="3" weight="regular">
-          {bookmark.title || "(Untitled)"}
-        </Text>
-        <Text size="2" color="light">
-          {getHostname(bookmark.url)}
-        </Text>
-
-        <div className={styles.tagsContainer}>
-          {bookmark.tags.length > 0 && (
-            <div className={styles.tags}>
-              {bookmark.tags.map((tagId: string) => (
-                <span key={tagId} className={styles.tag}>
-                  {getTagName(tagId, tags)}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <Text size="1" color="light" style={{ textAlign: "right" }}>
-            Updated: {formatDate(bookmark.updated_at)}
+        <div className={styles.content}>
+          <Text size="3" weight="medium" color="light">
+            {bookmark.title || "(Untitled)"}
           </Text>
+          <Text size="2" color="light">
+            {getHostname(bookmark.url)}
+          </Text>
+
+          <div className={styles.tagsContainer}>
+            {bookmark.tags.length > 0 && (
+              <div className={styles.tags}>
+                {bookmark.tags.map((tagId: string) => (
+                  <span key={tagId} className={styles.tag}>
+                    {getTagName(tagId, tags)}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <Text size="1" color="light" style={{ textAlign: "right" }}>
+              Updated: {formatDate(bookmark.updated_at)}
+            </Text>
+          </div>
         </div>
-      </div>
+      </a>
 
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger>
+        <DropdownMenu.Trigger className={styles.dropdownMenu}>
           <Button asIcon={true} color="dark">
             <EllipsisVertical size={16} />
           </Button>
@@ -72,6 +74,6 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Root>
-    </a>
+    </div>
   );
 }

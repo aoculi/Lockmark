@@ -21,8 +21,8 @@ export default function Interactible({
       onClick={onClick}
       {...props}
     >
-      <Background tone={tone} isActive={isActive} onEffect={true} />
       {children}
+      <Background tone={tone} isActive={isActive} onEffect={true} />
     </button>
   );
 }

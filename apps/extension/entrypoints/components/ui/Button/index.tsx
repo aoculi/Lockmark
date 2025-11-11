@@ -20,13 +20,14 @@ export default function Button({
   disabled = false,
   asIcon = false,
   style,
+  className,
   ...props
 }: ButtonProps) {
-  const className = `${styles.button} ${styles[variant]} ${styles[size]} ${
+  const classNames = `${styles.button} ${styles[variant]} ${styles[size]} ${
     styles[color]
-  } ${asIcon ? styles.icon : ""}`;
+  } ${asIcon ? styles.icon : ""} ${className || ""}`;
   return (
-    <button disabled={disabled} className={className} style={style} {...props}>
+    <button disabled={disabled} className={classNames} style={style} {...props}>
       {children}
     </button>
   );

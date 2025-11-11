@@ -7,4 +7,15 @@
   margin: 0;
   outline: none;
   z-index: 2;
+  color: inherit;
+  user-select: none;
+}
+
+.interactible:focus,
+.interactible:active,
+.interactible:hover {
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
