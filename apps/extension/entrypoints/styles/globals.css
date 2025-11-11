@@ -3,14 +3,13 @@
 @import url("./variables.css");
 
 html {
+  background: var(--background-3);
   /* Ensure popup stays on top */
   z-index: 2147483647; /* Maximum z-index value */
 }
 
 body {
   color: var(--text);
-  /* min-width: 700px; */
-  /* min-height: 100vh; */
   position: relative;
   z-index: 2147483647; /* Maximum z-index value */
 }

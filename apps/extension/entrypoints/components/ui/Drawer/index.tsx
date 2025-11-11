@@ -1,9 +1,9 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
+import Button from "@/entrypoints/components/ui/Button";
 import Text from "@/entrypoints/components/ui/Text";
 
-import Button from "../Button";
 import styles from "./styles.module.css";
 
 export function Drawer({

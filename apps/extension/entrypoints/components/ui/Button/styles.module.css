@@ -8,6 +8,16 @@
   border: none;
   flex-shrink: 0;
   transition: background-color 0.2s ease;
+  outline: none;
+  box-shadow: none;
+  border: none;
+  /* background: transparent;
+  background-color: transparent; */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  -o-appearance: none;
 }
 
 .sm {
@@ -69,7 +79,7 @@
 }
 
 .dark.ghost {
-  background-color: transparent;
+  background: none;
   color: var(--text);
 }
 

@@ -1,4 +1,3 @@
-import { Theme } from "@radix-ui/themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -7,7 +6,6 @@ import ErrorBoundary from "@/entrypoints/components/parts/ErrorBoundary";
 import Screens from "@/entrypoints/components/Screens";
 
 import "@/entrypoints/styles/globals.css";
-import "@radix-ui/themes/styles.css";
 
 // Ensure popup window gets focus when it opens (fixes issue where popup opens behind interface)
 // This is especially important on Linux systems
@@ -57,16 +55,9 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <Theme
-        appearance="dark"
-        radius="medium"
-        accentColor="violet"
-        grayColor="gray"
-      >
-        <ErrorBoundary>
-          <Screens />
-        </ErrorBoundary>
-      </Theme>
+      <ErrorBoundary>
+        <Screens />
+      </ErrorBoundary>
     </QueryClientProvider>
   </React.StrictMode>
 );
