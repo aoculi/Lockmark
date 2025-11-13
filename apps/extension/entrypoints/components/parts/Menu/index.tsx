@@ -35,9 +35,9 @@ export default function Menu({
 
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger>
+      <DropdownMenu.Trigger asChild>
         <Button asIcon color="dark" variant="ghost" size="sm">
-          <MenuIcon strokeWidth={2} size={18} />
+          <MenuIcon strokeWidth={2} size={18} color="white" />
         </Button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>

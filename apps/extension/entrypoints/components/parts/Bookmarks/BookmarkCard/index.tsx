@@ -40,17 +40,22 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
           </Text>
 
           <div className={styles.tagsContainer}>
-            {bookmark.tags.length > 0 && (
-              <div className={styles.tags}>
-                {bookmark.tags.map((tagId: string) => (
+            <div className={styles.tags}>
+              {bookmark.tags.length > 0 &&
+                bookmark.tags.map((tagId: string) => (
                   <span key={tagId} className={styles.tag}>
                     {getTagName(tagId, tags)}
                   </span>
                 ))}
-              </div>
-            )}
+            </div>
 
-            <Text size="1" color="light" style={{ textAlign: "right" }}>
+            <Text
+              size="1"
+              color="light"
+              style={{
+                textAlign: "right",
+              }}
+            >
               Updated: {formatDate(bookmark.updated_at)}
             </Text>
           </div>
@@ -58,7 +63,7 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
       </a>
 
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger className={styles.dropdownMenu}>
+        <DropdownMenu.Trigger asChild className={styles.dropdownMenu}>
           <Button asIcon={true} color="dark">
             <EllipsisVertical size={16} />
           </Button>

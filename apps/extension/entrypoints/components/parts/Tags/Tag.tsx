@@ -44,7 +44,7 @@ export default function Tag({
       {!all && (onEdit || onDelete) && (
         <div className={styles.dropdownMenu}>
           <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
+            <DropdownMenu.Trigger asChild>
               <Button asIcon={true} color="dark" variant="ghost" size="sm">
                 <EllipsisVertical size={16} />
               </Button>

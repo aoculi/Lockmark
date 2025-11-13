@@ -5,12 +5,11 @@ import { useTags } from "@/entrypoints/components/hooks/useTags";
 import { StatusIndicator } from "@/entrypoints/components/parts/StatusIndicator";
 import Button from "@/entrypoints/components/ui/Button";
 import { DropdownMenu } from "@/entrypoints/components/ui/DropdownMenu";
-import Text from "@/entrypoints/components/ui/Text";
 import type { Bookmark, Tag as EntityTag } from "@/entrypoints/lib/types";
 import { settingsStore } from "@/entrypoints/store/settings";
 import TagComponent from "./Tag";
-import { TagModal } from "./TagModal";
 import TagHeader from "./TagHeader";
+import { TagModal } from "./TagModal";
 
 import styles from "./styles.module.css";
 
@@ -80,7 +79,7 @@ export default function Tags({
   const onDeleteTag = (id: string) => {
     if (
       confirm(
-        "Are you sure you want to delete this tag? It will be removed from all bookmarks.",
+        "Are you sure you want to delete this tag? It will be removed from all bookmarks."
       )
     ) {
       try {
@@ -95,7 +94,7 @@ export default function Tags({
   };
 
   const sortedTags = useMemo(() => {
-    let tagsWithCounts = tags.map((tag: Tag) => ({
+    let tagsWithCounts = tags.map((tag: EntityTag) => ({
       tag,
       count: bookmarks.filter((bookmark) => bookmark.tags.includes(tag.id))
         .length,
@@ -104,17 +103,18 @@ export default function Tags({
     // Filter hidden tags based on settings
     if (!showHiddenTags) {
       tagsWithCounts = tagsWithCounts.filter(
-        (tag: { tag: EntityTag }) => !tag.tag.hidden,
+        (tag: { tag: EntityTag }) => !tag.tag.hidden
       );
     }
 
     if (sortMode === "name") {
-      return tagsWithCounts.sort((a: { tag: Tag }, b: { tag: EntityTag }) =>
-        a.tag.name.localeCompare(b.tag.name),
+      return tagsWithCounts.sort(
+        (a: { tag: EntityTag }, b: { tag: EntityTag }) =>
+          a.tag.name.localeCompare(b.tag.name)
       );
     } else {
       return tagsWithCounts.sort(
-        (a: { count: number }, b: { count: number }) => b.count - a.count,
+        (a: { count: number }, b: { count: number }) => b.count - a.count
       );
     }
   }, [tags, bookmarks, sortMode, showHiddenTags]);
@@ -126,6 +126,7 @@ export default function Tags({
       <div className={styles.content}>
         <div className={styles.contentActions}>
           <Button
+            size="sm"
             onClick={() => onSelectTag("all")}
             variant={currentTagId === "all" ? "solid" : "ghost"}
             color={currentTagId === "all" ? "primary" : "light"}
@@ -135,9 +136,9 @@ export default function Tags({
           </Button>
 
           <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-              <Button asIcon={true} size="md" color="light">
-                <ListFilter strokeWidth={1} size={16} />
+            <DropdownMenu.Trigger asChild>
+              <Button asIcon={true} size="sm" color="light">
+                <ListFilter strokeWidth={1} size={15} />
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
@@ -175,7 +176,7 @@ export default function Tags({
                   onEdit={() => onEditTag(tag)}
                   onDelete={() => onDeleteTag(tag.id)}
                 />
-              ),
+              )
             )}
         </div>
       </div>
