@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-import { decryptManifest } from "@/entrypoints/lib/manifestUtils";
+import { decryptManifest } from "@/entrypoints/lib/api";
 import { keystoreManager } from "@/entrypoints/store/keystore";
 import {
   manifestStore,

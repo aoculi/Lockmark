@@ -2,11 +2,21 @@
  * Auto-lock timer management for background script
  */
 
-import { getAutoLockTimeout } from "./settingsUtils";
-import { broadcast } from "./broadcast";
-import type { Session } from "./sessionManager";
+import { getAutoLockTimeout } from "../storage";
+import type { Session } from "./session";
 import type { KeyStore } from "./keystore";
 import type { TokenRefresh } from "./tokenRefresh";
+
+/**
+ * Broadcast a message to all extension contexts
+ */
+function broadcast(message: any): void {
+  try {
+    chrome.runtime.sendMessage(message);
+  } catch {
+    // ignore
+  }
+}
 
 export class AutoLockTimer {
   private autoLockTimer: number | null = null;
@@ -125,3 +135,4 @@ export class AutoLockTimer {
     }
   }
 }
+

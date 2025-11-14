@@ -2,10 +2,10 @@
  * Message type definitions for background script communication
  */
 
-import type { AadContext } from "./types";
-import type { Session } from "./sessionManager";
-import type { Settings } from "./settingsUtils";
-import type { TabInfo } from "./tabUtils";
+import type { AadContext } from "../types";
+import type { Session } from "./session";
+import type { Settings } from "../storage";
+import type { TabInfo } from "../tabUtils";
 
 // Base message structure
 export interface BaseMessage {
@@ -168,3 +168,4 @@ export type BackgroundResponse =
   | SettingsGetResponse
   | SettingsSetResponse
   | TabsGetCurrentResponse;
+

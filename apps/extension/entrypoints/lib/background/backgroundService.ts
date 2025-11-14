@@ -4,7 +4,7 @@
  */
 
 import { KeyStore } from "./keystore";
-import { SessionManager } from "./sessionManager";
+import { SessionManager } from "./session";
 import { TokenRefresh } from "./tokenRefresh";
 import { AutoLockTimer } from "./autoLockTimer";
 import { MessageHandlers } from "./messageHandlers";
@@ -90,3 +90,4 @@ export class BackgroundService {
     return this.autoLockTimer;
   }
 }
+

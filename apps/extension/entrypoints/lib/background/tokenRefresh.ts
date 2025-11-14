@@ -2,11 +2,10 @@
  * Token refresh logic for background script
  */
 
-import { MIN_REFRESH_INTERVAL } from "./constants";
-import type { Session } from "./sessionManager";
-import type { Settings } from "./settingsUtils";
-import { getDefaultSettings } from "./settingsUtils";
-import { getSettings } from "./storageUtils";
+import { MIN_REFRESH_INTERVAL } from "../constants";
+import type { Session } from "./session";
+import type { Settings } from "../storage";
+import { getDefaultSettings, getSettings } from "../storage";
 
 export class TokenRefresh {
   private lastRefreshAttempt: number = 0;
@@ -98,3 +97,4 @@ export class TokenRefresh {
     return this.refreshInProgress;
   }
 }
+

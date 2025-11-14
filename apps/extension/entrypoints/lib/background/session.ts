@@ -2,12 +2,21 @@
  * Session management for background script
  */
 
-import { broadcast } from "./broadcast";
-
 export interface Session {
   token: string;
   userId: string;
   expiresAt: number;
+}
+
+/**
+ * Broadcast a message to all extension contexts
+ */
+function broadcast(message: any): void {
+  try {
+    chrome.runtime.sendMessage(message);
+  } catch {
+    // ignore
+  }
 }
 
 export class SessionManager {
@@ -59,3 +68,4 @@ export class SessionManager {
     return this.session !== null;
   }
 }
+

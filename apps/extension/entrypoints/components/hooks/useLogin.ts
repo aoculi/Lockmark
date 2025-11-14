@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { apiClient, type ApiError } from "@/entrypoints/lib/api";
-import { prefetchVaultData } from "@/entrypoints/lib/vaultPrefetch";
+import { prefetchVaultData } from "@/entrypoints/lib/api";
 import { authStore } from "@/entrypoints/store/auth";
 import { sessionManager } from "@/entrypoints/store/session";
 

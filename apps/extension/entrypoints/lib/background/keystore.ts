@@ -3,7 +3,7 @@
  * Keys are never persisted and are lost on popup close or SW suspend
  */
 
-import type { AadContext } from "./types";
+import type { AadContext } from "../types";
 
 export class KeyStore {
   private MK: Uint8Array | null = null;
@@ -85,3 +85,4 @@ export class KeyStore {
     return this.aadContext;
   }
 }
+

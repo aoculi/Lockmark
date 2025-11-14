@@ -2,12 +2,11 @@
  * Message handlers for background script
  */
 
-import { base64ToUint8Array, uint8ArrayToBase64 } from "./base64Utils";
-import { getSettings, setSettings } from "./storageUtils";
-import { getDefaultSettings } from "./settingsUtils";
-import { getCurrentTab } from "./tabUtils";
+import { base64ToUint8Array, uint8ArrayToBase64 } from "../crypto";
+import { getSettings, setSettings, getDefaultSettings } from "../storage";
+import { getCurrentTab } from "../tabUtils";
 import type { KeyStore } from "./keystore";
-import type { SessionManager } from "./sessionManager";
+import type { SessionManager } from "./session";
 import type { AutoLockTimer } from "./autoLockTimer";
 import type { TokenRefresh } from "./tokenRefresh";
 import type { BackgroundMessage, BackgroundResponse } from "./messageTypes";
@@ -221,3 +220,4 @@ export class MessageHandlers {
     }
   }
 }
+

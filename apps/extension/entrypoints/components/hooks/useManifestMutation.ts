@@ -7,7 +7,7 @@ import {
 } from "@/entrypoints/lib/conflictResolution";
 import { constructAadManifest } from "@/entrypoints/lib/constants";
 import { encryptAEAD, toBase64, zeroize } from "@/entrypoints/lib/crypto";
-import { decryptManifest } from "@/entrypoints/lib/manifestUtils";
+import { decryptManifest } from "@/entrypoints/lib/api";
 import type { ManifestV1 } from "@/entrypoints/lib/types";
 import { keystoreManager } from "@/entrypoints/store/keystore";
 import { manifestStore } from "@/entrypoints/store/manifest";

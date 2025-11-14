@@ -4,7 +4,7 @@ import Button from "@/entrypoints/components/ui/Button";
 import { DropdownMenu } from "@/entrypoints/components/ui/DropdownMenu";
 import Text from "@/entrypoints/components/ui/Text";
 import { getTagName } from "@/entrypoints/lib/bookmarkUtils";
-import { formatDate, getHostname } from "@/entrypoints/lib/formatUtils";
+import { formatDate, getHostname } from "@/entrypoints/lib/utils";
 import type { Bookmark, Tag } from "@/entrypoints/lib/types";
 
 import styles from "./styles.module.css";

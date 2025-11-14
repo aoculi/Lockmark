@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { generateId } from "@/entrypoints/lib/id";
+import { generateId } from "@/entrypoints/lib/utils";
 import type { Bookmark } from "@/entrypoints/lib/types";
 import { manifestStore } from "@/entrypoints/store/manifest";
 import { useManifestOperations } from "./useManifestOperations";

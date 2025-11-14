@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { ApiError } from "@/entrypoints/lib/api";
-import { decryptManifest } from "@/entrypoints/lib/manifestUtils";
+import { decryptManifest } from "@/entrypoints/lib/api";
 import { manifestStore } from "@/entrypoints/store/manifest";
 import { useUnlock } from "./unlock";
 

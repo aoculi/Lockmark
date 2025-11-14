@@ -1,7 +1,7 @@
 /**
  * Bookmark-specific utilities
  */
-import { getHostname } from "./formatUtils";
+import { getHostname } from "./utils";
 import type { Bookmark, Tag } from "./types";
 
 /**
