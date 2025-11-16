@@ -3,7 +3,6 @@ import { nanoid } from "nanoid";
 import { formatKdfParams, formatWrappedMk } from "../libs/auth-helpers";
 import {
   generateKdfParams,
-  generateSaltBuffer,
   hashPassword,
   verifyPassword,
 } from "../libs/crypto";
@@ -70,6 +69,7 @@ export const registerUser = async (
 ): Promise<RegisterUserOutput> => {
   const { login, password } = input;
 
+  console.log("registerUser");
   // Check if login already exists
   const exists = await userRepository.loginExists(login);
   if (exists) {
@@ -149,17 +149,6 @@ export const loginUser = async (
     // Log failed attempt (no sensitive data)
     console.log(`Login failed for user: ${user.userId}`);
     throw createUnauthorizedError();
-  }
-
-  // Generate HKDF salt for users who don't have it
-  // Auto-generate HKDF salt ONLY for users who don't have WMK yet
-  // Users with existing WMK must continue using kdfSalt for backwards compatibility
-  if (!user.hkdfSalt && !user.wmkCiphertext) {
-    const hkdfSaltBuffer = generateSaltBuffer(16);
-    await userRepository.updateUser(user.userId, {
-      hkdfSalt: hkdfSaltBuffer,
-    });
-    user.hkdfSalt = hkdfSaltBuffer;
   }
 
   // Generate session ID and JWT ID

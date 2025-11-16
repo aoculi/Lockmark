@@ -18,6 +18,7 @@
   outline: 0;
   transform: translateX(100%);
   animation: slideIn 0.25s ease-out forwards;
+  overflow-y: auto;
 }
 
 [data-state="closed"].content {
