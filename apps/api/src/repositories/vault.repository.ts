@@ -1,7 +1,7 @@
 // Vault repository - handles all database operations for vaults
-import { eq } from 'drizzle-orm';
-import { db } from '../database/db';
-import { manifests, NewVault, vaults } from '../database/schema';
+import { eq } from 'drizzle-orm'
+import { db } from '../database/db'
+import { manifests, NewVault, vaults } from '../database/schema'
 
 /**
  * Find a vault by vault ID
@@ -13,9 +13,9 @@ export async function findVaultById(vaultId: string) {
         .select()
         .from(vaults)
         .where(eq(vaults.vaultId, vaultId))
-        .limit(1);
+        .limit(1)
 
-    return result[0];
+    return result[0]
 }
 
 /**
@@ -28,9 +28,9 @@ export async function findVaultByUserId(userId: string) {
         .select()
         .from(vaults)
         .where(eq(vaults.userId, userId))
-        .limit(1);
+        .limit(1)
 
-    return result[0];
+    return result[0]
 }
 
 /**
@@ -39,10 +39,10 @@ export async function findVaultByUserId(userId: string) {
  * @returns The created vault record
  */
 export async function createVault(vaultData: NewVault) {
-    await db.insert(vaults).values(vaultData);
+    await db.insert(vaults).values(vaultData)
 
     // Fetch and return the created vault
-    return findVaultById(vaultData.vaultId);
+    return findVaultById(vaultData.vaultId)
 }
 
 /**
@@ -54,17 +54,14 @@ export async function createVault(vaultData: NewVault) {
 export async function updateVault(
     vaultId: string,
     data: {
-        version?: number;
-        bytesTotal?: number;
-        updatedAt?: number;
+        version?: number
+        bytesTotal?: number
+        updatedAt?: number
     }
 ) {
-    await db
-        .update(vaults)
-        .set(data)
-        .where(eq(vaults.vaultId, vaultId));
+    await db.update(vaults).set(data).where(eq(vaults.vaultId, vaultId))
 
-    return findVaultById(vaultId);
+    return findVaultById(vaultId)
 }
 
 /**
@@ -77,9 +74,9 @@ export async function manifestExists(vaultId: string): Promise<boolean> {
         .select({ vaultId: manifests.vaultId })
         .from(manifests)
         .where(eq(manifests.vaultId, vaultId))
-        .limit(1);
+        .limit(1)
 
-    return result.length > 0;
+    return result.length > 0
 }
 
 /**
@@ -92,9 +89,9 @@ export async function getManifestByVaultId(vaultId: string) {
         .select()
         .from(manifests)
         .where(eq(manifests.vaultId, vaultId))
-        .limit(1);
+        .limit(1)
 
-    return result[0];
+    return result[0]
 }
 
 /**
@@ -102,16 +99,19 @@ export async function getManifestByVaultId(vaultId: string) {
  * @param vaultId - The vault ID
  * @param manifestData - Manifest data to insert/update
  */
-export async function upsertManifest(vaultId: string, manifestData: {
-    etag: string;
-    version: number;
-    nonce: Buffer;
-    ciphertext: Buffer;
-    size: number;
-    updatedAt: number;
-}) {
+export async function upsertManifest(
+    vaultId: string,
+    manifestData: {
+        etag: string
+        version: number
+        nonce: Buffer
+        ciphertext: Buffer
+        size: number
+        updatedAt: number
+    }
+) {
     // Check if manifest exists
-    const existing = await getManifestByVaultId(vaultId);
+    const existing = await getManifestByVaultId(vaultId)
 
     if (existing) {
         // Update existing manifest
@@ -125,23 +125,14 @@ export async function upsertManifest(vaultId: string, manifestData: {
                 size: manifestData.size,
                 updatedAt: manifestData.updatedAt,
             })
-            .where(eq(manifests.vaultId, vaultId));
+            .where(eq(manifests.vaultId, vaultId))
     } else {
         // Insert new manifest
         await db.insert(manifests).values({
             vaultId,
             ...manifestData,
-        });
+        })
     }
 
-    return getManifestByVaultId(vaultId);
+    return getManifestByVaultId(vaultId)
 }
-
-/**
- * Delete a vault by ID
- * @param vaultId - The vault ID to delete
- */
-export async function deleteVault(vaultId: string): Promise<void> {
-    await db.delete(vaults).where(eq(vaults.vaultId, vaultId));
-}
-
