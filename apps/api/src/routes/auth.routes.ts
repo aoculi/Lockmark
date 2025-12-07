@@ -1,26 +1,26 @@
 // Authentication routes - handles /auth endpoints
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import { z } from "zod";
-import { config } from "../config";
-import { ERROR_MESSAGES, ERROR_NAMES, logError } from "../libs/errors";
-import { createValidationErrorHandler } from "../libs/validation";
-import { requireAuth } from "../middleware/auth.middleware";
+import { zValidator } from '@hono/zod-validator'
+import { Hono } from 'hono'
+import { z } from 'zod'
+import { config } from '../config'
+import { ERROR_MESSAGES, ERROR_NAMES, logError } from '../libs/errors'
+import { createValidationErrorHandler } from '../libs/validation'
+import { requireAuth } from '../middleware/auth.middleware'
 import {
   rateLimitAuth,
-  rateLimitRefresh,
-} from "../middleware/rate-limit.middleware";
-import * as sessionRepository from "../repositories/session.repository";
+  rateLimitRefresh
+} from '../middleware/rate-limit.middleware'
+import * as sessionRepository from '../repositories/session.repository'
 import {
   loginUser,
   logoutUser,
   refreshSession,
-  registerUser,
-} from "../services/auth.service";
+  registerUser
+} from '../services/auth.service'
 
-const auth = new Hono();
+const auth = new Hono()
 
-export type AppType = typeof auth;
+export type AppType = typeof auth
 
 // Validation schema for registration and login
 const authSchema = z.object({
@@ -44,8 +44,8 @@ const authSchema = z.object({
     .max(
       config.validation.password.maxLength,
       `Password must not exceed ${config.validation.password.maxLength} characters`
-    ),
-});
+    )
+})
 
 /**
  * POST /auth/register
@@ -78,29 +78,29 @@ const authSchema = z.object({
  *   - 500: Server error
  */
 auth.post(
-  "/register",
+  '/register',
   rateLimitAuth,
-  zValidator("json", authSchema, createValidationErrorHandler()),
+  zValidator('json', authSchema, createValidationErrorHandler()),
   async (c) => {
     try {
-      const { login, password } = c.req.valid("json");
+      const { login, password } = c.req.valid('json')
 
       // Register user through auth service
-      const result = await registerUser({ login, password });
+      const result = await registerUser({ login, password })
 
       // Return success with user_id and KDF parameters
-      return c.json(result, 201);
+      return c.json(result, 201)
     } catch (error) {
       // Handle known errors
       if (error instanceof Error && error.name === ERROR_NAMES.CONFLICT) {
-        return c.json({ error: ERROR_MESSAGES.LOGIN_EXISTS }, 409);
+        return c.json({ error: ERROR_MESSAGES.LOGIN_EXISTS }, 409)
       }
 
-      logError("Registration error", error);
-      return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500);
+      logError('Registration error', error)
+      return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500)
     }
   }
-);
+)
 
 /**
  * POST /auth/login
@@ -137,29 +137,29 @@ auth.post(
  *   - 500: Server error
  */
 auth.post(
-  "/login",
+  '/login',
   rateLimitAuth,
-  zValidator("json", authSchema, createValidationErrorHandler()),
+  zValidator('json', authSchema, createValidationErrorHandler()),
   async (c) => {
     try {
-      const { login, password } = c.req.valid("json");
+      const { login, password } = c.req.valid('json')
 
       // Login user through auth service
-      const result = await loginUser({ login, password });
+      const result = await loginUser({ login, password })
 
       // Return session info and user data
-      return c.json(result, 200);
+      return c.json(result, 200)
     } catch (error) {
       // Handle known errors
       if (error instanceof Error && error.name === ERROR_NAMES.UNAUTHORIZED) {
-        return c.json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS }, 401);
+        return c.json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS }, 401)
       }
 
-      logError("Login error", error);
-      return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500);
+      logError('Login error', error)
+      return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500)
     }
   }
-);
+)
 
 /**
  * POST /auth/logout
@@ -180,21 +180,21 @@ auth.post(
  *   - 401: Missing, invalid, or expired token
  *   - 500: Server error
  */
-auth.post("/logout", requireAuth, async (c) => {
+auth.post('/logout', requireAuth, async (c) => {
   try {
     // Get JWT ID from authenticated context (attached by middleware)
-    const jwtId = (c.req.raw as any).jwtId as string;
+    const jwtId = (c.req.raw as any).jwtId as string
 
     // Revoke the session
-    await logoutUser(jwtId);
+    await logoutUser(jwtId)
 
     // Return success
-    return c.json({ ok: true }, 200);
+    return c.json({ ok: true }, 200)
   } catch (error) {
-    logError("Logout error", error);
-    return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500);
+    logError('Logout error', error)
+    return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500)
   }
-});
+})
 
 /**
  * GET /auth/session
@@ -216,22 +216,22 @@ auth.post("/logout", requireAuth, async (c) => {
  * Errors:
  *   - 401: Invalid, expired, or revoked token
  */
-auth.get("/session", requireAuth, async (c) => {
+auth.get('/session', requireAuth, async (c) => {
   try {
     // Get user info from authenticated context (attached by middleware)
-    const userId = (c.req.raw as any).userId as string;
-    const jwtId = (c.req.raw as any).jwtId as string;
+    const userId = (c.req.raw as any).userId as string
+    const jwtId = (c.req.raw as any).jwtId as string
 
     // Get session details from repository
-    const session = await sessionRepository.findSessionByJwtId(jwtId);
+    const session = await sessionRepository.findSessionByJwtId(jwtId)
 
     if (!session) {
       return c.json(
         {
-          error: "Session not found",
+          error: 'Session not found'
         },
         401
-      );
+      )
     }
 
     // Return session info
@@ -239,15 +239,15 @@ auth.get("/session", requireAuth, async (c) => {
       {
         user_id: userId,
         valid: true,
-        expires_at: session.expiresAt,
+        expires_at: session.expiresAt
       },
       200
-    );
+    )
   } catch (error) {
-    logError("Session check error", error);
-    return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500);
+    logError('Session check error', error)
+    return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500)
   }
-});
+})
 
 /**
  * POST /auth/refresh
@@ -272,32 +272,32 @@ auth.get("/session", requireAuth, async (c) => {
  *   - 429: Too many refresh requests
  *   - 500: Server error
  */
-auth.post("/refresh", requireAuth, rateLimitRefresh, async (c) => {
+auth.post('/refresh', requireAuth, rateLimitRefresh, async (c) => {
   try {
     // Get user info from authenticated context
-    const userId = (c.req.raw as any).userId as string;
-    const jwtId = (c.req.raw as any).jwtId as string;
+    const userId = (c.req.raw as any).userId as string
+    const jwtId = (c.req.raw as any).jwtId as string
 
     // Refresh session through auth service
-    const result = await refreshSession(jwtId);
+    const result = await refreshSession(jwtId)
 
     // Return new token and expiration
     return c.json(
       {
         token: result.token,
-        expires_at: result.expiresAt,
+        expires_at: result.expiresAt
       },
       200
-    );
+    )
   } catch (error) {
     // Handle known errors
     if (error instanceof Error && error.name === ERROR_NAMES.UNAUTHORIZED) {
-      return c.json({ error: ERROR_MESSAGES.INVALID_SESSION }, 401);
+      return c.json({ error: ERROR_MESSAGES.INVALID_SESSION }, 401)
     }
 
-    logError("Token refresh error", error);
-    return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500);
+    logError('Token refresh error', error)
+    return c.json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR }, 500)
   }
-});
+})
 
-export default auth;
+export default auth

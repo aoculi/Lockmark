@@ -1,59 +1,55 @@
 // Authentication service - handles user registration and login
-import { nanoid } from "nanoid";
-import { formatKdfParams, formatWrappedMk } from "../libs/auth-helpers";
-import {
-  generateKdfParams,
-  hashPassword,
-  verifyPassword,
-} from "../libs/crypto";
+import { nanoid } from 'nanoid'
+import { formatKdfParams, formatWrappedMk } from '../libs/auth-helpers'
+import { generateKdfParams, hashPassword, verifyPassword } from '../libs/crypto'
 import {
   createConflictError,
   createUnauthorizedError,
-  logError,
-} from "../libs/errors";
-import { generateToken, getExpirationTimestamp } from "../libs/jwt";
-import * as sessionRepository from "../repositories/session.repository";
-import * as userRepository from "../repositories/user.repository";
+  logError
+} from '../libs/errors'
+import { generateToken, getExpirationTimestamp } from '../libs/jwt'
+import * as sessionRepository from '../repositories/session.repository'
+import * as userRepository from '../repositories/user.repository'
 
 export interface RegisterUserInput {
-  login: string;
-  password: string;
+  login: string
+  password: string
 }
 
 export interface RegisterUserOutput {
-  user_id: string;
+  user_id: string
   kdf: {
-    algo: string;
-    salt: string;
-    m: number;
-    t: number;
-    p: number;
-    hkdf_salt?: string | null;
-  };
+    algo: string
+    salt: string
+    m: number
+    t: number
+    p: number
+    hkdf_salt?: string | null
+  }
 }
 
 export interface LoginUserInput {
-  login: string;
-  password: string;
+  login: string
+  password: string
 }
 
 export interface LoginUserOutput {
-  user_id: string;
-  token: string;
-  expires_at: number;
+  user_id: string
+  token: string
+  expires_at: number
   kdf: {
-    algo: string;
-    salt: string;
-    m: number;
-    t: number;
-    p: number;
-  };
-  wrapped_mk: string | null;
+    algo: string
+    salt: string
+    m: number
+    t: number
+    p: number
+  }
+  wrapped_mk: string | null
 }
 
 export interface RefreshSessionOutput {
-  token: string;
-  expiresAt: number;
+  token: string
+  expiresAt: number
 }
 
 /**
@@ -67,26 +63,26 @@ export interface RefreshSessionOutput {
 export const registerUser = async (
   input: RegisterUserInput
 ): Promise<RegisterUserOutput> => {
-  const { login, password } = input;
+  const { login, password } = input
 
-  console.log("registerUser");
+  console.log('registerUser')
   // Check if login already exists
-  const exists = await userRepository.loginExists(login);
+  const exists = await userRepository.loginExists(login)
   if (exists) {
-    throw createConflictError();
+    throw createConflictError()
   }
 
   // Generate user ID
-  const userId = `u_${nanoid(21)}`;
+  const userId = `u_${nanoid(21)}`
 
   // Hash password with Argon2id (AUTH parameters) - generates its own salt
-  const authHash = await hashPassword(password);
+  const authHash = await hashPassword(password)
 
   // Generate KDF parameters for client-side UEK derivation
-  const kdfParams = generateKdfParams();
+  const kdfParams = generateKdfParams()
 
   // Get current timestamp
-  const now = Date.now();
+  const now = Date.now()
 
   // Insert user into database
   try {
@@ -101,11 +97,10 @@ export const registerUser = async (
       kdfP: kdfParams.p,
       hkdfSalt: kdfParams.hkdfSaltBuffer,
       createdAt: now,
-      updatedAt: now,
-    });
+      updatedAt: now
+    })
 
-    // Log success (no sensitive data)
-    console.log(`User registered successfully: ${userId}`);
+    console.log(`User registered successfully: ${userId}`)
 
     // Return only what client needs for UEK derivation
     return {
@@ -116,14 +111,14 @@ export const registerUser = async (
         m: kdfParams.m,
         t: kdfParams.t,
         p: kdfParams.p,
-        hkdf_salt: kdfParams.hkdfSalt,
-      },
-    };
+        hkdf_salt: kdfParams.hkdfSalt
+      }
+    }
   } catch (error) {
-    logError("User registration failed", error);
-    throw new Error("Failed to register user");
+    logError('User registration failed', error)
+    throw new Error('Failed to register user')
   }
-};
+}
 
 /**
  * Login user and create session
@@ -135,31 +130,30 @@ export const registerUser = async (
 export const loginUser = async (
   input: LoginUserInput
 ): Promise<LoginUserOutput> => {
-  const { login, password } = input;
+  const { login, password } = input
 
   // Lookup user by login
-  const user = await userRepository.findUserByLogin(login);
+  const user = await userRepository.findUserByLogin(login)
   if (!user) {
-    throw createUnauthorizedError();
+    throw createUnauthorizedError()
   }
 
   // Verify password (constant-time compare via Argon2id)
-  const isValid = await verifyPassword(user.authHash, password);
+  const isValid = await verifyPassword(user.authHash, password)
   if (!isValid) {
-    // Log failed attempt (no sensitive data)
-    console.log(`Login failed for user: ${user.userId}`);
-    throw createUnauthorizedError();
+    console.log(`Login failed for user: ${user.userId}`)
+    throw createUnauthorizedError()
   }
 
   // Generate session ID and JWT ID
-  const sessionId = `s_${nanoid(21)}`;
-  const jwtId = `jti_${nanoid(21)}`;
+  const sessionId = `s_${nanoid(21)}`
+  const jwtId = `jti_${nanoid(21)}`
 
   // Calculate expiration
-  const expiresAt = getExpirationTimestamp();
+  const expiresAt = getExpirationTimestamp()
 
   // Generate JWT token
-  const token = await generateToken(user.userId, jwtId);
+  const token = await generateToken(user.userId, jwtId)
 
   // Create session record
   try {
@@ -168,11 +162,10 @@ export const loginUser = async (
       userId: user.userId,
       jwtId,
       expiresAt,
-      createdAt: Date.now(),
-    });
+      createdAt: Date.now()
+    })
 
-    // Log successful login (no sensitive data)
-    console.log(`User logged in successfully: ${user.userId}`);
+    console.log(`User logged in successfully: ${user.userId}`)
 
     // Return session info and KDF parameters
     return {
@@ -180,13 +173,13 @@ export const loginUser = async (
       token,
       expires_at: expiresAt,
       kdf: formatKdfParams(user),
-      wrapped_mk: formatWrappedMk(user),
-    };
+      wrapped_mk: formatWrappedMk(user)
+    }
   } catch (error) {
-    logError("Session creation failed", error);
-    throw new Error("Failed to create session");
+    logError('Session creation failed', error)
+    throw new Error('Failed to create session')
   }
-};
+}
 
 /**
  * Logout user and revoke session
@@ -196,15 +189,14 @@ export const loginUser = async (
 export const logoutUser = async (jwtId: string): Promise<void> => {
   try {
     // Revoke the session by JWT ID
-    await sessionRepository.revokeSessionByJwtId(jwtId);
+    await sessionRepository.revokeSessionByJwtId(jwtId)
 
-    // Log successful logout (no sensitive data)
-    console.log(`Session revoked: ${jwtId}`);
+    console.log(`Session revoked: ${jwtId}`)
   } catch (error) {
-    logError("Session revocation failed", error);
-    throw new Error("Failed to revoke session");
+    logError('Session revocation failed', error)
+    throw new Error('Failed to revoke session')
   }
-};
+}
 
 /**
  * Refresh session token and extend expiration
@@ -218,41 +210,40 @@ export const refreshSession = async (
   jwtId: string
 ): Promise<RefreshSessionOutput> => {
   // Get current session
-  const session = await sessionRepository.findSessionByJwtId(jwtId);
+  const session = await sessionRepository.findSessionByJwtId(jwtId)
 
   if (!session) {
-    throw createUnauthorizedError();
+    throw createUnauthorizedError()
   }
 
   if (session.revokedAt !== null) {
-    throw createUnauthorizedError();
+    throw createUnauthorizedError()
   }
 
   // Check if session has already expired
   if (session.expiresAt < Date.now()) {
-    throw createUnauthorizedError();
+    throw createUnauthorizedError()
   }
 
   // Calculate new expiration (extend by configured JWT expiration time)
-  const newExpiresAt = getExpirationTimestamp();
+  const newExpiresAt = getExpirationTimestamp()
 
   // Generate new JWT token with same jwtId and userId
   // This allows seamless refresh without creating a new session
-  const token = await generateToken(session.userId, jwtId);
+  const token = await generateToken(session.userId, jwtId)
 
   // Update session expiration in database
   try {
-    await sessionRepository.updateSessionExpiration(jwtId, newExpiresAt);
+    await sessionRepository.updateSessionExpiration(jwtId, newExpiresAt)
 
-    // Log successful refresh (no sensitive data)
-    console.log(`Session refreshed: ${jwtId}`);
+    console.log(`Session refreshed: ${jwtId}`)
 
     return {
       token,
-      expiresAt: newExpiresAt,
-    };
+      expiresAt: newExpiresAt
+    }
   } catch (error) {
-    logError("Session refresh failed", error);
-    throw new Error("Failed to refresh session");
+    logError('Session refresh failed', error)
+    throw new Error('Failed to refresh session')
   }
-};
+}

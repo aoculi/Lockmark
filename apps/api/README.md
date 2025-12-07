@@ -4,17 +4,17 @@ LockMark API is a Bun + Hono service that stores only ciphertext for the LockMar
 
 ## What this service provides
 
--   Local-only by default (`127.0.0.1:3500`)
--   JWT sessions with revocation + 1h expiry
--   Rate-limited auth endpoints (5 attempts/min per IP and per login)
--   Optimistic concurrency with ETags/If-Match on manifests and items
--   Zero plaintext storage: encrypted manifest/items, wrapped master key, Argon2id password hashes, salts, and metadata only
+- Local-only by default (`127.0.0.1:3500`)
+- JWT sessions with revocation + 1h expiry
+- Rate-limited auth endpoints (5 attempts/min per IP and per login)
+- Optimistic concurrency with ETags/If-Match on manifests and items
+- Zero plaintext storage: encrypted manifest/items, wrapped master key, Argon2id password hashes, salts, and metadata only
 
 ## Requirements
 
--   Bun (runtime + package manager)
--   SQLite (file-based; `sqlite.db` by default)
--   Optional: pnpm if you prefer workspace installs from the repo root
+- Bun (runtime + package manager)
+- SQLite (file-based; `sqlite.db` by default)
+- Optional: pnpm if you prefer workspace installs from the repo root
 
 ## Quick start (from `apps/api`)
 
@@ -63,20 +63,20 @@ bun test                  # run test suite
 
 ## Data & storage model (zero-knowledge)
 
--   `users`: Argon2id password hash (auth), client KDF/HKDF salts, wrapped master key blob
--   `sessions`: JWT jti mapping with expiry/revocation
--   `vaults` + `manifests`: encrypted manifest blob with ETag + version
--   `bookmarks`, `tags`, `bookmark_tags`: encrypted items, per-item DEK wrapped and versioned
+- `users`: Argon2id password hash (auth), client KDF/HKDF salts, wrapped master key blob
+- `sessions`: JWT jti mapping with expiry/revocation
+- `vaults` + `manifests`: encrypted manifest blob with ETag + version
+- `bookmarks`, `tags`, `bookmark_tags`: encrypted items, per-item DEK wrapped and versioned
 
 All bookmark/tag data and manifests are base64-validated, size-bounded (manifest 5 MB, item 64 KB), and stored as ciphertext only.
 
 ## Security notes
 
--   Auth hashing: Argon2id (server-side) for password verification
--   Client KDF: Argon2id (512 MiB, 3 iters) → UEK; master key wrapped client-side
--   Transport surface: binds to loopback by default; adjust `HOST`/`PORT` to expose
--   Rate limiting: auth endpoints limited per IP and per login; refresh limited per user
--   JWT: HS256, 1h default, must correspond to a non-revoked session in DB
+- Auth hashing: Argon2id (server-side) for password verification
+- Client KDF: Argon2id (512 MiB, 3 iters) → UEK; master key wrapped client-side
+- Transport surface: binds to loopback by default; adjust `HOST`/`PORT` to expose
+- Rate limiting: auth endpoints limited per IP and per login; refresh limited per user
+- JWT: HS256, 1h default, must correspond to a non-revoked session in DB
 
 ## Example usage (manual)
 

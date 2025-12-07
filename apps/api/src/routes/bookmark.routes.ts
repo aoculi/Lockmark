@@ -1,70 +1,61 @@
 // Bookmark routes - handles /bookmarks endpoints
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import { z } from "zod";
-import { createValidationErrorHandler } from "../libs/validation";
-import { requireAuth } from "../middleware/auth.middleware";
-import { listTagsForBookmark } from "../services/bookmark-tag.service";
+import { zValidator } from '@hono/zod-validator'
+import { Hono } from 'hono'
+import { z } from 'zod'
+import { createValidationErrorHandler } from '../libs/validation'
+import { requireAuth } from '../middleware/auth.middleware'
+import { listTagsForBookmark } from '../services/bookmark-tag.service'
 import {
   createBookmark,
   deleteBookmark,
   getBookmark,
   listBookmarks,
-  updateBookmark,
-} from "../services/bookmark.service";
+  updateBookmark
+} from '../services/bookmark.service'
 
-const bookmarksRouter = new Hono();
+const bookmarksRouter = new Hono()
 
-export type AppType = typeof bookmarksRouter;
+export type AppType = typeof bookmarksRouter
 
 // Validation schema for POST /bookmarks
 const createBookmarkSchema = z.object({
-  item_id: z.string().min(1, "item_id is required"),
-  nonce_content: z.string().min(1, "nonce_content is required"),
-  ciphertext_content: z.string().min(1, "ciphertext_content is required"),
-  nonce_wrap: z.string().min(1, "nonce_wrap is required"),
-  dek_wrapped: z.string().min(1, "dek_wrapped is required"),
-  size: z.number().int().nonnegative("size must be non-negative"),
+  item_id: z.string().min(1, 'item_id is required'),
+  nonce_content: z.string().min(1, 'nonce_content is required'),
+  ciphertext_content: z.string().min(1, 'ciphertext_content is required'),
+  nonce_wrap: z.string().min(1, 'nonce_wrap is required'),
+  dek_wrapped: z.string().min(1, 'dek_wrapped is required'),
+  size: z.number().int().nonnegative('size must be non-negative'),
   created_at: z
     .number()
     .int()
-    .positive("created_at must be a positive integer"),
-  updated_at: z
-    .number()
-    .int()
-    .positive("updated_at must be a positive integer"),
-});
+    .positive('created_at must be a positive integer'),
+  updated_at: z.number().int().positive('updated_at must be a positive integer')
+})
 
 // Validation schema for PUT /bookmarks/:id
 const updateBookmarkSchema = z.object({
-  version: z.number().int().positive("version must be a positive integer"),
-  nonce_content: z.string().min(1, "nonce_content is required"),
-  ciphertext_content: z.string().min(1, "ciphertext_content is required"),
-  nonce_wrap: z.string().min(1, "nonce_wrap is required"),
-  dek_wrapped: z.string().min(1, "dek_wrapped is required"),
-  size: z.number().int().nonnegative("size must be non-negative"),
-  updated_at: z
-    .number()
-    .int()
-    .positive("updated_at must be a positive integer"),
-});
+  version: z.number().int().positive('version must be a positive integer'),
+  nonce_content: z.string().min(1, 'nonce_content is required'),
+  ciphertext_content: z.string().min(1, 'ciphertext_content is required'),
+  nonce_wrap: z.string().min(1, 'nonce_wrap is required'),
+  dek_wrapped: z.string().min(1, 'dek_wrapped is required'),
+  size: z.number().int().nonnegative('size must be non-negative'),
+  updated_at: z.number().int().positive('updated_at must be a positive integer')
+})
 
 // Validation schema for DELETE /bookmarks/:id
 const deleteBookmarkSchema = z.object({
-  version: z.number().int().positive("version must be a positive integer"),
-  deleted_at: z
-    .number()
-    .int()
-    .positive("deleted_at must be a positive integer"),
-});
+  version: z.number().int().positive('version must be a positive integer'),
+  deleted_at: z.number().int().positive('deleted_at must be a positive integer')
+})
 
 // Validation schema for GET /bookmarks (query parameters)
 const listBookmarksSchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   includeDeleted: z.coerce.boolean().optional().default(false),
-  updatedAfter: z.coerce.number().int().positive().optional(),
-});
+  updatedAfter: z.coerce.number().int().positive().optional()
+})
 
 /**
  * GET /bookmarks
@@ -108,48 +99,48 @@ const listBookmarksSchema = z.object({
  *   - 500: Server error
  */
 bookmarksRouter.get(
-  "/",
+  '/',
   requireAuth,
-  zValidator("query", listBookmarksSchema, createValidationErrorHandler()),
+  zValidator('query', listBookmarksSchema, createValidationErrorHandler()),
   async (c) => {
     try {
       // Get user ID from authenticated context
-      const userId = (c.req.raw as any).userId as string;
+      const userId = (c.req.raw as any).userId as string
 
       // Get validated query parameters
-      const query = c.req.valid("query");
+      const query = c.req.valid('query')
 
       // List bookmarks
-      const result = await listBookmarks(userId, query);
+      const result = await listBookmarks(userId, query)
 
       // Return paginated list
-      return c.json(result, 200);
+      return c.json(result, 200)
     } catch (error) {
       // Handle known errors
       if (error instanceof Error) {
-        if (error.name === "ValidationError") {
+        if (error.name === 'ValidationError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             400
-          );
+          )
         }
 
         // Log unexpected errors (no sensitive data)
-        console.error("List bookmarks error:", error.message);
+        console.error('List bookmarks error:', error.message)
       }
 
       // Generic server error response
       return c.json(
         {
-          error: "Internal server error",
+          error: 'Internal server error'
         },
         500
-      );
+      )
     }
   }
-);
+)
 
 /**
  * POST /bookmarks
@@ -192,75 +183,75 @@ bookmarksRouter.get(
  *   - 500: Server error
  */
 bookmarksRouter.post(
-  "/",
+  '/',
   requireAuth,
-  zValidator("json", createBookmarkSchema, createValidationErrorHandler()),
+  zValidator('json', createBookmarkSchema, createValidationErrorHandler()),
   async (c) => {
     try {
       // Get user ID from authenticated context (attached by middleware)
-      const userId = (c.req.raw as any).userId as string;
+      const userId = (c.req.raw as any).userId as string
 
       // Get validated request body
-      const body = c.req.valid("json");
+      const body = c.req.valid('json')
 
       // Create bookmark
-      const result = await createBookmark(userId, body);
+      const result = await createBookmark(userId, body)
 
       // Return 201 Created
-      return c.json(result, 201);
+      return c.json(result, 201)
     } catch (error) {
       // Handle known errors
       if (error instanceof Error) {
-        if (error.name === "ValidationError") {
+        if (error.name === 'ValidationError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             400
-          );
+          )
         }
 
-        if (error.name === "NotFoundError") {
+        if (error.name === 'NotFoundError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             404
-          );
+          )
         }
 
-        if (error.name === "ConflictError") {
+        if (error.name === 'ConflictError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             409
-          );
+          )
         }
 
-        if (error.name === "PayloadTooLargeError") {
+        if (error.name === 'PayloadTooLargeError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             413
-          );
+          )
         }
 
         // Log unexpected errors (no sensitive data)
-        console.error("Create bookmark error:", error.message);
+        console.error('Create bookmark error:', error.message)
       }
 
       // Generic server error response
       return c.json(
         {
-          error: "Internal server error",
+          error: 'Internal server error'
         },
         500
-      );
+      )
     }
   }
-);
+)
 
 /**
  * GET /bookmarks/:id
@@ -293,44 +284,44 @@ bookmarksRouter.post(
  *   - 404: Bookmark not found or vault not found
  *   - 500: Server error
  */
-bookmarksRouter.get("/:id", requireAuth, async (c) => {
+bookmarksRouter.get('/:id', requireAuth, async (c) => {
   try {
     // Get user ID from authenticated context
-    const userId = (c.req.raw as any).userId as string;
+    const userId = (c.req.raw as any).userId as string
 
     // Get item_id from URL parameter
-    const itemId = c.req.param("id");
+    const itemId = c.req.param('id')
 
     // Fetch bookmark
-    const bookmark = await getBookmark(userId, itemId);
+    const bookmark = await getBookmark(userId, itemId)
 
     // Return bookmark data
-    return c.json(bookmark, 200);
+    return c.json(bookmark, 200)
   } catch (error) {
     // Handle known errors
     if (error instanceof Error) {
-      if (error.name === "NotFoundError") {
+      if (error.name === 'NotFoundError') {
         return c.json(
           {
-            error: error.message,
+            error: error.message
           },
           404
-        );
+        )
       }
 
       // Log unexpected errors (no sensitive data)
-      console.error("Get bookmark error:", error.message);
+      console.error('Get bookmark error:', error.message)
     }
 
     // Generic server error response
     return c.json(
       {
-        error: "Internal server error",
+        error: 'Internal server error'
       },
       500
-    );
+    )
   }
-});
+})
 
 /**
  * GET /bookmarks/:id/tags
@@ -349,24 +340,24 @@ bookmarksRouter.get("/:id", requireAuth, async (c) => {
  *   - 401: Unauthorized
  *   - 404: Bookmark not found or vault not found
  */
-bookmarksRouter.get("/:id/tags", requireAuth, async (c) => {
+bookmarksRouter.get('/:id/tags', requireAuth, async (c) => {
   try {
-    const userId = (c.req.raw as any).userId as string;
-    const itemId = c.req.param("id");
+    const userId = (c.req.raw as any).userId as string
+    const itemId = c.req.param('id')
 
-    const result = await listTagsForBookmark(userId, itemId);
-    return c.json(result, 200);
+    const result = await listTagsForBookmark(userId, itemId)
+    return c.json(result, 200)
   } catch (error) {
-    if (error instanceof Error && error.name === "NotFoundError") {
-      return c.json({ error: error.message }, 404);
+    if (error instanceof Error && error.name === 'NotFoundError') {
+      return c.json({ error: error.message }, 404)
     }
     console.error(
-      "List tags for bookmark error:",
-      error instanceof Error ? error.message : "Unknown error"
-    );
-    return c.json({ error: "Internal server error" }, 500);
+      'List tags for bookmark error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    )
+    return c.json({ error: 'Internal server error' }, 500)
   }
-});
+})
 
 /**
  * PUT /bookmarks/:id
@@ -409,81 +400,81 @@ bookmarksRouter.get("/:id/tags", requireAuth, async (c) => {
  *   - 500: Server error
  */
 bookmarksRouter.put(
-  "/:id",
+  '/:id',
   requireAuth,
-  zValidator("json", updateBookmarkSchema, createValidationErrorHandler()),
+  zValidator('json', updateBookmarkSchema, createValidationErrorHandler()),
   async (c) => {
     try {
       // Get user ID from authenticated context
-      const userId = (c.req.raw as any).userId as string;
+      const userId = (c.req.raw as any).userId as string
 
       // Get item_id from URL parameter
-      const itemId = c.req.param("id");
+      const itemId = c.req.param('id')
 
       // Get validated request body
-      const body = c.req.valid("json");
+      const body = c.req.valid('json')
 
       // Get If-Match header
-      const ifMatch = c.req.header("If-Match");
+      const ifMatch = c.req.header('If-Match')
 
       // Update bookmark
-      const result = await updateBookmark(userId, itemId, body, ifMatch);
+      const result = await updateBookmark(userId, itemId, body, ifMatch)
 
       // Return 200 OK
-      return c.json(result, 200);
+      return c.json(result, 200)
     } catch (error) {
       // Handle known errors
       if (error instanceof Error) {
-        if (error.name === "ValidationError") {
+        if (error.name === 'ValidationError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             400
-          );
+          )
         }
 
-        if (error.name === "NotFoundError") {
+        if (error.name === 'NotFoundError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             404
-          );
+          )
         }
 
-        if (error.name === "ConflictError") {
+        if (error.name === 'ConflictError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             409
-          );
+          )
         }
 
-        if (error.name === "PayloadTooLargeError") {
+        if (error.name === 'PayloadTooLargeError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             413
-          );
+          )
         }
 
         // Log unexpected errors (no sensitive data)
-        console.error("Update bookmark error:", error.message);
+        console.error('Update bookmark error:', error.message)
       }
 
       // Generic server error response
       return c.json(
         {
-          error: "Internal server error",
+          error: 'Internal server error'
         },
         500
-      );
+      )
     }
   }
-);
+)
 
 /**
  * DELETE /bookmarks/:id
@@ -519,62 +510,62 @@ bookmarksRouter.put(
  *   - 500: Server error
  */
 bookmarksRouter.delete(
-  "/:id",
+  '/:id',
   requireAuth,
-  zValidator("json", deleteBookmarkSchema, createValidationErrorHandler()),
+  zValidator('json', deleteBookmarkSchema, createValidationErrorHandler()),
   async (c) => {
     try {
       // Get user ID from authenticated context
-      const userId = (c.req.raw as any).userId as string;
+      const userId = (c.req.raw as any).userId as string
 
       // Get item_id from URL parameter
-      const itemId = c.req.param("id");
+      const itemId = c.req.param('id')
 
       // Get validated request body
-      const body = c.req.valid("json");
+      const body = c.req.valid('json')
 
       // Get If-Match header
-      const ifMatch = c.req.header("If-Match");
+      const ifMatch = c.req.header('If-Match')
 
       // Delete bookmark (soft delete)
-      const result = await deleteBookmark(userId, itemId, body, ifMatch);
+      const result = await deleteBookmark(userId, itemId, body, ifMatch)
 
       // Return 200 OK
-      return c.json(result, 200);
+      return c.json(result, 200)
     } catch (error) {
       // Handle known errors
       if (error instanceof Error) {
-        if (error.name === "NotFoundError") {
+        if (error.name === 'NotFoundError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             404
-          );
+          )
         }
 
-        if (error.name === "ConflictError") {
+        if (error.name === 'ConflictError') {
           return c.json(
             {
-              error: error.message,
+              error: error.message
             },
             409
-          );
+          )
         }
 
         // Log unexpected errors (no sensitive data)
-        console.error("Delete bookmark error:", error.message);
+        console.error('Delete bookmark error:', error.message)
       }
 
       // Generic server error response
       return c.json(
         {
-          error: "Internal server error",
+          error: 'Internal server error'
         },
         500
-      );
+      )
     }
   }
-);
+)
 
-export default bookmarksRouter;
+export default bookmarksRouter

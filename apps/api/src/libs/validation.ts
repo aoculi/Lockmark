@@ -1,12 +1,12 @@
 // Zod validation utilities for consistent error handling across routes
-import { ZodError } from 'zod';
+import { ZodError } from 'zod'
 
 /**
  * Interface for formatted validation errors
  */
 interface ValidationErrorResponse {
-    error: string;
-    details: Record<string, string[]>;
+  error: string
+  details: Record<string, string[]>
 }
 
 /**
@@ -16,23 +16,23 @@ interface ValidationErrorResponse {
  * @returns Formatted error response object
  */
 function formatValidationError(
-    error: ZodError,
-    customErrorMessage: string = 'Invalid input'
+  error: ZodError,
+  customErrorMessage: string = 'Invalid input'
 ): ValidationErrorResponse {
-    const fieldErrors: Record<string, string[]> = {};
+  const fieldErrors: Record<string, string[]> = {}
 
-    for (const issue of error.issues) {
-        const path = issue.path.join('.');
-        if (!fieldErrors[path]) {
-            fieldErrors[path] = [];
-        }
-        fieldErrors[path].push(issue.message);
+  for (const issue of error.issues) {
+    const path = issue.path.join('.')
+    if (!fieldErrors[path]) {
+      fieldErrors[path] = []
     }
+    fieldErrors[path].push(issue.message)
+  }
 
-    return {
-        error: customErrorMessage,
-        details: fieldErrors,
-    };
+  return {
+    error: customErrorMessage,
+    details: fieldErrors
+  }
 }
 
 /**
@@ -41,10 +41,13 @@ function formatValidationError(
  * @returns Error handler function for zValidator
  */
 export function createValidationErrorHandler(customErrorMessage?: string) {
-    return (result: any, c: any) => {
-        if (!result.success) {
-            const formattedError = formatValidationError(result.error, customErrorMessage);
-            return c.json(formattedError, 400);
-        }
-    };
+  return (result: any, c: any) => {
+    if (!result.success) {
+      const formattedError = formatValidationError(
+        result.error,
+        customErrorMessage
+      )
+      return c.json(formattedError, 400)
+    }
+  }
 }

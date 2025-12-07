@@ -11,6 +11,7 @@
     "db:deploy:prod": "bun run db:generate:prod && bun run db:migrate:prod",
     "dev": "bun run --hot src/index.ts",
     "generate:secret": "bun run scripts/generate-jwt-secret.ts",
+    "format": "bunx prettier --write \"{scripts,src,tests}/**/*.{ts,tsx,js,jsx,json}\"",
     "test": "bun test",
     "test:watch": "bun test --watch"
   },
@@ -28,6 +29,7 @@
     "@types/bun": "latest",
     "@types/node": "^24.9.1",
     "drizzle-kit": "^0.31.5",
+    "prettier": "^3.7.4",
     "vitest": "^4.0.4"
   }
 }
