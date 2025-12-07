@@ -2,43 +2,43 @@
  * Session management for background script
  */
 
-import { broadcastSessionUpdated, broadcastSessionCleared } from "./broadcast";
+import { broadcastSessionCleared, broadcastSessionUpdated } from './broadcast'
 
 export interface Session {
-  token: string;
-  userId: string;
-  expiresAt: number;
+  token: string
+  userId: string
+  expiresAt: number
 }
 
 export class SessionManager {
-  private session: Session | null = null;
-  private onSessionSetCallback?: (session: Session) => void;
+  private session: Session | null = null
+  private onSessionSetCallback?: (session: Session) => void
 
   /**
    * Set callback to be called when session is set
    * Used for auto-lock timer reset
    */
   setOnSessionSetCallback(callback: (session: Session) => void): void {
-    this.onSessionSetCallback = callback;
+    this.onSessionSetCallback = callback
   }
 
   /**
    * Get current session
    */
   getSession(): Session | null {
-    return this.session;
+    return this.session
   }
 
   /**
    * Set session and broadcast update
    */
   setSession(session: Session): void {
-    this.session = session;
-    broadcastSessionUpdated(session.userId, session.expiresAt);
+    this.session = session
+    broadcastSessionUpdated(session.userId, session.expiresAt)
 
     // Notify callback if set (for auto-lock timer reset)
     if (this.onSessionSetCallback) {
-      this.onSessionSetCallback(session);
+      this.onSessionSetCallback(session)
     }
   }
 
@@ -46,14 +46,14 @@ export class SessionManager {
    * Clear session and broadcast
    */
   clearSession(): void {
-    this.session = null;
-    broadcastSessionCleared();
+    this.session = null
+    broadcastSessionCleared()
   }
 
   /**
    * Check if session exists
    */
   hasSession(): boolean {
-    return this.session !== null;
+    return this.session !== null
   }
 }

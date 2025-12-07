@@ -1,23 +1,23 @@
-import { KeyRound, Loader2, Mail } from "lucide-react";
+import { KeyRound, Loader2, Mail } from 'lucide-react'
 
-import { useRegisterAndLogin } from "@/entrypoints/components/hooks/auth";
-import { useAuthForm } from "@/entrypoints/components/hooks/useAuthForm";
-import Menu from "@/entrypoints/components/parts/Menu";
-import Button from "@/entrypoints/components/ui/Button";
-import ErrorCallout from "@/entrypoints/components/ui/ErrorCallout";
-import Input from "@/entrypoints/components/ui/Input";
-import Text from "@/entrypoints/components/ui/Text";
-import { useNavigation } from "..";
+import { useRegisterAndLogin } from '@/entrypoints/components/hooks/auth'
+import { useAuthForm } from '@/entrypoints/components/hooks/useAuthForm'
+import Menu from '@/entrypoints/components/parts/Menu'
+import Button from '@/entrypoints/components/ui/Button'
+import ErrorCallout from '@/entrypoints/components/ui/ErrorCallout'
+import Input from '@/entrypoints/components/ui/Input'
+import Text from '@/entrypoints/components/ui/Text'
+import { useNavigation } from '..'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 interface RegisterProps {
-  onRegisterSuccess: () => void;
+  onRegisterSuccess: () => void
 }
 
 export default function Register({ onRegisterSuccess }: RegisterProps) {
-  const registerMutation = useRegisterAndLogin();
-  const { navigate } = useNavigation();
+  const registerMutation = useRegisterAndLogin()
+  const { navigate } = useNavigation()
 
   const {
     formData,
@@ -26,11 +26,11 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
     initializing,
     disabled,
     handleSubmit,
-    handleChange,
+    handleChange
   } = useAuthForm({
     onSuccess: onRegisterSuccess,
-    mutation: registerMutation,
-  });
+    mutation: registerMutation
+  })
 
   return (
     <div className={styles.container}>
@@ -41,7 +41,7 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
       </div>
 
       <div className={styles.content}>
-        <Text as="h1" size="6" weight="medium">
+        <Text as='h1' size='6' weight='medium'>
           LockMark
         </Text>
 
@@ -49,9 +49,9 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <Input
-            size="lg"
-            placeholder="Email or username"
-            name="login"
+            size='lg'
+            placeholder='Email or username'
+            name='login'
             value={formData.login}
             onChange={handleChange}
             disabled={registerMutation.isPending}
@@ -61,10 +61,10 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
           </Input>
 
           <Input
-            size="lg"
-            placeholder="Password"
-            type="password"
-            name="password"
+            size='lg'
+            placeholder='Password'
+            type='password'
+            name='password'
             value={formData.password}
             onChange={handleChange}
             disabled={registerMutation.isPending}
@@ -75,19 +75,19 @@ export default function Register({ onRegisterSuccess }: RegisterProps) {
           <Button disabled={disabled}>
             {initializing && <Loader2 className={styles.spinner} />}
             {isInitializing
-              ? "Initializing..."
+              ? 'Initializing...'
               : registerMutation.isPending
-              ? "Creating account..."
-              : "Create Account"}
+                ? 'Creating account...'
+                : 'Create Account'}
           </Button>
         </form>
 
         <div className={styles.loginLink}>
-          <Button variant="ghost" onClick={() => navigate("/login")}>
+          <Button variant='ghost' onClick={() => navigate('/login')}>
             Already have an account? Sign in
           </Button>
         </div>
       </div>
     </div>
-  );
+  )
 }

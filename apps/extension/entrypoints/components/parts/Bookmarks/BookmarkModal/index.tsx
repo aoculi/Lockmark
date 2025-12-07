@@ -1,14 +1,14 @@
-import { Loader2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-import Button from "@/entrypoints/components/ui/Button";
-import { Drawer } from "@/entrypoints/components/ui/Drawer";
-import Input from "@/entrypoints/components/ui/Input";
-import { TagSelectorField } from "@/entrypoints/components/ui/TagSelectorField";
-import type { Bookmark, Tag } from "@/entrypoints/lib/types";
-import { MAX_TAGS_PER_ITEM } from "@/entrypoints/lib/validation";
+import Button from '@/entrypoints/components/ui/Button'
+import { Drawer } from '@/entrypoints/components/ui/Drawer'
+import Input from '@/entrypoints/components/ui/Input'
+import { TagSelectorField } from '@/entrypoints/components/ui/TagSelectorField'
+import type { Bookmark, Tag } from '@/entrypoints/lib/types'
+import { MAX_TAGS_PER_ITEM } from '@/entrypoints/lib/validation'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 export const BookmarkModal = ({
   isOpen,
@@ -16,93 +16,93 @@ export const BookmarkModal = ({
   onClose,
   onSave,
   tags,
-  tmp,
+  tmp
 }: {
-  isOpen: boolean;
-  bookmark: Bookmark | null;
-  onClose: () => void;
+  isOpen: boolean
+  bookmark: Bookmark | null
+  onClose: () => void
   onSave: (data: {
-    url: string;
-    title: string;
-    picture: string;
-    tags: string[];
-  }) => void;
-  tags: Tag[];
-  tmp: Bookmark | null;
+    url: string
+    title: string
+    picture: string
+    tags: string[]
+  }) => void
+  tags: Tag[]
+  tmp: Bookmark | null
 }) => {
-  const [url, setUrl] = useState(bookmark?.url || "");
-  const [title, setTitle] = useState(bookmark?.title || "");
-  const [picture, setPicture] = useState(bookmark?.picture || "");
+  const [url, setUrl] = useState(bookmark?.url || '')
+  const [title, setTitle] = useState(bookmark?.title || '')
+  const [picture, setPicture] = useState(bookmark?.picture || '')
   const [selectedTags, setSelectedTags] = useState<string[]>(
-    bookmark?.tags || [],
-  );
+    bookmark?.tags || []
+  )
 
-  const urlField = useRef<HTMLInputElement>(null);
+  const urlField = useRef<HTMLInputElement>(null)
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(false)
 
   // Update form fields when bookmark prop changes or modal opens
   useEffect(() => {
     if (isOpen) {
       if (tmp) {
-        setUrl(tmp.url);
-        setTitle(tmp.title);
-        setPicture(tmp.picture);
-        setSelectedTags([]);
+        setUrl(tmp.url)
+        setTitle(tmp.title)
+        setPicture(tmp.picture)
+        setSelectedTags([])
       } else {
-        setUrl(bookmark?.url || "");
-        setTitle(bookmark?.title || "");
-        setPicture(bookmark?.picture || "");
-        setSelectedTags(bookmark?.tags || []);
+        setUrl(bookmark?.url || '')
+        setTitle(bookmark?.title || '')
+        setPicture(bookmark?.picture || '')
+        setSelectedTags(bookmark?.tags || [])
       }
-      setErrors({});
-      setIsLoading(false);
+      setErrors({})
+      setIsLoading(false)
       setTimeout(() => {
-        urlField?.current?.focus();
-      }, 0);
+        urlField?.current?.focus()
+      }, 0)
     }
-  }, [isOpen, bookmark]);
+  }, [isOpen, bookmark])
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {}
 
     // URL validation
     if (!url.trim()) {
-      newErrors.url = "URL is required";
+      newErrors.url = 'URL is required'
     } else {
       try {
-        const parsed = new URL(url.trim());
-        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-          newErrors.url = "URL must start with http:// or https://";
+        const parsed = new URL(url.trim())
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          newErrors.url = 'URL must start with http:// or https://'
         }
       } catch {
-        newErrors.url = "Please enter a valid URL";
+        newErrors.url = 'Please enter a valid URL'
       }
     }
 
     // Title validation
     if (!title.trim()) {
-      newErrors.title = "Title is required";
+      newErrors.title = 'Title is required'
     }
 
     // Tags validation
     if (selectedTags.length > MAX_TAGS_PER_ITEM) {
-      newErrors.tags = `Maximum ${MAX_TAGS_PER_ITEM} tags per bookmark`;
+      newErrors.tags = `Maximum ${MAX_TAGS_PER_ITEM} tags per bookmark`
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!validateForm() || isLoading) {
-      return;
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       // Call onSave - wrap in Promise.resolve to handle both sync and async cases
       await Promise.resolve(
@@ -110,77 +110,77 @@ export const BookmarkModal = ({
           url: url.trim(),
           title: title.trim(),
           picture: picture.trim(),
-          tags: selectedTags,
-        }),
-      );
+          tags: selectedTags
+        })
+      )
 
-      onClose();
+      onClose()
     } catch (error) {
       // Error handling is done in parent component
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Check if there are changes and URL is set
   const hasChanges = useMemo(() => {
     if (!url.trim()) {
-      return false;
+      return false
     }
 
     if (!bookmark) {
       // For new bookmarks, there's a change if URL is set
-      return true;
+      return true
     }
 
     // For existing bookmarks, check if any field changed
-    const urlChanged = url.trim() !== bookmark.url;
-    const titleChanged = title.trim() !== bookmark.title;
-    const pictureChanged = picture.trim() !== bookmark.picture;
+    const urlChanged = url.trim() !== bookmark.url
+    const titleChanged = title.trim() !== bookmark.title
+    const pictureChanged = picture.trim() !== bookmark.picture
 
     // Check if tags changed (compare arrays)
     const tagsChanged =
       selectedTags.length !== bookmark.tags.length ||
       selectedTags.some((tag) => !bookmark.tags.includes(tag)) ||
-      bookmark.tags.some((tag) => !selectedTags.includes(tag));
+      bookmark.tags.some((tag) => !selectedTags.includes(tag))
 
-    return urlChanged || titleChanged || pictureChanged || tagsChanged;
-  }, [url, title, picture, selectedTags, bookmark]);
+    return urlChanged || titleChanged || pictureChanged || tagsChanged
+  }, [url, title, picture, selectedTags, bookmark])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <Drawer
-      title={bookmark ? "Edit Bookmark" : "Add Bookmark"}
-      description="Make changes to your bookmark"
+      title={bookmark ? 'Edit Bookmark' : 'Add Bookmark'}
+      description='Make changes to your bookmark'
       open={isOpen}
       onClose={onClose}
     >
       <div className={styles.content}>
-        <Input type="hidden" value={picture} />
+        <Input type='hidden' value={picture} />
         <Input
           error={errors.url}
           ref={urlField}
-          size="lg"
-          type="url"
-          placeholder="https://example.com"
+          size='lg'
+          type='url'
+          placeholder='https://example.com'
           value={url}
           onChange={(e) => {
-            setUrl(e.target.value);
-            if (errors.url) setErrors({ ...errors, url: "" });
+            setUrl(e.target.value)
+            if (errors.url) setErrors({ ...errors, url: '' })
           }}
         />
 
         <Input
           error={errors.title}
-          size="lg"
-          type="text"
+          size='lg'
+          type='text'
           value={title}
           onChange={(e) => {
-            setTitle(e.target.value);
-            if (errors.title) setErrors({ ...errors, title: "" });
+            setTitle(e.target.value)
+            if (errors.title) setErrors({ ...errors, title: '' })
           }}
-          placeholder="Bookmark title"
+          placeholder='Bookmark title'
         />
 
         <TagSelectorField
@@ -197,9 +197,9 @@ export const BookmarkModal = ({
       <div className={styles.actions}>
         <Button onClick={handleSubmit} disabled={!hasChanges || isLoading}>
           {isLoading && <Loader2 className={styles.spinner} />}
-          {bookmark ? "Save" : "Create"}
+          {bookmark ? 'Save' : 'Create'}
         </Button>
       </div>
     </Drawer>
-  );
-};
+  )
+}

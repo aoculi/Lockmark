@@ -1,20 +1,20 @@
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical } from 'lucide-react'
 
-import Button from "@/entrypoints/components/ui/Button";
-import { DropdownMenu } from "@/entrypoints/components/ui/DropdownMenu";
-import Text from "@/entrypoints/components/ui/Text";
-import { getTagName } from "@/entrypoints/lib/bookmarkUtils";
-import { formatDate, getHostname } from "@/entrypoints/lib/utils";
-import type { Bookmark, Tag } from "@/entrypoints/lib/types";
+import Button from '@/entrypoints/components/ui/Button'
+import { DropdownMenu } from '@/entrypoints/components/ui/DropdownMenu'
+import Text from '@/entrypoints/components/ui/Text'
+import { getTagName } from '@/entrypoints/lib/bookmarkUtils'
+import { formatDate, getHostname } from '@/entrypoints/lib/utils'
+import type { Bookmark, Tag } from '@/entrypoints/lib/types'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 type Props = {
-  bookmark: Bookmark;
-  tags: Tag[];
-  onEdit: (bookmark: Bookmark) => void;
-  onDelete: (id: string) => void;
-};
+  bookmark: Bookmark
+  tags: Tag[]
+  onEdit: (bookmark: Bookmark) => void
+  onDelete: (id: string) => void
+}
 
 export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
   return (
@@ -22,8 +22,8 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
       <a
         className={styles.card}
         href={bookmark.url}
-        target="_blank"
-        rel="noopener noreferrer"
+        target='_blank'
+        rel='noopener noreferrer'
       >
         {bookmark.picture && (
           <div className={styles.picture}>
@@ -32,10 +32,10 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
         )}
 
         <div className={styles.content}>
-          <Text size="2" weight="medium" color="white">
-            {bookmark.title || "(Untitled)"}
+          <Text size='2' weight='medium' color='white'>
+            {bookmark.title || '(Untitled)'}
           </Text>
-          <Text size="2" color="light">
+          <Text size='2' color='light'>
             {getHostname(bookmark.url)}
           </Text>
 
@@ -50,10 +50,10 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
             </div>
 
             <Text
-              size="1"
-              color="light"
+              size='1'
+              color='light'
               style={{
-                textAlign: "right",
+                textAlign: 'right'
               }}
             >
               Updated: {formatDate(bookmark.updated_at)}
@@ -64,7 +64,7 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
 
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild className={styles.dropdownMenu}>
-          <Button asIcon={true} color="dark">
+          <Button asIcon={true} color='dark'>
             <EllipsisVertical size={16} />
           </Button>
         </DropdownMenu.Trigger>
@@ -73,11 +73,11 @@ export function BookmarkCard({ bookmark, tags, onEdit, onDelete }: Props) {
             Edit
           </DropdownMenu.Item>
           <DropdownMenu.Separator />
-          <DropdownMenu.Item onClick={() => onDelete(bookmark.id)} color="red">
+          <DropdownMenu.Item onClick={() => onDelete(bookmark.id)} color='red'>
             Delete
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Root>
     </div>
-  );
+  )
 }

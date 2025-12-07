@@ -1,23 +1,23 @@
-import { KeyRound, Loader2, Mail } from "lucide-react";
+import { KeyRound, Loader2, Mail } from 'lucide-react'
 
-import { useLoginAndUnlock } from "@/entrypoints/components/hooks/auth";
-import { useAuthForm } from "@/entrypoints/components/hooks/useAuthForm";
-import Menu from "@/entrypoints/components/parts/Menu";
-import Button from "@/entrypoints/components/ui/Button";
-import ErrorCallout from "@/entrypoints/components/ui/ErrorCallout";
-import Input from "@/entrypoints/components/ui/Input";
-import Text from "@/entrypoints/components/ui/Text";
-import { useNavigation } from "..";
+import { useLoginAndUnlock } from '@/entrypoints/components/hooks/auth'
+import { useAuthForm } from '@/entrypoints/components/hooks/useAuthForm'
+import Menu from '@/entrypoints/components/parts/Menu'
+import Button from '@/entrypoints/components/ui/Button'
+import ErrorCallout from '@/entrypoints/components/ui/ErrorCallout'
+import Input from '@/entrypoints/components/ui/Input'
+import Text from '@/entrypoints/components/ui/Text'
+import { useNavigation } from '..'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: () => void
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
-  const loginMutation = useLoginAndUnlock();
-  const { navigate } = useNavigation();
+  const loginMutation = useLoginAndUnlock()
+  const { navigate } = useNavigation()
 
   const {
     formData,
@@ -26,11 +26,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     initializing,
     disabled,
     handleSubmit,
-    handleChange,
+    handleChange
   } = useAuthForm({
     onSuccess: onLoginSuccess,
-    mutation: loginMutation,
-  });
+    mutation: loginMutation
+  })
 
   return (
     <div className={styles.container}>
@@ -41,7 +41,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       </div>
 
       <div className={styles.content}>
-        <Text as="h1" size="6" weight="medium">
+        <Text as='h1' size='6' weight='medium'>
           LockMark
         </Text>
 
@@ -49,9 +49,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <Input
-            size="lg"
-            placeholder="Email or username"
-            name="login"
+            size='lg'
+            placeholder='Email or username'
+            name='login'
             value={formData.login}
             onChange={handleChange}
             disabled={loginMutation.isPending}
@@ -61,10 +61,10 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           </Input>
 
           <Input
-            size="lg"
-            placeholder="Password"
-            type="password"
-            name="password"
+            size='lg'
+            placeholder='Password'
+            type='password'
+            name='password'
             value={formData.password}
             onChange={handleChange}
             disabled={loginMutation.isPending}
@@ -75,18 +75,18 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           <Button disabled={disabled}>
             {initializing && <Loader2 className={styles.spinner} />}
             {isInitializing
-              ? "Initializing..."
+              ? 'Initializing...'
               : loginMutation.isPending
-              ? "Logging in..."
-              : "Unlock Vault"}
+                ? 'Logging in...'
+                : 'Unlock Vault'}
           </Button>
         </form>
         <div className={styles.registerLink}>
-          <Button variant="ghost" onClick={() => navigate("/register")}>
+          <Button variant='ghost' onClick={() => navigate('/register')}>
             Not registered? Create an account
           </Button>
         </div>
       </div>
     </div>
-  );
+  )
 }

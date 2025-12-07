@@ -1,30 +1,27 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React from "react";
-import ReactDOM from "react-dom/client";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 
-import ErrorBoundary from "@/entrypoints/components/parts/ErrorBoundary";
-import Screens from "@/entrypoints/components/Screens";
+import ErrorBoundary from '@/entrypoints/components/parts/ErrorBoundary'
+import Screens from '@/entrypoints/components/Screens'
 
-import "@/entrypoints/styles/globals.css";
+import '@/entrypoints/styles/globals.css'
 
 // Ensure popup window gets focus when it opens (fixes issue where popup opens behind interface)
 // This is especially important on Linux systems
-if (typeof window !== "undefined") {
-  // Focus immediately
-  window.focus();
+if (typeof window !== 'undefined') {
+  window.focus()
 
-  // Also focus after a short delay to handle race conditions
   setTimeout(() => {
-    window.focus();
-  }, 0);
+    window.focus()
+  }, 0)
 
-  // Focus on any user interaction as a fallback
   const focusHandler = () => {
-    window.focus();
-  };
+    window.focus()
+  }
 
-  window.addEventListener("load", focusHandler);
-  document.addEventListener("DOMContentLoaded", focusHandler);
+  window.addEventListener('load', focusHandler)
+  document.addEventListener('DOMContentLoaded', focusHandler)
 }
 
 const queryClient = new QueryClient({
@@ -37,22 +34,22 @@ const queryClient = new QueryClient({
         _error?: unknown,
         _ctx?: { query?: any }
       ) => {
-        const query = _ctx?.query;
-        const key = query?.queryKey as readonly unknown[];
-        const isAuth = Array.isArray(key) && key[0] === "auth";
+        const query = _ctx?.query
+        const key = query?.queryKey as readonly unknown[]
+        const isAuth = Array.isArray(key) && key[0] === 'auth'
         const isManifest =
-          Array.isArray(key) && key[0] === "vault" && key[1] === "manifest";
-        if (isAuth || isManifest) return false;
-        return failureCount < 3;
-      },
+          Array.isArray(key) && key[0] === 'vault' && key[1] === 'manifest'
+        if (isAuth || isManifest) return false
+        return failureCount < 3
+      }
     },
     mutations: {
-      retry: 0,
-    },
-  },
-});
+      retry: 0
+    }
+  }
+})
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
@@ -60,4 +57,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       </ErrorBoundary>
     </QueryClientProvider>
   </React.StrictMode>
-);
+)

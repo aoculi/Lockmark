@@ -2,141 +2,141 @@
  * Message type definitions for background script communication
  */
 
-import type { AadContext } from "../types";
-import type { Session } from "./session";
-import type { Settings } from "../storage";
-import type { TabInfo } from "../tabUtils";
+import type { AadContext } from '../types'
+import type { Session } from './session'
+import type { Settings } from '../storage'
+import type { TabInfo } from '../tabUtils'
 
 // Base message structure
 export interface BaseMessage {
-  type: string;
-  payload?: any;
+  type: string
+  payload?: any
 }
 
 // Session messages
 export interface SessionGetMessage extends BaseMessage {
-  type: "session:get";
+  type: 'session:get'
 }
 
 export interface SessionGetResponse {
-  ok: boolean;
-  session: Session | null;
+  ok: boolean
+  session: Session | null
 }
 
 export interface SessionSetMessage extends BaseMessage {
-  type: "session:set";
+  type: 'session:set'
   payload: {
-    token: string;
-    userId: string;
-    expiresAt: number;
-  };
+    token: string
+    userId: string
+    expiresAt: number
+  }
 }
 
 export interface SessionSetResponse {
-  ok: boolean;
-  error?: string;
+  ok: boolean
+  error?: string
 }
 
 export interface SessionClearMessage extends BaseMessage {
-  type: "session:clear";
+  type: 'session:clear'
 }
 
 export interface SessionClearResponse {
-  ok: boolean;
+  ok: boolean
 }
 
 // Keystore messages
 export interface KeystoreSetKeysMessage extends BaseMessage {
-  type: "keystore:setKeys";
+  type: 'keystore:setKeys'
   payload: {
-    MK: string; // base64
-    KEK: string; // base64
-    MAK: string; // base64
-    aadContext: AadContext;
-  };
+    MK: string // base64
+    KEK: string // base64
+    MAK: string // base64
+    aadContext: AadContext
+  }
 }
 
 export interface KeystoreSetKeysResponse {
-  ok: boolean;
-  error?: string;
+  ok: boolean
+  error?: string
 }
 
 export interface KeystoreIsUnlockedMessage extends BaseMessage {
-  type: "keystore:isUnlocked";
+  type: 'keystore:isUnlocked'
 }
 
 export interface KeystoreIsUnlockedResponse {
-  ok: boolean;
-  unlocked: boolean;
+  ok: boolean
+  unlocked: boolean
 }
 
 export interface KeystoreZeroizeMessage extends BaseMessage {
-  type: "keystore:zeroize";
+  type: 'keystore:zeroize'
 }
 
 export interface KeystoreZeroizeResponse {
-  ok: boolean;
+  ok: boolean
 }
 
 export interface KeystoreGetMAKMessage extends BaseMessage {
-  type: "keystore:getMAK";
+  type: 'keystore:getMAK'
 }
 
 export interface KeystoreGetMAKResponse {
-  ok: boolean;
-  key?: string; // base64
-  error?: string;
+  ok: boolean
+  key?: string // base64
+  error?: string
 }
 
 export interface KeystoreGetKEKMessage extends BaseMessage {
-  type: "keystore:getKEK";
+  type: 'keystore:getKEK'
 }
 
 export interface KeystoreGetKEKResponse {
-  ok: boolean;
-  key?: string; // base64
-  error?: string;
+  ok: boolean
+  key?: string // base64
+  error?: string
 }
 
 export interface KeystoreGetAadContextMessage extends BaseMessage {
-  type: "keystore:getAadContext";
+  type: 'keystore:getAadContext'
 }
 
 export interface KeystoreGetAadContextResponse {
-  ok: boolean;
-  context: AadContext | null;
+  ok: boolean
+  context: AadContext | null
 }
 
 // Settings messages
 export interface SettingsGetMessage extends BaseMessage {
-  type: "settings:get";
+  type: 'settings:get'
 }
 
 export interface SettingsGetResponse {
-  ok: boolean;
-  settings?: Settings;
-  error?: string;
+  ok: boolean
+  settings?: Settings
+  error?: string
 }
 
 export interface SettingsSetMessage extends BaseMessage {
-  type: "settings:set";
-  payload: Settings;
+  type: 'settings:set'
+  payload: Settings
 }
 
 export interface SettingsSetResponse {
-  ok: boolean;
-  error?: string;
+  ok: boolean
+  error?: string
 }
 
 // Tab messages
 export interface TabsGetCurrentMessage extends BaseMessage {
-  type: "tabs:getCurrent";
+  type: 'tabs:getCurrent'
 }
 
 export interface TabsGetCurrentResponse {
-  ok: boolean;
-  tab?: TabInfo;
-  error?: string;
+  ok: boolean
+  tab?: TabInfo
+  error?: string
 }
 
 // Union type for all messages
@@ -152,7 +152,7 @@ export type BackgroundMessage =
   | KeystoreGetAadContextMessage
   | SettingsGetMessage
   | SettingsSetMessage
-  | TabsGetCurrentMessage;
+  | TabsGetCurrentMessage
 
 // Union type for all responses
 export type BackgroundResponse =
@@ -167,6 +167,4 @@ export type BackgroundResponse =
   | KeystoreGetAadContextResponse
   | SettingsGetResponse
   | SettingsSetResponse
-  | TabsGetCurrentResponse;
-
-
+  | TabsGetCurrentResponse

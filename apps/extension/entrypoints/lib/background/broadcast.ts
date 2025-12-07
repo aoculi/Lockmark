@@ -7,10 +7,10 @@
  * Message types for broadcasting
  */
 export type BroadcastMessage =
-  | { type: "keystore:locked" }
-  | { type: "auth:unauthorized" }
-  | { type: "session:updated"; payload: { userId: string; expiresAt: number } }
-  | { type: "session:cleared" };
+  | { type: 'keystore:locked' }
+  | { type: 'auth:unauthorized' }
+  | { type: 'session:updated'; payload: { userId: string; expiresAt: number } }
+  | { type: 'session:cleared' }
 
 /**
  * Broadcast a message to all extension contexts
@@ -19,7 +19,7 @@ export type BroadcastMessage =
  */
 export function broadcast(message: BroadcastMessage): void {
   try {
-    chrome.runtime.sendMessage(message);
+    chrome.runtime.sendMessage(message)
   } catch (error) {
     // Silently ignore errors (e.g., no listeners)
     // This is expected when popup is closed
@@ -30,14 +30,14 @@ export function broadcast(message: BroadcastMessage): void {
  * Broadcast keystore locked event
  */
 export function broadcastKeystoreLocked(): void {
-  broadcast({ type: "keystore:locked" });
+  broadcast({ type: 'keystore:locked' })
 }
 
 /**
  * Broadcast unauthorized event
  */
 export function broadcastUnauthorized(): void {
-  broadcast({ type: "auth:unauthorized" });
+  broadcast({ type: 'auth:unauthorized' })
 }
 
 /**
@@ -49,12 +49,12 @@ export function broadcastSessionUpdated(
   userId: string,
   expiresAt: number
 ): void {
-  broadcast({ type: "session:updated", payload: { userId, expiresAt } });
+  broadcast({ type: 'session:updated', payload: { userId, expiresAt } })
 }
 
 /**
  * Broadcast session cleared event
  */
 export function broadcastSessionCleared(): void {
-  broadcast({ type: "session:cleared" });
+  broadcast({ type: 'session:cleared' })
 }

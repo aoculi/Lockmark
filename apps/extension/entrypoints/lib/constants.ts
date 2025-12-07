@@ -56,34 +56,34 @@
  */
 
 export const KDF = {
-  algo: "argon2id" as const,
-  opslimit: "MODERATE" as const,
-  memlimit: "MODERATE" as const,
+  algo: 'argon2id' as const,
+  opslimit: 'MODERATE' as const,
+  memlimit: 'MODERATE' as const,
   outLen: 32, // bytes
-  saltLen: 32, // bytes
-};
+  saltLen: 32 // bytes
+}
 
 export const HKDF = {
   saltLen: 16, // bytes - separate salt for HKDF
-  keyLen: 32, // bytes - output key length
-};
+  keyLen: 32 // bytes - output key length
+}
 
 export const AEAD = {
-  algo: "xchacha20poly1305" as const,
-  nonceLen: 24, // bytes
-};
+  algo: 'xchacha20poly1305' as const,
+  nonceLen: 24 // bytes
+}
 
 export const AAD_LABELS = {
-  manifest: "manifest_v1" as const,
-  wmk: "wmk_v1" as const,
-};
+  manifest: 'manifest_v1' as const,
+  wmk: 'wmk_v1' as const
+}
 
 /**
  * Construct AAD string for WMK (Wrapped Master Key)
  * Format: user_id + "|" + vault_id + "|wmk_v1"
  */
 export function constructAadWmk(userId: string, vaultId: string): string {
-  return `${userId}|${vaultId}|wmk_v1`;
+  return `${userId}|${vaultId}|wmk_v1`
 }
 
 /**
@@ -91,22 +91,22 @@ export function constructAadWmk(userId: string, vaultId: string): string {
  * Format: user_id + "|" + vault_id + "|manifest_v1"
  */
 export function constructAadManifest(userId: string, vaultId: string): string {
-  return `${userId}|${vaultId}|manifest_v1`;
+  return `${userId}|${vaultId}|manifest_v1`
 }
 
 export const KEY_DERIVATION = {
-  kek_info: "VAULT/KEK v1",
-  mak_info: "VAULT/MAK v1",
-};
+  kek_info: 'VAULT/KEK v1',
+  mak_info: 'VAULT/MAK v1'
+}
 
 // Storage keys for chrome.storage.local
 export const STORAGE_KEYS = {
-  SETTINGS: "settings",
-} as const;
+  SETTINGS: 'settings'
+} as const
 
 // Auto-lock timer constants
-export const DEFAULT_AUTO_LOCK_TIMEOUT = "20min";
-export const DEFAULT_AUTO_LOCK_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes in milliseconds
+export const DEFAULT_AUTO_LOCK_TIMEOUT = '20min'
+export const DEFAULT_AUTO_LOCK_TIMEOUT_MS = 20 * 60 * 1000 // 20 minutes in milliseconds
 
 // Token refresh constants
-export const MIN_REFRESH_INTERVAL = 60 * 1000; // Minimum 1 minute between refresh attempts
+export const MIN_REFRESH_INTERVAL = 60 * 1000 // Minimum 1 minute between refresh attempts

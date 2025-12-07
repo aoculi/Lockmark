@@ -1,106 +1,106 @@
-import { Loader2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-import Button from "@/entrypoints/components/ui/Button";
-import { Checkbox } from "@/entrypoints/components/ui/Checkbox";
-import { Drawer } from "@/entrypoints/components/ui/Drawer";
-import Input from "@/entrypoints/components/ui/Input";
-import Text from "@/entrypoints/components/ui/Text";
-import type { Tag } from "@/entrypoints/lib/types";
-import { validateTagName } from "@/entrypoints/lib/validation";
+import Button from '@/entrypoints/components/ui/Button'
+import { Checkbox } from '@/entrypoints/components/ui/Checkbox'
+import { Drawer } from '@/entrypoints/components/ui/Drawer'
+import Input from '@/entrypoints/components/ui/Input'
+import Text from '@/entrypoints/components/ui/Text'
+import type { Tag } from '@/entrypoints/lib/types'
+import { validateTagName } from '@/entrypoints/lib/validation'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 export const TagModal = ({
   isOpen,
   tag,
   onClose,
-  onSave,
+  onSave
 }: {
-  isOpen: boolean;
-  tag: Tag | null;
-  onClose: () => void;
-  onSave: (data: { name: string; hidden: boolean }) => void;
+  isOpen: boolean
+  tag: Tag | null
+  onClose: () => void
+  onSave: (data: { name: string; hidden: boolean }) => void
 }) => {
-  const [name, setName] = useState(tag?.name || "");
-  const [hidden, setHidden] = useState(tag?.hidden ?? false);
-  const nameField = useRef<HTMLInputElement>(null);
+  const [name, setName] = useState(tag?.name || '')
+  const [hidden, setHidden] = useState(tag?.hidden ?? false)
+  const nameField = useRef<HTMLInputElement>(null)
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(false)
 
   // Update form fields when tag prop changes or modal opens
   useEffect(() => {
     if (isOpen) {
-      setName(tag?.name || "");
-      setHidden(tag?.hidden ?? false);
-      setErrors({});
-      setIsLoading(false);
+      setName(tag?.name || '')
+      setHidden(tag?.hidden ?? false)
+      setErrors({})
+      setIsLoading(false)
       setTimeout(() => {
-        nameField?.current?.focus();
-      }, 0);
+        nameField?.current?.focus()
+      }, 0)
     }
-  }, [isOpen, tag]);
+  }, [isOpen, tag])
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = {}
 
     // Name validation
-    const validationError = validateTagName(name);
+    const validationError = validateTagName(name)
     if (validationError) {
-      newErrors.name = validationError;
+      newErrors.name = validationError
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!validateForm() || isLoading) {
-      return;
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       // Call onSave - wrap in Promise.resolve to handle both sync and async cases
       await Promise.resolve(
         onSave({
           name: name.trim(),
-          hidden: hidden,
+          hidden: hidden
         })
-      );
+      )
 
-      onClose();
+      onClose()
     } catch (error) {
       // Error handling is done in parent component
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Check if there are changes and name is set
   const hasChanges = useMemo(() => {
     if (!name.trim()) {
-      return false;
+      return false
     }
 
     if (!tag) {
       // For new tags, there's a change if name is set
-      return true;
+      return true
     }
 
     // For existing tags, check if name or hidden changed
-    return name.trim() !== tag.name || hidden !== (tag.hidden ?? false);
-  }, [name, hidden, tag]);
+    return name.trim() !== tag.name || hidden !== (tag.hidden ?? false)
+  }, [name, hidden, tag])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <Drawer
-      title={tag ? "Edit Tag" : "Add Tag"}
-      description={tag ? "Manage tag details" : "Create a new tag"}
+      title={tag ? 'Edit Tag' : 'Add Tag'}
+      description={tag ? 'Manage tag details' : 'Create a new tag'}
       open={isOpen}
       onClose={onClose}
     >
@@ -108,17 +108,17 @@ export const TagModal = ({
         <Input
           ref={nameField}
           error={errors.name}
-          size="lg"
-          type="text"
-          placeholder="Tag name"
+          size='lg'
+          type='text'
+          placeholder='Tag name'
           value={name}
           onChange={(e) => {
-            setName(e.target.value);
-            if (errors.name) setErrors({ ...errors, name: "" });
+            setName(e.target.value)
+            if (errors.name) setErrors({ ...errors, name: '' })
           }}
         />
 
-        <Text as="label" size="2">
+        <Text as='label' size='2'>
           <Checkbox
             checked={hidden}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -132,9 +132,9 @@ export const TagModal = ({
       <div className={styles.actions}>
         <Button onClick={handleSubmit} disabled={!hasChanges || isLoading}>
           {isLoading && <Loader2 className={styles.spinner} />}
-          {tag ? "Save" : "Create"}
+          {tag ? 'Save' : 'Create'}
         </Button>
       </div>
     </Drawer>
-  );
-};
+  )
+}

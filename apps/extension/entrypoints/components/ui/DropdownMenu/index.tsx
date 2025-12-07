@@ -1,9 +1,9 @@
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import React from "react";
+import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
+import React from 'react'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
-const DropdownMenuRoot = DropdownMenuPrimitive.Root;
+const DropdownMenuRoot = DropdownMenuPrimitive.Root
 
 const DropdownMenuTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
@@ -14,8 +14,8 @@ const DropdownMenuTrigger = React.forwardRef<
     className={`${styles.trigger} ${className}`}
     {...props}
   />
-));
-DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
+))
+DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName
 
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
@@ -24,50 +24,52 @@ const DropdownMenuContent = React.forwardRef<
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
-      className={`${styles.content} ${className || ""}`}
+      className={`${styles.content} ${className || ''}`}
       sideOffset={5}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
-));
-DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
+))
+DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
 type DropdownMenuItemPrimitiveProps = React.ComponentPropsWithoutRef<
   typeof DropdownMenuPrimitive.Item
->;
+>
 
-interface DropdownMenuItemProps
-  extends Omit<DropdownMenuItemPrimitiveProps, "onSelect"> {
-  color?: "default" | "red";
-  onClick?: () => void;
-  onSelect?: DropdownMenuItemPrimitiveProps["onSelect"];
+interface DropdownMenuItemProps extends Omit<
+  DropdownMenuItemPrimitiveProps,
+  'onSelect'
+> {
+  color?: 'default' | 'red'
+  onClick?: () => void
+  onSelect?: DropdownMenuItemPrimitiveProps['onSelect']
 }
 
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   DropdownMenuItemProps
->(({ className, color = "default", onClick, onSelect, ...props }, ref) => {
-  const handleSelect: DropdownMenuItemPrimitiveProps["onSelect"] = (event) => {
+>(({ className, color = 'default', onClick, onSelect, ...props }, ref) => {
+  const handleSelect: DropdownMenuItemPrimitiveProps['onSelect'] = (event) => {
     // Call onClick if provided
     if (onClick) {
-      onClick();
+      onClick()
     }
     // Call original onSelect if provided
     if (onSelect) {
-      onSelect(event);
+      onSelect(event)
     }
-  };
+  }
 
   return (
     <DropdownMenuPrimitive.Item
       ref={ref}
-      className={`${styles.item} ${styles[`item-${color}`]} ${className || ""}`}
+      className={`${styles.item} ${styles[`item-${color}`]} ${className || ''}`}
       onSelect={handleSelect}
       {...props}
     />
-  );
-});
-DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
+  )
+})
+DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 const DropdownMenuSeparator = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
@@ -75,11 +77,11 @@ const DropdownMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={`${styles.separator} ${className || ""}`}
+    className={`${styles.separator} ${className || ''}`}
     {...props}
   />
-));
-DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
+))
+DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
 
 // Export as namespace object to match Radix UI themes API
 export const DropdownMenu = {
@@ -87,5 +89,5 @@ export const DropdownMenu = {
   Trigger: DropdownMenuTrigger,
   Content: DropdownMenuContent,
   Item: DropdownMenuItem,
-  Separator: DropdownMenuSeparator,
-};
+  Separator: DropdownMenuSeparator
+}

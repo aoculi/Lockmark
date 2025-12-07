@@ -1,9 +1,9 @@
-import { AlertCircle } from "lucide-react";
+import { AlertCircle } from 'lucide-react'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 interface ErrorCalloutProps {
-  children: string | string[];
+  children: string | string[]
 }
 
 export default function ErrorCallout({ children }: ErrorCalloutProps) {
@@ -24,5 +24,5 @@ export default function ErrorCallout({ children }: ErrorCalloutProps) {
         )}
       </div>
     </div>
-  );
+  )
 }

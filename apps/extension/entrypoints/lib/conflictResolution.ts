@@ -1,44 +1,46 @@
-import type { Bookmark, ManifestV1, Tag } from './types';
+import type { Bookmark, ManifestV1, Tag } from './types'
 
 /**
  * Result of a three-way merge operation
  */
 export type ConflictResolution = {
-    merged: ManifestV1;
-    hasConflicts: boolean;
-    conflicts: string[];
-};
+  merged: ManifestV1
+  hasConflicts: boolean
+  conflicts: string[]
+}
 
 /**
  * Input for three-way merge
  */
 export type ThreeWayMergeInput = {
-    base: ManifestV1;
-    local: ManifestV1;
-    remote: ManifestV1;
-};
+  base: ManifestV1
+  local: ManifestV1
+  remote: ManifestV1
+}
 
 /**
  * Helper to check if all three values are different
  */
 function allDifferent<T>(base: T, local: T, remote: T): boolean {
-    return base !== local && base !== remote && local !== remote;
+  return base !== local && base !== remote && local !== remote
 }
 
 /**
  * Helper to create maps by ID
  */
-function createIdMap<T extends { id: string }>(items: T[] | undefined): Map<string, T> {
-    return new Map((items || []).map(item => [item.id, item]));
+function createIdMap<T extends { id: string }>(
+  items: T[] | undefined
+): Map<string, T> {
+  return new Map((items || []).map((item) => [item.id, item]))
 }
 
 /**
  * Helper to get all unique IDs from multiple maps
  */
 function getAllIds<T>(...maps: Map<string, T>[]): Set<string> {
-    const allIds = new Set<string>();
-    maps.forEach(map => map.forEach((_, id) => allIds.add(id)));
-    return allIds;
+  const allIds = new Set<string>()
+  maps.forEach((map) => map.forEach((_, id) => allIds.add(id)))
+  return allIds
 }
 
 /**
@@ -55,174 +57,174 @@ function getAllIds<T>(...maps: Map<string, T>[]): Set<string> {
  * @returns Merged manifest with conflict information
  */
 export function threeWayMerge(input: ThreeWayMergeInput): ConflictResolution {
-    const { base, local, remote } = input;
-    const conflicts: string[] = [];
-    let hasConflicts = false;
+  const { base, local, remote } = input
+  const conflicts: string[] = []
+  let hasConflicts = false
 
-    // Start with remote as base (prefer remote for conflicts)
-    const merged: ManifestV1 = { ...remote };
+  // Start with remote as base (prefer remote for conflicts)
+  const merged: ManifestV1 = { ...remote }
 
-    // Check version conflicts
-    if (allDifferent(base.version, local.version, remote.version)) {
-        conflicts.push('version');
-        hasConflicts = true;
+  // Check version conflicts
+  if (allDifferent(base.version, local.version, remote.version)) {
+    conflicts.push('version')
+    hasConflicts = true
+  }
+
+  // Check chain_head conflicts
+  if (allDifferent(base.chain_head, local.chain_head, remote.chain_head)) {
+    conflicts.push('chain_head')
+    hasConflicts = true
+  }
+
+  // Merge items (bookmarks) by ID with item-level merge strategy
+  const baseItemMap = createIdMap(base.items)
+  const localItemMap = createIdMap(local.items)
+  const remoteItemMap = createIdMap(remote.items)
+  const allItemIds = getAllIds(baseItemMap, localItemMap, remoteItemMap)
+
+  const mergedItems = new Map<string, Bookmark>()
+
+  // Process each item based on where it appears
+  allItemIds.forEach((id) => {
+    const baseItem = baseItemMap.get(id)
+    const localItem = localItemMap.get(id)
+    const remoteItem = remoteItemMap.get(id)
+
+    const wasInBase = !!baseItem
+    const isInLocal = !!localItem
+    const isInRemote = !!remoteItem
+
+    // New item only in local
+    if (!wasInBase && isInLocal && !isInRemote) {
+      mergedItems.set(id, localItem)
+      return
     }
 
-    // Check chain_head conflicts
-    if (allDifferent(base.chain_head, local.chain_head, remote.chain_head)) {
-        conflicts.push('chain_head');
-        hasConflicts = true;
+    // New item only in remote
+    if (!wasInBase && !isInLocal && isInRemote) {
+      mergedItems.set(id, remoteItem)
+      return
     }
 
-    // Merge items (bookmarks) by ID with item-level merge strategy
-    const baseItemMap = createIdMap(base.items);
-    const localItemMap = createIdMap(local.items);
-    const remoteItemMap = createIdMap(remote.items);
-    const allItemIds = getAllIds(baseItemMap, localItemMap, remoteItemMap);
+    // New item in both (conflict)
+    if (!wasInBase && isInLocal && isInRemote) {
+      mergedItems.set(id, remoteItem)
+      conflicts.push(`item:${id}`)
+      hasConflicts = true
+      return
+    }
 
-    const mergedItems = new Map<string, Bookmark>();
+    // Deleted in remote, kept/modified in local
+    if (wasInBase && isInLocal && !isInRemote) {
+      mergedItems.set(id, localItem)
+      return
+    }
 
-    // Process each item based on where it appears
-    allItemIds.forEach(id => {
-        const baseItem = baseItemMap.get(id);
-        const localItem = localItemMap.get(id);
-        const remoteItem = remoteItemMap.get(id);
+    // Deleted in local, kept/modified in remote
+    if (wasInBase && !isInLocal && isInRemote) {
+      mergedItems.set(id, remoteItem)
+      return
+    }
 
-        const wasInBase = !!baseItem;
-        const isInLocal = !!localItem;
-        const isInRemote = !!remoteItem;
+    // Modified in both - use last-write-wins
+    if (wasInBase && isInLocal && isInRemote) {
+      const localUpdated = localItem.updated_at
+      const remoteUpdated = remoteItem.updated_at
 
-        // New item only in local
-        if (!wasInBase && isInLocal && !isInRemote) {
-            mergedItems.set(id, localItem);
-            return;
-        }
+      if (remoteUpdated >= localUpdated) {
+        mergedItems.set(id, remoteItem)
+      } else {
+        mergedItems.set(id, localItem)
+      }
 
-        // New item only in remote
-        if (!wasInBase && !isInLocal && isInRemote) {
-            mergedItems.set(id, remoteItem);
-            return;
-        }
+      // Mark as conflict if both were modified
+      if (localUpdated !== remoteUpdated) {
+        conflicts.push(`item:${id}`)
+        hasConflicts = true
+      }
+      return
+    }
 
-        // New item in both (conflict)
-        if (!wasInBase && isInLocal && isInRemote) {
-            mergedItems.set(id, remoteItem);
-            conflicts.push(`item:${id}`);
-            hasConflicts = true;
-            return;
-        }
+    // Deleted in both - don't add to merged
+  })
 
-        // Deleted in remote, kept/modified in local
-        if (wasInBase && isInLocal && !isInRemote) {
-            mergedItems.set(id, localItem);
-            return;
-        }
+  merged.items = Array.from(mergedItems.values())
 
-        // Deleted in local, kept/modified in remote
-        if (wasInBase && !isInLocal && isInRemote) {
-            mergedItems.set(id, remoteItem);
-            return;
-        }
+  // Merge tags by ID - union approach
+  const baseTagMap = createIdMap(base.tags)
+  const localTagMap = createIdMap(local.tags)
+  const remoteTagMap = createIdMap(remote.tags)
+  const allTagIds = getAllIds(baseTagMap, localTagMap, remoteTagMap)
 
-        // Modified in both - use last-write-wins
-        if (wasInBase && isInLocal && isInRemote) {
-            const localUpdated = localItem.updated_at;
-            const remoteUpdated = remoteItem.updated_at;
+  const mergedTags = new Map<string, Tag>()
 
-            if (remoteUpdated >= localUpdated) {
-                mergedItems.set(id, remoteItem);
-            } else {
-                mergedItems.set(id, localItem);
-            }
+  allTagIds.forEach((id) => {
+    const baseTag = baseTagMap.get(id)
+    const localTag = localTagMap.get(id)
+    const remoteTag = remoteTagMap.get(id)
 
-            // Mark as conflict if both were modified
-            if (localUpdated !== remoteUpdated) {
-                conflicts.push(`item:${id}`);
-                hasConflicts = true;
-            }
-            return;
-        }
+    const wasInBase = !!baseTag
+    const isInLocal = !!localTag
+    const isInRemote = !!remoteTag
 
-        // Deleted in both - don't add to merged
-    });
+    // New tag only in local
+    if (!wasInBase && isInLocal && !isInRemote) {
+      mergedTags.set(id, localTag)
+      return
+    }
 
-    merged.items = Array.from(mergedItems.values());
+    // New tag only in remote
+    if (!wasInBase && !isInLocal && isInRemote) {
+      mergedTags.set(id, remoteTag)
+      return
+    }
 
-    // Merge tags by ID - union approach
-    const baseTagMap = createIdMap(base.tags);
-    const localTagMap = createIdMap(local.tags);
-    const remoteTagMap = createIdMap(remote.tags);
-    const allTagIds = getAllIds(baseTagMap, localTagMap, remoteTagMap);
+    // New tag in both (conflict)
+    if (!wasInBase && isInLocal && isInRemote) {
+      mergedTags.set(id, remoteTag)
+      conflicts.push(`tag:${id}`)
+      hasConflicts = true
+      return
+    }
 
-    const mergedTags = new Map<string, Tag>();
+    // Deleted in remote, kept/modified in local
+    if (wasInBase && isInLocal && !isInRemote) {
+      mergedTags.set(id, localTag)
+      return
+    }
 
-    allTagIds.forEach(id => {
-        const baseTag = baseTagMap.get(id);
-        const localTag = localTagMap.get(id);
-        const remoteTag = remoteTagMap.get(id);
+    // Deleted in local, kept/modified in remote
+    if (wasInBase && !isInLocal && isInRemote) {
+      mergedTags.set(id, remoteTag)
+      return
+    }
 
-        const wasInBase = !!baseTag;
-        const isInLocal = !!localTag;
-        const isInRemote = !!remoteTag;
+    // Modified in both
+    if (wasInBase && isInLocal && isInRemote) {
+      const localName = localTag.name.toLowerCase()
+      const remoteName = remoteTag.name.toLowerCase()
+      const baseName = baseTag.name.toLowerCase()
 
-        // New tag only in local
-        if (!wasInBase && isInLocal && !isInRemote) {
-            mergedTags.set(id, localTag);
-            return;
-        }
+      // Check for rename collision
+      if (localName !== remoteName && localName !== baseName) {
+        mergedTags.set(id, remoteTag)
+        conflicts.push(`tag:${id}`)
+        hasConflicts = true
+      } else {
+        // No conflict or only remote changed - prefer remote
+        mergedTags.set(id, remoteTag)
+      }
+      return
+    }
 
-        // New tag only in remote
-        if (!wasInBase && !isInLocal && isInRemote) {
-            mergedTags.set(id, remoteTag);
-            return;
-        }
+    // Deleted in both - don't add to merged
+  })
 
-        // New tag in both (conflict)
-        if (!wasInBase && isInLocal && isInRemote) {
-            mergedTags.set(id, remoteTag);
-            conflicts.push(`tag:${id}`);
-            hasConflicts = true;
-            return;
-        }
+  merged.tags = Array.from(mergedTags.values())
 
-        // Deleted in remote, kept/modified in local
-        if (wasInBase && isInLocal && !isInRemote) {
-            mergedTags.set(id, localTag);
-            return;
-        }
-
-        // Deleted in local, kept/modified in remote
-        if (wasInBase && !isInLocal && isInRemote) {
-            mergedTags.set(id, remoteTag);
-            return;
-        }
-
-        // Modified in both
-        if (wasInBase && isInLocal && isInRemote) {
-            const localName = localTag.name.toLowerCase();
-            const remoteName = remoteTag.name.toLowerCase();
-            const baseName = baseTag.name.toLowerCase();
-
-            // Check for rename collision
-            if (localName !== remoteName && localName !== baseName) {
-                mergedTags.set(id, remoteTag);
-                conflicts.push(`tag:${id}`);
-                hasConflicts = true;
-            } else {
-                // No conflict or only remote changed - prefer remote
-                mergedTags.set(id, remoteTag);
-            }
-            return;
-        }
-
-        // Deleted in both - don't add to merged
-    });
-
-    merged.tags = Array.from(mergedTags.values());
-
-    return {
-        merged,
-        hasConflicts,
-        conflicts,
-    };
+  return {
+    merged,
+    hasConflicts,
+    conflicts
+  }
 }

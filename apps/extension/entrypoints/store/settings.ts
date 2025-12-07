@@ -3,18 +3,18 @@
  */
 
 export type AutoLockTimeout =
-  | "1min"
-  | "2min"
-  | "5min"
-  | "10min"
-  | "20min"
-  | "30min"
-  | "1h";
+  | '1min'
+  | '2min'
+  | '5min'
+  | '10min'
+  | '20min'
+  | '30min'
+  | '1h'
 
 interface SettingsState {
-  showHiddenTags: boolean;
-  apiUrl: string;
-  autoLockTimeout: AutoLockTimeout;
+  showHiddenTags: boolean
+  apiUrl: string
+  autoLockTimeout: AutoLockTimeout
 }
 
 // Background service worker communication
@@ -22,119 +22,119 @@ async function sendToBackground<T = any>(message: any): Promise<T> {
   return new Promise((resolve) => {
     try {
       chrome.runtime.sendMessage(message, (response) => {
-        resolve(response);
-      });
+        resolve(response)
+      })
     } catch {
-      resolve(null as T);
+      resolve(null as T)
     }
-  });
+  })
 }
 
 class SettingsStore {
   private state: SettingsState = {
     showHiddenTags: false,
-    apiUrl: "",
-    autoLockTimeout: "20min",
-  };
+    apiUrl: '',
+    autoLockTimeout: '20min'
+  }
 
-  private listeners: Set<() => void> = new Set();
-  private initialized = false;
-  private initPromise: Promise<void> | null = null;
+  private listeners: Set<() => void> = new Set()
+  private initialized = false
+  private initPromise: Promise<void> | null = null
 
   constructor() {
-    this.initPromise = this.loadSettings();
+    this.initPromise = this.loadSettings()
   }
 
   private async loadSettings(): Promise<void> {
     try {
       const response = await sendToBackground<{
-        ok: boolean;
-        settings?: SettingsState;
+        ok: boolean
+        settings?: SettingsState
       }>({
-        type: "settings:get",
-      });
+        type: 'settings:get'
+      })
       if (response?.ok && response.settings) {
-        this.state = response.settings;
-        this.notify();
+        this.state = response.settings
+        this.notify()
       }
-      this.initialized = true;
+      this.initialized = true
     } catch (error) {
-      console.error("Error loading settings:", error);
-      this.initialized = true;
+      console.error('Error loading settings:', error)
+      this.initialized = true
     }
   }
 
   async getState(): Promise<SettingsState> {
     if (!this.initialized && this.initPromise) {
-      await this.initPromise;
+      await this.initPromise
     } else if (!this.initialized) {
-      await this.loadSettings();
+      await this.loadSettings()
     }
-    return { ...this.state };
+    return { ...this.state }
   }
 
   // Synchronous getter for immediate access (returns default if not loaded yet)
   getStateSync(): SettingsState {
-    return { ...this.state };
+    return { ...this.state }
   }
 
   subscribe(listener: () => void): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
   }
 
   private notify() {
     this.listeners.forEach((listener) => {
       try {
-        listener();
+        listener()
       } catch {
         // ignore
       }
-    });
+    })
   }
 
   async setShowHiddenTags(value: boolean) {
-    this.state.showHiddenTags = value;
-    this.notify();
-    await this.saveSettings();
+    this.state.showHiddenTags = value
+    this.notify()
+    await this.saveSettings()
   }
 
   async setApiUrl(value: string) {
-    this.state.apiUrl = value;
-    this.notify();
-    await this.saveSettings();
+    this.state.apiUrl = value
+    this.notify()
+    await this.saveSettings()
   }
 
   async setSettings(settings: Partial<SettingsState>) {
     // Update state with provided settings
     if (settings.showHiddenTags !== undefined) {
-      this.state.showHiddenTags = settings.showHiddenTags;
+      this.state.showHiddenTags = settings.showHiddenTags
     }
     if (settings.apiUrl !== undefined) {
-      this.state.apiUrl = settings.apiUrl;
+      this.state.apiUrl = settings.apiUrl
     }
     if (settings.autoLockTimeout !== undefined) {
-      this.state.autoLockTimeout = settings.autoLockTimeout;
+      this.state.autoLockTimeout = settings.autoLockTimeout
     }
-    this.notify();
+    this.notify()
     // Save the complete state
-    await this.saveSettings();
+    await this.saveSettings()
   }
 
   private async saveSettings(): Promise<void> {
     try {
       const response = await sendToBackground<{ ok: boolean }>({
-        type: "settings:set",
-        payload: this.state,
-      });
+        type: 'settings:set',
+        payload: this.state
+      })
       if (!response?.ok) {
-        throw new Error("Failed to save settings");
+        throw new Error('Failed to save settings')
       }
     } catch (error) {
-      console.error("Error saving settings:", error);
-      throw error;
+      console.error('Error saving settings:', error)
+      throw error
     }
   }
 }
 
-export const settingsStore = new SettingsStore();
+export const settingsStore = new SettingsStore()

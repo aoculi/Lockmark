@@ -2,38 +2,38 @@
 // KDF parameters and wrapped master key are stored in memory only
 
 export type KdfParams = {
-  algo: string;
-  salt: string;
-  m: number;
-  t: number;
-  p: number;
-  hkdf_salt?: string | null; // Optional for backwards compatibility
-};
+  algo: string
+  salt: string
+  m: number
+  t: number
+  p: number
+  hkdf_salt?: string | null // Optional for backwards compatibility
+}
 
 export class AuthStore {
-  private kdf: KdfParams | null = null;
-  private wrappedMk: string | null = null;
+  private kdf: KdfParams | null = null
+  private wrappedMk: string | null = null
 
   setKdf(kdf: KdfParams | null): void {
-    this.kdf = kdf;
+    this.kdf = kdf
   }
 
   setWrappedMk(wrapped: string | null): void {
-    this.wrappedMk = wrapped;
+    this.wrappedMk = wrapped
   }
 
   getKdf(): KdfParams | null {
-    return this.kdf;
+    return this.kdf
   }
 
   getWrappedMk(): string | null {
-    return this.wrappedMk;
+    return this.wrappedMk
   }
 
   clear(): void {
-    this.kdf = null;
-    this.wrappedMk = null;
+    this.kdf = null
+    this.wrappedMk = null
   }
 }
 
-export const authStore = new AuthStore();
+export const authStore = new AuthStore()

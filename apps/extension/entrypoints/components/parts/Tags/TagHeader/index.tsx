@@ -1,10 +1,10 @@
-import { Plus } from "lucide-react";
+import { Plus } from 'lucide-react'
 
-import Button from "../../../ui/Button";
-import Text from "../../../ui/Text";
-import Menu from "../../Menu";
+import Button from '../../../ui/Button'
+import Text from '../../../ui/Text'
+import Menu from '../../Menu'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 export default function TagHeader({ onAddTag }: { onAddTag: () => void }) {
   return (
@@ -14,15 +14,15 @@ export default function TagHeader({ onAddTag }: { onAddTag: () => void }) {
 
         <div>
           <Text
-            size="3"
-            as="span"
-            color="white"
-            weight="medium"
-            style={{ marginRight: "4px" }}
+            size='3'
+            as='span'
+            color='white'
+            weight='medium'
+            style={{ marginRight: '4px' }}
           >
             Lock
           </Text>
-          <Text size="3" as="span" color="primary" weight="medium">
+          <Text size='3' as='span' color='primary' weight='medium'>
             Mark
           </Text>
         </div>
@@ -31,12 +31,12 @@ export default function TagHeader({ onAddTag }: { onAddTag: () => void }) {
       <Button
         onClick={onAddTag}
         asIcon={true}
-        size="sm"
-        color="primary"
-        variant="solid"
+        size='sm'
+        color='primary'
+        variant='solid'
       >
         <Plus strokeWidth={1} size={18} />
       </Button>
     </div>
-  );
+  )
 }

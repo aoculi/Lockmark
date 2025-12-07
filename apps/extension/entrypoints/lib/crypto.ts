@@ -3,39 +3,39 @@
  * Implements Argon2id, HKDF-SHA-256, and XChaCha20-Poly1305
  */
 
-import { hkdf } from "@noble/hashes/hkdf.js";
-import { sha256 } from "@noble/hashes/sha2.js";
-import { argon2id } from "hash-wasm";
-import { AEAD, HKDF, KDF, KEY_DERIVATION } from "./constants";
-import { getCryptoEnv } from "./cryptoEnv";
+import { hkdf } from '@noble/hashes/hkdf.js'
+import { sha256 } from '@noble/hashes/sha2.js'
+import { argon2id } from 'hash-wasm'
+import { AEAD, HKDF, KDF, KEY_DERIVATION } from './constants'
+import { getCryptoEnv } from './cryptoEnv'
 
 /**
  * Generate a random UUID v4
  */
 export function generateUUID(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
 
   // Set version (4) and variant bits
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
 
   const hex = Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
 
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(
     12,
     16
-  )}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  )}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
 
 /**
  * Generate random bytes using libsodium
  */
 export function generateRandomBytes(length: number): Uint8Array {
-  const sodium = getCryptoEnv();
-  return sodium.randombytes_buf(length);
+  const sodium = getCryptoEnv()
+  return sodium.randombytes_buf(length)
 }
 
 /**
@@ -55,9 +55,9 @@ export async function deriveKeyFromPassword(
     iterations: 3,
     memorySize: 512 * 1024, // in KiB
     hashLength: KDF.outLen,
-    outputType: "binary",
-  });
-  return hash as Uint8Array;
+    outputType: 'binary'
+  })
+  return hash as Uint8Array
 }
 
 /**
@@ -71,16 +71,16 @@ export function deriveSubKeys(
   hkdfSalt: Uint8Array
 ): { kek: Uint8Array; mak: Uint8Array } {
   // Convert info strings to Uint8Array
-  const kekInfo = new TextEncoder().encode(KEY_DERIVATION.kek_info);
-  const makInfo = new TextEncoder().encode(KEY_DERIVATION.mak_info);
+  const kekInfo = new TextEncoder().encode(KEY_DERIVATION.kek_info)
+  const makInfo = new TextEncoder().encode(KEY_DERIVATION.mak_info)
 
   // Derive KEK
-  const kek = hkdf(sha256, masterKey, hkdfSalt, kekInfo, HKDF.keyLen);
+  const kek = hkdf(sha256, masterKey, hkdfSalt, kekInfo, HKDF.keyLen)
 
   // Derive MAK
-  const mak = hkdf(sha256, masterKey, hkdfSalt, makInfo, HKDF.keyLen);
+  const mak = hkdf(sha256, masterKey, hkdfSalt, makInfo, HKDF.keyLen)
 
-  return { kek, mak };
+  return { kek, mak }
 }
 
 /**
@@ -95,10 +95,10 @@ export function encryptAEAD(
   key: Uint8Array,
   aad: Uint8Array
 ): { nonce: Uint8Array; ciphertext: Uint8Array } {
-  const sodium = getCryptoEnv();
+  const sodium = getCryptoEnv()
 
   // Generate random nonce
-  const nonce = sodium.randombytes_buf(AEAD.nonceLen);
+  const nonce = sodium.randombytes_buf(AEAD.nonceLen)
 
   // Encrypt with AEAD
   const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
@@ -107,9 +107,9 @@ export function encryptAEAD(
     null, // no secret nonce
     nonce,
     key
-  );
+  )
 
-  return { nonce, ciphertext };
+  return { nonce, ciphertext }
 }
 
 /**
@@ -127,7 +127,7 @@ export function decryptAEAD(
   key: Uint8Array,
   aad: Uint8Array
 ): Uint8Array {
-  const sodium = getCryptoEnv();
+  const sodium = getCryptoEnv()
 
   try {
     const plaintext = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
@@ -136,11 +136,11 @@ export function decryptAEAD(
       aad,
       nonce,
       key
-    );
+    )
 
-    return plaintext;
+    return plaintext
   } catch (error) {
-    throw new Error("Decryption failed: invalid key or corrupted data");
+    throw new Error('Decryption failed: invalid key or corrupted data')
   }
 }
 
@@ -151,7 +151,7 @@ export function decryptAEAD(
 export function zeroize(...data: (Uint8Array | undefined)[]): void {
   for (const item of data) {
     if (item) {
-      item.fill(0);
+      item.fill(0)
     }
   }
 }
@@ -166,12 +166,12 @@ export function zeroize(...data: (Uint8Array | undefined)[]): void {
  * Safe to use before libsodium is initialized
  */
 export function base64ToUint8Array(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
+  const binaryString = atob(base64)
+  const bytes = new Uint8Array(binaryString.length)
   for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+    bytes[i] = binaryString.charCodeAt(i)
   }
-  return bytes;
+  return bytes
 }
 
 /**
@@ -180,13 +180,13 @@ export function base64ToUint8Array(base64: string): Uint8Array {
  * Safe to use before libsodium is initialized
  */
 export function uint8ArrayToBase64(arr: Uint8Array): string {
-  let binary = "";
-  const chunkSize = 8192;
+  let binary = ''
+  const chunkSize = 8192
   for (let i = 0; i < arr.length; i += chunkSize) {
-    const chunk = arr.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
+    const chunk = arr.subarray(i, i + chunkSize)
+    binary += String.fromCharCode(...chunk)
   }
-  return btoa(binary);
+  return btoa(binary)
 }
 
 /**
@@ -195,8 +195,8 @@ export function uint8ArrayToBase64(arr: Uint8Array): string {
  * @deprecated Use uint8ArrayToBase64 for consistency
  */
 export function toBase64(data: Uint8Array): string {
-  const sodium = getCryptoEnv();
-  return sodium.to_base64(data, sodium.base64_variants.ORIGINAL);
+  const sodium = getCryptoEnv()
+  return sodium.to_base64(data, sodium.base64_variants.ORIGINAL)
 }
 
 /**
@@ -205,6 +205,6 @@ export function toBase64(data: Uint8Array): string {
  * @deprecated Use base64ToUint8Array for consistency
  */
 export function fromBase64(base64: string): Uint8Array {
-  const sodium = getCryptoEnv();
-  return sodium.from_base64(base64, sodium.base64_variants.ORIGINAL);
+  const sodium = getCryptoEnv()
+  return sodium.from_base64(base64, sodium.base64_variants.ORIGINAL)
 }

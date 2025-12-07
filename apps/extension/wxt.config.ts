@@ -1,8 +1,8 @@
-import { defineConfig } from "wxt";
+import { defineConfig } from 'wxt'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
-  modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
+  modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
   autoIcons: {
     developmentIndicator: false,
   },
@@ -13,10 +13,10 @@ export default defineConfig({
   },
 
   manifest: {
-    name: "LockMark",
-    description: "Secure Bookmarks Vault",
-    host_permissions: ["http://127.0.0.1:3500/*", "http://localhost:3500/*"],
-    permissions: ["storage", "tabs"],
+    name: 'LockMark',
+    description: 'Secure Bookmarks Vault',
+    host_permissions: ['http://127.0.0.1:3500/*', 'http://localhost:3500/*'],
+    permissions: ['storage', 'tabs'],
     content_security_policy: {
       // Allow WebAssembly in dev (needed for hash-wasm and libsodium wrappers)
       // Include WXT dev server origins (3000 for main server, 3001 for HMR)
@@ -26,14 +26,14 @@ export default defineConfig({
     },
     browser_specific_settings: {
       chrome: {
-        id: "@lockmark",
+        id: '@lockmark',
       },
       gecko: {
-        id: "@lockmark",
+        id: '@lockmark',
       },
       edge: {
-        id: "@lockmark",
+        id: '@lockmark',
       },
     } as any,
   },
-});
+})

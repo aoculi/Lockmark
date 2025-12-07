@@ -1,27 +1,27 @@
-import type { ManifestV1 } from "@/entrypoints/lib/types";
+import type { ManifestV1 } from '@/entrypoints/lib/types'
 
-export type ManifestStatus = "idle" | "loaded" | "dirty" | "saving" | "offline";
+export type ManifestStatus = 'idle' | 'loaded' | 'dirty' | 'saving' | 'offline'
 
 export type ManifestStoreState = {
-  manifest: ManifestV1 | null;
-  etag: string | null;
-  serverVersion: number;
-  status: ManifestStatus;
-  lastKnownServerSnapshot: ManifestV1 | null; // For 3-way merge
-};
+  manifest: ManifestV1 | null
+  etag: string | null
+  serverVersion: number
+  status: ManifestStatus
+  lastKnownServerSnapshot: ManifestV1 | null // For 3-way merge
+}
 
-export type ManifestUpdater = (manifest: ManifestV1) => ManifestV1;
+export type ManifestUpdater = (manifest: ManifestV1) => ManifestV1
 
 export type LoadManifestData = {
-  manifest: ManifestV1;
-  etag: string | null;
-  version: number;
-};
+  manifest: ManifestV1
+  etag: string | null
+  version: number
+}
 
 export type AckSavedData = {
-  etag: string;
-  version: number;
-};
+  etag: string
+  version: number
+}
 
 /**
  * ManifestStore - In-memory manifest state management
@@ -34,25 +34,25 @@ class ManifestStore {
     manifest: null,
     etag: null,
     serverVersion: 0,
-    status: "idle",
-    lastKnownServerSnapshot: null,
-  };
+    status: 'idle',
+    lastKnownServerSnapshot: null
+  }
 
-  private listeners: Set<() => void> = new Set();
+  private listeners: Set<() => void> = new Set()
 
   getState(): ManifestStoreState {
-    return { ...this.state };
+    return { ...this.state }
   }
 
   subscribe(listener: () => void): () => void {
-    this.listeners.add(listener);
+    this.listeners.add(listener)
     return () => {
-      this.listeners.delete(listener);
-    };
+      this.listeners.delete(listener)
+    }
   }
 
   private notify(): void {
-    this.listeners.forEach((listener) => listener());
+    this.listeners.forEach((listener) => listener())
   }
 
   load(data: LoadManifestData, baseSnapshot?: ManifestV1): void {
@@ -60,50 +60,50 @@ class ManifestStore {
       manifest: data.manifest,
       etag: data.etag,
       serverVersion: data.version,
-      status: "loaded",
+      status: 'loaded',
       lastKnownServerSnapshot: baseSnapshot
         ? { ...baseSnapshot }
-        : { ...data.manifest },
-    };
-    this.notify();
+        : { ...data.manifest }
+    }
+    this.notify()
   }
 
   markDirty(): void {
-    if (this.state.status === "loaded" || this.state.status === "offline") {
-      this.state.status = "dirty";
-      this.notify();
+    if (this.state.status === 'loaded' || this.state.status === 'offline') {
+      this.state.status = 'dirty'
+      this.notify()
     }
   }
 
   apply(updater: ManifestUpdater): void {
     if (this.state.manifest) {
-      this.state.manifest = updater(this.state.manifest);
-      this.markDirty();
+      this.state.manifest = updater(this.state.manifest)
+      this.markDirty()
     }
   }
 
   setSaving(): void {
-    if (this.state.status === "dirty" || this.state.status === "offline") {
-      this.state.status = "saving";
-      this.notify();
+    if (this.state.status === 'dirty' || this.state.status === 'offline') {
+      this.state.status = 'saving'
+      this.notify()
     }
   }
 
   setOffline(): void {
-    if (this.state.status === "dirty" || this.state.status === "saving") {
-      this.state.status = "offline";
-      this.notify();
+    if (this.state.status === 'dirty' || this.state.status === 'saving') {
+      this.state.status = 'offline'
+      this.notify()
     }
   }
 
   ackSaved(data: AckSavedData): void {
-    this.state.etag = data.etag;
-    this.state.serverVersion = data.version;
-    this.state.status = "loaded";
+    this.state.etag = data.etag
+    this.state.serverVersion = data.version
+    this.state.status = 'loaded'
     if (this.state.manifest) {
-      this.state.lastKnownServerSnapshot = { ...this.state.manifest };
+      this.state.lastKnownServerSnapshot = { ...this.state.manifest }
     }
-    this.notify();
+    this.notify()
   }
 
   reset(): void {
@@ -111,37 +111,37 @@ class ManifestStore {
       manifest: null,
       etag: null,
       serverVersion: 0,
-      status: "idle",
-      lastKnownServerSnapshot: null,
-    };
-    this.notify();
+      status: 'idle',
+      lastKnownServerSnapshot: null
+    }
+    this.notify()
   }
 
   getSaveData(): {
-    manifest: ManifestV1;
-    etag: string | null;
-    serverVersion: number;
+    manifest: ManifestV1
+    etag: string | null
+    serverVersion: number
   } | null {
     if (!this.state.manifest) {
-      return null;
+      return null
     }
     // Allow initial create when serverVersion === 0 and etag is null
     if (this.state.serverVersion === 0) {
       return {
         manifest: this.state.manifest,
         etag: null,
-        serverVersion: this.state.serverVersion,
-      };
+        serverVersion: this.state.serverVersion
+      }
     }
     if (!this.state.etag) {
-      return null;
+      return null
     }
     return {
       manifest: this.state.manifest,
       etag: this.state.etag,
-      serverVersion: this.state.serverVersion,
-    };
+      serverVersion: this.state.serverVersion
+    }
   }
 }
 
-export const manifestStore = new ManifestStore();
+export const manifestStore = new ManifestStore()

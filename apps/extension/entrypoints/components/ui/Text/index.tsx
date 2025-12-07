@@ -1,59 +1,59 @@
-import React from "react";
+import React from 'react'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 function Text({
-  size = "2",
-  weight = "regular",
-  as = "div",
-  color = "inherit",
+  size = '2',
+  weight = 'regular',
+  as = 'div',
+  color = 'inherit',
   children,
-  style,
+  style
 }: {
-  size?: "1" | "2" | "3" | "4" | "5" | "6";
-  weight?: "light" | "regular" | "medium" | "bold";
-  as?: "label" | "p" | "div" | "h1" | "span";
-  color?: "inherit" | "light" | "primary" | "white";
-  style?: React.CSSProperties;
-  children: React.ReactNode;
+  size?: '1' | '2' | '3' | '4' | '5' | '6'
+  weight?: 'light' | 'regular' | 'medium' | 'bold'
+  as?: 'label' | 'p' | 'div' | 'h1' | 'span'
+  color?: 'inherit' | 'light' | 'primary' | 'white'
+  style?: React.CSSProperties
+  children: React.ReactNode
 }) {
-  const className = `${styles.text} ${styles["size-" + size]} ${
-    styles["weight-" + weight]
-  } ${styles["color-" + color]}`;
+  const className = `${styles.text} ${styles['size-' + size]} ${
+    styles['weight-' + weight]
+  } ${styles['color-' + color]}`
 
-  if (as === "label") {
+  if (as === 'label') {
     return (
       <label className={className} style={style}>
         {children}
       </label>
-    );
+    )
   }
-  if (as === "p") {
+  if (as === 'p') {
     return (
       <p className={className} style={style}>
         {children}
       </p>
-    );
+    )
   }
-  if (as === "h1") {
+  if (as === 'h1') {
     return (
       <h1 className={className} style={style}>
         {children}
       </h1>
-    );
+    )
   }
-  if (as === "span") {
+  if (as === 'span') {
     return (
       <span className={className} style={style}>
         {children}
       </span>
-    );
+    )
   }
   return (
     <div className={className} style={style}>
       {children}
     </div>
-  );
+  )
 }
 
-export default Text;
+export default Text

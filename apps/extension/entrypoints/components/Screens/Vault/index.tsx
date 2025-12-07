@@ -1,27 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 
-import { useBookmarks } from "@/entrypoints/components/hooks/useBookmarks";
-import { useManifestOperations } from "@/entrypoints/components/hooks/useManifestOperations";
-import { useTags } from "@/entrypoints/components/hooks/useTags";
-import Bookmarks from "@/entrypoints/components/parts/Bookmarks";
-import Tags from "@/entrypoints/components/parts/Tags";
-import Text from "@/entrypoints/components/ui/Text";
-import { keystoreManager } from "@/entrypoints/store/keystore";
-import { sessionManager } from "@/entrypoints/store/session";
-import { useNavigation } from "..";
+import { useBookmarks } from '@/entrypoints/components/hooks/useBookmarks'
+import { useManifestOperations } from '@/entrypoints/components/hooks/useManifestOperations'
+import { useTags } from '@/entrypoints/components/hooks/useTags'
+import Bookmarks from '@/entrypoints/components/parts/Bookmarks'
+import Tags from '@/entrypoints/components/parts/Tags'
+import Text from '@/entrypoints/components/ui/Text'
+import { keystoreManager } from '@/entrypoints/store/keystore'
+import { sessionManager } from '@/entrypoints/store/session'
+import { useNavigation } from '..'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 export default function Vault() {
-  const { mutation, store } = useManifestOperations();
-  const { bookmarks } = useBookmarks();
-  const { tags } = useTags();
-  const { navigate } = useNavigation();
+  const { mutation, store } = useManifestOperations()
+  const { bookmarks } = useBookmarks()
+  const { tags } = useTags()
+  const { navigate } = useNavigation()
 
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
-  const [message, setMessage] = useState<string | null>(null);
-  const [currentTagId, setCurrentTagId] = useState<string | null>("all");
+  const [isUnlocked, setIsUnlocked] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
+  const [message, setMessage] = useState<string | null>(null)
+  const [currentTagId, setCurrentTagId] = useState<string | null>('all')
 
   // Initialize keystore state and listen for lock events
   // Note: Screens component handles initial mount check and redirect,
@@ -29,55 +29,55 @@ export default function Vault() {
   useEffect(() => {
     const initializeKeystore = async () => {
       try {
-        const unlocked = await keystoreManager.isUnlocked();
-        setIsUnlocked(unlocked);
+        const unlocked = await keystoreManager.isUnlocked()
+        setIsUnlocked(unlocked)
       } catch (error) {
-        setIsUnlocked(false);
+        setIsUnlocked(false)
       } finally {
-        setIsChecking(false);
+        setIsChecking(false)
       }
-    };
+    }
 
-    initializeKeystore();
+    initializeKeystore()
 
     // Listen for runtime keystore lock events (auto-lock timeout, etc.)
     const unsubscribe = sessionManager.onUnauthorized(() => {
-      setIsUnlocked(false);
-      navigate("/login");
-    });
+      setIsUnlocked(false)
+      navigate('/login')
+    })
 
-    return unsubscribe;
-  }, [navigate]);
+    return unsubscribe
+  }, [navigate])
 
   // Show messages for manifest operations
   useEffect(() => {
     if (mutation.isSuccess) {
-      setMessage("Changes saved successfully");
-      setTimeout(() => setMessage(null), 3000);
+      setMessage('Changes saved successfully')
+      setTimeout(() => setMessage(null), 3000)
     } else if (mutation.isError) {
-      const error = mutation.error as any;
+      const error = mutation.error as any
       if (error?.details?.offline) {
-        setMessage("Working offline—will retry");
+        setMessage('Working offline—will retry')
       } else {
-        setMessage("Failed to save changes");
-        setTimeout(() => setMessage(null), 3000);
+        setMessage('Failed to save changes')
+        setTimeout(() => setMessage(null), 3000)
       }
     }
-  }, [mutation.isSuccess, mutation.isError]);
+  }, [mutation.isSuccess, mutation.isError])
 
   const onSelectTag = (id: string) => {
-    setCurrentTagId(id);
-  };
+    setCurrentTagId(id)
+  }
 
   // Show loading if still checking, or if unlocked but manifest not loaded yet
-  const isManifestLoading = isUnlocked && !store.manifest;
+  const isManifestLoading = isUnlocked && !store.manifest
 
   if (isChecking || isManifestLoading) {
     return (
       <div className={styles.container}>
         <Text>Checking vault status...</Text>
       </div>
-    );
+    )
   }
 
   // If we reach here and keystore is locked, we're redirecting (safety check)
@@ -86,7 +86,7 @@ export default function Vault() {
       <div className={styles.container}>
         <Text>Redirecting to login...</Text>
       </div>
-    );
+    )
   }
 
   return (
@@ -104,5 +104,5 @@ export default function Vault() {
         currentTagId={currentTagId}
       />
     </div>
-  );
+  )
 }

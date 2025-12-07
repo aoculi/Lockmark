@@ -11,11 +11,11 @@
   font-family: inherit;
 }
 
-.content[data-state="open"] {
+.content[data-state='open'] {
   animation-name: slideIn;
 }
 
-.content[data-state="closed"] {
+.content[data-state='closed'] {
   animation-name: slideOut;
 }
 
@@ -67,7 +67,9 @@
   cursor: pointer;
   outline: none;
   user-select: none;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .item:hover,

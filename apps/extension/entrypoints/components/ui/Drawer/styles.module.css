@@ -21,10 +21,10 @@
   overflow-y: auto;
 }
 
-[data-state="closed"].content {
+[data-state='closed'].content {
   animation: slideOut 0.2s ease-in forwards;
 }
-[data-state="closed"] + .overlay {
+[data-state='closed'] + .overlay {
   animation: overlayHide 0.2s ease-in forwards;
 }
 

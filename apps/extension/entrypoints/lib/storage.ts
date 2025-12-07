@@ -5,23 +5,23 @@
 import {
   DEFAULT_AUTO_LOCK_TIMEOUT,
   DEFAULT_AUTO_LOCK_TIMEOUT_MS,
-  STORAGE_KEYS,
-} from "./constants";
+  STORAGE_KEYS
+} from './constants'
 
 /**
  * Settings interface
  */
 export interface Settings {
-  showHiddenTags: boolean;
-  apiUrl: string;
-  autoLockTimeout: string;
+  showHiddenTags: boolean
+  apiUrl: string
+  autoLockTimeout: string
 }
 
 /**
  * Check if chrome.storage.local is available
  */
 function isStorageAvailable(): boolean {
-  return !!(chrome?.storage?.local);
+  return !!chrome?.storage?.local
 }
 
 /**
@@ -32,20 +32,20 @@ function isStorageAvailable(): boolean {
 export function getStorageItem<T>(key: string): Promise<T | null> {
   return new Promise((resolve) => {
     if (!isStorageAvailable()) {
-      console.warn("chrome.storage.local is not available");
-      resolve(null);
-      return;
+      console.warn('chrome.storage.local is not available')
+      resolve(null)
+      return
     }
 
     chrome.storage.local.get(key, (result) => {
       if (chrome.runtime.lastError) {
-        console.error("Storage get error:", chrome.runtime.lastError);
-        resolve(null);
-        return;
+        console.error('Storage get error:', chrome.runtime.lastError)
+        resolve(null)
+        return
       }
-      resolve(result[key] ?? null);
-    });
-  });
+      resolve(result[key] ?? null)
+    })
+  })
 }
 
 /**
@@ -57,18 +57,20 @@ export function getStorageItem<T>(key: string): Promise<T | null> {
 export function setStorageItem(key: string, value: any): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!isStorageAvailable()) {
-      reject(new Error("chrome.storage.local is not available"));
-      return;
+      reject(new Error('chrome.storage.local is not available'))
+      return
     }
 
     chrome.storage.local.set({ [key]: value }, () => {
       if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message || "Storage set failed"));
-        return;
+        reject(
+          new Error(chrome.runtime.lastError.message || 'Storage set failed')
+        )
+        return
       }
-      resolve();
-    });
-  });
+      resolve()
+    })
+  })
 }
 
 /**
@@ -79,18 +81,20 @@ export function setStorageItem(key: string, value: any): Promise<void> {
 export function removeStorageItem(key: string): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!isStorageAvailable()) {
-      reject(new Error("chrome.storage.local is not available"));
-      return;
+      reject(new Error('chrome.storage.local is not available'))
+      return
     }
 
     chrome.storage.local.remove(key, () => {
       if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message || "Storage remove failed"));
-        return;
+        reject(
+          new Error(chrome.runtime.lastError.message || 'Storage remove failed')
+        )
+        return
       }
-      resolve();
-    });
-  });
+      resolve()
+    })
+  })
 }
 
 /**
@@ -100,32 +104,34 @@ export function removeStorageItem(key: string): Promise<void> {
 export function clearStorage(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!isStorageAvailable()) {
-      reject(new Error("chrome.storage.local is not available"));
-      return;
+      reject(new Error('chrome.storage.local is not available'))
+      return
     }
 
     chrome.storage.local.clear(() => {
       if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message || "Storage clear failed"));
-        return;
+        reject(
+          new Error(chrome.runtime.lastError.message || 'Storage clear failed')
+        )
+        return
       }
-      resolve();
-    });
-  });
+      resolve()
+    })
+  })
 }
 
 /**
  * Get settings from chrome.storage.local
  */
 export function getSettings(): Promise<Settings | null> {
-  return getStorageItem<Settings>(STORAGE_KEYS.SETTINGS);
+  return getStorageItem<Settings>(STORAGE_KEYS.SETTINGS)
 }
 
 /**
  * Set settings in chrome.storage.local
  */
 export function setSettings(settings: Settings): Promise<void> {
-  return setStorageItem(STORAGE_KEYS.SETTINGS, settings);
+  return setStorageItem(STORAGE_KEYS.SETTINGS, settings)
 }
 
 /**
@@ -134,27 +140,27 @@ export function setSettings(settings: Settings): Promise<void> {
 export function getDefaultSettings(): Settings {
   return {
     showHiddenTags: false,
-    apiUrl: "",
-    autoLockTimeout: DEFAULT_AUTO_LOCK_TIMEOUT,
-  };
+    apiUrl: '',
+    autoLockTimeout: DEFAULT_AUTO_LOCK_TIMEOUT
+  }
 }
 
 /**
  * Parse auto-lock timeout string to milliseconds
  */
 export function parseAutoLockTimeout(timeout: string): number {
-  const match = timeout.match(/^(\d+)(min|h)$/);
+  const match = timeout.match(/^(\d+)(min|h)$/)
   if (!match) {
-    return DEFAULT_AUTO_LOCK_TIMEOUT_MS;
+    return DEFAULT_AUTO_LOCK_TIMEOUT_MS
   }
 
-  const value = parseInt(match[1], 10);
-  const unit = match[2];
+  const value = parseInt(match[1], 10)
+  const unit = match[2]
 
-  if (unit === "h") {
-    return value * 60 * 60 * 1000;
+  if (unit === 'h') {
+    return value * 60 * 60 * 1000
   } else {
-    return value * 60 * 1000;
+    return value * 60 * 1000
   }
 }
 
@@ -162,9 +168,9 @@ export function parseAutoLockTimeout(timeout: string): number {
  * Get auto-lock timeout from settings
  */
 export async function getAutoLockTimeout(): Promise<number> {
-  const settings = (await getSettings()) || getDefaultSettings();
+  const settings = (await getSettings()) || getDefaultSettings()
   const timeout = parseAutoLockTimeout(
-    settings.autoLockTimeout || DEFAULT_AUTO_LOCK_TIMEOUT,
-  );
-  return timeout;
+    settings.autoLockTimeout || DEFAULT_AUTO_LOCK_TIMEOUT
+  )
+  return timeout
 }

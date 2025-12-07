@@ -1,10 +1,10 @@
-import { EllipsisVertical, LineSquiggle } from "lucide-react";
+import { EllipsisVertical, LineSquiggle } from 'lucide-react'
 
-import Button from "@/entrypoints/components/ui/Button";
-import { DropdownMenu } from "@/entrypoints/components/ui/DropdownMenu";
-import Text from "@/entrypoints/components/ui/Text";
+import Button from '@/entrypoints/components/ui/Button'
+import { DropdownMenu } from '@/entrypoints/components/ui/DropdownMenu'
+import Text from '@/entrypoints/components/ui/Text'
 
-import styles from "./styles.module.css";
+import styles from './styles.module.css'
 
 export default function Tag({
   name,
@@ -13,29 +13,29 @@ export default function Tag({
   active = false,
   onClick,
   onEdit,
-  onDelete,
+  onDelete
 }: {
-  name: string;
-  count: number;
-  all: boolean;
-  active: boolean;
-  onClick: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
+  name: string
+  count: number
+  all: boolean
+  active: boolean
+  onClick: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }) {
   return (
     <div className={styles.tagWrapper}>
       <a
         className={`${styles.tag} ${active ? styles.active : styles.inactive}`}
-        href="#"
+        href='#'
         onClick={onClick}
       >
         <div className={styles.tagLabel}>
           {all && <LineSquiggle height={16} width={16} />}
-          <Text size="2">{name}</Text>
+          <Text size='2'>{name}</Text>
         </div>
-        <div className={`${styles.tagEnd} ${!all ? styles.countItem : ""}`}>
-          <Text size="2" weight="medium" color="light">
+        <div className={`${styles.tagEnd} ${!all ? styles.countItem : ''}`}>
+          <Text size='2' weight='medium' color='light'>
             {count}
           </Text>
         </div>
@@ -45,7 +45,7 @@ export default function Tag({
         <div className={styles.dropdownMenu}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <Button asIcon={true} color="dark" variant="ghost" size="sm">
+              <Button asIcon={true} color='dark' variant='ghost' size='sm'>
                 <EllipsisVertical size={16} />
               </Button>
             </DropdownMenu.Trigger>
@@ -55,7 +55,7 @@ export default function Tag({
               )}
               {onEdit && onDelete && <DropdownMenu.Separator />}
               {onDelete && (
-                <DropdownMenu.Item onClick={onDelete} color="red">
+                <DropdownMenu.Item onClick={onDelete} color='red'>
                   Delete
                 </DropdownMenu.Item>
               )}
@@ -64,5 +64,5 @@ export default function Tag({
         </div>
       )}
     </div>
-  );
+  )
 }
