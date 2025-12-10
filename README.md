@@ -1,4 +1,4 @@
-# LockMark - A secure local bookmarks vault
+# LockMark
 
 Inspired by Proton’s privacy-first approach (especially Proton Pass).
 
