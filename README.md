@@ -1,16 +1,16 @@
-# LockMark - Secure Bookmarks Vault
+# LockMark - A secure local bookmarks vault
 
-Inspired by Proton’s privacy-first approach, especially Proton Pass.
+Inspired by Proton’s privacy-first approach (especially Proton Pass).
 
 LockMark is a local-first, end-to-end encrypted bookmark manager. The React/WXT browser extension encrypts everything on your device and talks to a lightweight Bun + Hono API that only stores ciphertext in SQLite.
 
 ## What you get
 
--   🔐 End-to-end encryption with client-side key derivation (Argon2id + XChaCha20-Poly1305)
--   🛡️ Zero-knowledge server: only ciphertext, nonces, and Argon2id password hashes live in the database
--   🧩 Two components: browser extension UI (`apps/extension`) and local API (`apps/api`)
--   🗄️ SQLite via Drizzle ORM with optimistic concurrency (ETags/If-Match) for manifests and items
--   ⚡ Local-only by default (`127.0.0.1:3500`), rate-limited auth, and JWT session revocation
+- 🔐 End-to-end encryption with client-side key derivation (Argon2id + XChaCha20-Poly1305)
+- 🛡️ Zero-knowledge server: only ciphertext, nonces, and Argon2id password hashes live in the database
+- 🧩 Two components: browser extension UI (`apps/extension`) and local API (`apps/api`)
+- 🗄️ SQLite via Drizzle ORM with optimistic concurrency (ETags/If-Match) for manifests and items
+- ⚡ Local-only by default (`127.0.0.1:3500`), rate-limited auth, and JWT session revocation
 
 ## Repository layout
 
@@ -25,10 +25,10 @@ bookmarks/
 
 ## Requirements
 
--   pnpm (workspace manager)
--   Bun (to run the API)
--   Node.js 18+ (for the extension toolchain)
--   Firefox Nightly or Firefox ZEN for unsigned builds (Chrome/Chromium not yet tested for unsigned installs)
+- pnpm (workspace manager)
+- Bun (to run the API)
+- Node.js 18+ (for the extension toolchain)
+- Firefox Nightly or Firefox ZEN for unsigned builds (Chrome/Chromium not yet tested for unsigned installs)
 
 ## Quick start (dev)
 
@@ -58,9 +58,9 @@ pnpm run dev      # API on 127.0.0.1:3500, extension dev server
 
 ### Run components individually
 
--   API: `cd apps/api && bun run dev`
--   Extension (Chrome): `cd apps/extension && pnpm run dev`
--   Extension (Firefox): `cd apps/extension && pnpm run dev:firefox`
+- API: `cd apps/api && bun run dev`
+- Extension (Chrome): `cd apps/extension && pnpm run dev`
+- Extension (Firefox): `cd apps/extension && pnpm run dev:firefox`
 
 ### Building/packaging the extension
 
@@ -68,11 +68,11 @@ See `apps/extension/README.md` for production builds and ZIP packaging commands.
 
 ## Usage
 
--   Ensure the API is running on `http://127.0.0.1:3500` (default host/port).
--   Load the extension in your browser (unsigned loading instructions are in `apps/extension/README.md`).
--   Open the extension settings and set the API URL if you’re not using the default.
--   Register a new account (provides KDF params and wraps your master key), then log in.
--   Add bookmarks/tags in the extension; the vault manifest is stored as encrypted blobs in SQLite with concurrency protection via ETags.
+- Ensure the API is running on `http://127.0.0.1:3500` (default host/port).
+- Load the extension in your browser (unsigned loading instructions are in `apps/extension/README.md`).
+- Open the extension settings and set the API URL if you’re not using the default.
+- Register a new account (provides KDF params and wraps your master key), then log in.
+- Add bookmarks/tags in the extension; the vault manifest is stored as encrypted blobs in SQLite with concurrency protection via ETags.
 
 Want to poke the API directly? Example (register):
 
@@ -84,14 +84,14 @@ curl -X POST http://127.0.0.1:3500/auth/register \
 
 ## Security at a glance
 
--   Client-side crypto: Argon2id KDF (512 MiB, 3 iterations) + XChaCha20-Poly1305 + HKDF-SHA-256; master key is wrapped with the derived UEK and only ciphertext/nonces are sent.
--   Server storage (`apps/api/src/database/schema.ts`): Argon2id password hashes, KDF/HKDF salts, wrapped master key blob, encrypted manifest/items, and metadata—no plaintext bookmarks.
--   Authentication: JWT sessions (HS256, 1h default) checked against a sessions table; tokens require non-revoked, non-expired sessions (`auth.middleware.ts`).
--   Rate limiting: auth endpoints limited to 5 attempts/min per IP and per login; refresh limited to 30 per 5 minutes (`rate-limit.middleware.ts`).
--   Network surface: binds to `127.0.0.1` by default; set `HOST`/`PORT` in `apps/api/.env` to change.
--   Integrity/DoS guards: manifest size capped at 5 MB; item size capped at 64 KB; base64 validation and optimistic concurrency via ETags (`vault.service.ts`).
+- Client-side crypto: Argon2id KDF (512 MiB, 3 iterations) + XChaCha20-Poly1305 + HKDF-SHA-256; master key is wrapped with the derived UEK and only ciphertext/nonces are sent.
+- Server storage (`apps/api/src/database/schema.ts`): Argon2id password hashes, KDF/HKDF salts, wrapped master key blob, encrypted manifest/items, and metadata—no plaintext bookmarks.
+- Authentication: JWT sessions (HS256, 1h default) checked against a sessions table; tokens require non-revoked, non-expired sessions (`auth.middleware.ts`).
+- Rate limiting: auth endpoints limited to 5 attempts/min per IP and per login; refresh limited to 30 per 5 minutes (`rate-limit.middleware.ts`).
+- Network surface: binds to `127.0.0.1` by default; set `HOST`/`PORT` in `apps/api/.env` to change.
+- Integrity/DoS guards: manifest size capped at 5 MB; item size capped at 64 KB; base64 validation and optimistic concurrency via ETags (`vault.service.ts`).
 
 ## More docs
 
--   API: `apps/api/README.md`
--   Extension: `apps/extension/README.md`
+- API: `apps/api/README.md`
+- Extension: `apps/extension/README.md`
