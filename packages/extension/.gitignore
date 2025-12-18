@@ -1,9 +1,3 @@
-# deps
-node_modules/
-sqlite.db
-.env
-.env.test
-
 # Logs
 logs
 *.log
@@ -13,7 +7,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-.output
+node_modules
+dist
 stats.html
 stats-*.json
 .wxt
@@ -29,7 +24,3 @@ web-ext.config.ts
 *.njsproj
 *.sln
 *.sw?
-packages/api/.env.production
-packages/api/prod.db
-packages/extension/assets/icon-old.png
-packages/extension/.env.production
