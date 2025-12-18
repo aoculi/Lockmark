@@ -1,8 +1,20 @@
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { defineConfig } from 'wxt'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
+  srcDir: 'src',
   modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
+  vite: () => ({
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src')
+      }
+    }
+  }),
   autoIcons: {
     developmentIndicator: false
   },
