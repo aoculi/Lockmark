@@ -1,5 +1,6 @@
 .component {
-  padding: 10px 15px;
+  padding: 10px 15px 0;
+  height: 35px;
 }
 
 .content {

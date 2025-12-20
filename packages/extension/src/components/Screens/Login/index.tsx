@@ -1,15 +1,15 @@
 import { KeyRound, Loader2, Mail } from 'lucide-react'
 
-import { useLoginAndUnlock } from '@/components/hooks/auth'
+import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
+import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 import { useAuthForm } from '@/components/hooks/useAuthForm'
-import { useNavigation } from '@/components/hooks/useNavigation'
 
-import Menu from '@/components/parts/Menu'
+import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
 import ErrorCallout from '@/components/ui/ErrorCallout'
 import Input from '@/components/ui/Input'
-import Text from '@/components/ui/Text'
 
+import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
 import styles from './styles.module.css'
 
 interface LoginProps {
@@ -17,35 +17,32 @@ interface LoginProps {
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
-  const loginMutation = useLoginAndUnlock()
+  const { login } = useQueryAuth()
   const { navigate } = useNavigation()
 
   const {
-    formData,
-    error,
-    isInitializing,
-    initializing,
-    disabled,
-    handleSubmit,
-    handleChange
-  } = useAuthForm({
-    onSuccess: onLoginSuccess,
-    mutation: loginMutation
-  })
+    settings,
+    isLoading,
+    updateSettings,
+    setShowHiddenTags,
+    setApiUrl,
+    setAutoLockTimeout
+  } = useSettings()
+  console.log(settings)
+
+  const mutation = login
+
+  const { formData, error, disabled, handleSubmit, handleChange } = useAuthForm(
+    {
+      onSuccess: onLoginSuccess,
+      mutation
+    }
+  )
 
   return (
     <div className={styles.container}>
-      <div className={styles.special} />
-
-      <div className={styles.menu}>
-        <Menu />
-      </div>
-
+      <Header title='Login' />
       <div className={styles.content}>
-        <Text as='h1' size='6' weight='medium'>
-          LockMark
-        </Text>
-
         {error && <ErrorCallout>{error}</ErrorCallout>}
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -56,7 +53,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             autoComplete='off'
             value={formData.login}
             onChange={handleChange}
-            disabled={loginMutation.isPending}
+            disabled={mutation.isPending}
             autoFocus
           >
             <Mail size={16} />
@@ -69,22 +66,23 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             name='password'
             value={formData.password}
             onChange={handleChange}
-            disabled={loginMutation.isPending}
+            disabled={mutation.isPending}
           >
             <KeyRound size={16} />
           </Input>
 
           <Button disabled={disabled}>
-            {initializing && <Loader2 className={styles.spinner} />}
-            {isInitializing
-              ? 'Initializing...'
-              : loginMutation.isPending
-                ? 'Logging in...'
-                : 'Unlock Vault'}
+            {mutation.isPending && <Loader2 className={styles.spinner} />}
+            {mutation.isPending ? 'Logging in...' : 'Unlock Vault'}
           </Button>
         </form>
+
         <div className={styles.registerLink}>
-          <Button variant='ghost' onClick={() => navigate('/register')}>
+          <Button
+            variant='ghost'
+            onClick={() => navigate('/register')}
+            color='light'
+          >
             Not registered? Create an account
           </Button>
         </div>

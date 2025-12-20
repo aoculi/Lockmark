@@ -1,0 +1,82 @@
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+
+export type Route = '/login' | '/register' | '/vault'
+
+type NavigationContextType = {
+  route: Route
+  flash: string | null
+  isSettingsOpen: boolean
+  navigate: (route: Route) => void
+  setFlash: (message: string | null) => void
+  openSettings: () => void
+  closeSettings: () => void
+}
+
+export const NavigationContext = createContext<NavigationContextType>({
+  route: '/login',
+  flash: null,
+  isSettingsOpen: false,
+  navigate: () => {},
+  setFlash: () => {},
+  openSettings: () => {},
+  closeSettings: () => {}
+})
+
+/**
+ * Hook to use the navigation context
+ * Must be used within a NavigationProvider
+ */
+export const useNavigation = () => {
+  const context = useContext(NavigationContext)
+  if (!context) {
+    throw new Error('useNavigation must be used within a NavigationProvider')
+  }
+  return context
+}
+
+type NavigationProviderProps = {
+  children: ReactNode
+  initialRoute?: Route
+}
+
+/**
+ * Navigation Provider Component
+ * Provides navigation, flash messages, and settings modal state to children
+ */
+export function NavigationProvider({ children, initialRoute = '/login' }: NavigationProviderProps) {
+  const [route, setRoute] = useState<Route>(initialRoute)
+  const [flash, setFlashState] = useState<string | null>(null)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  const navigate = useCallback((newRoute: Route) => {
+    setRoute(newRoute)
+  }, [])
+
+  const setFlash = useCallback((message: string | null) => {
+    setFlashState(message)
+  }, [])
+
+  const openSettings = useCallback(() => {
+    setIsSettingsOpen(true)
+  }, [])
+
+  const closeSettings = useCallback(() => {
+    setIsSettingsOpen(false)
+  }, [])
+
+  const contextValue: NavigationContextType = {
+    route,
+    flash,
+    isSettingsOpen,
+    navigate,
+    setFlash,
+    openSettings,
+    closeSettings
+  }
+
+  return (
+    <NavigationContext.Provider value={contextValue}>
+      {children}
+    </NavigationContext.Provider>
+  )
+}

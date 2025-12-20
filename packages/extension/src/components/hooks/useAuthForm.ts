@@ -1,10 +1,8 @@
 import type { UseMutationResult } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-
-import { useNavigation } from '@/components/hooks/useNavigation'
+import { useState } from 'react'
 
 import type { ApiError } from '@/lib/api'
-import { whenCryptoReady } from '@/lib/cryptoEnv'
+import { useNavigation } from './providers/useNavigationProvider'
 
 export type AuthFormData = {
   login: string
@@ -22,38 +20,12 @@ export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
     password: ''
   })
   const [error, setError] = useState<string | string[] | null>(null)
-  const [cryptoReady, setCryptoReady] = useState(false)
-  const [isInitializing, setIsInitializing] = useState(true)
-  const { setFlash, openSettings } = useNavigation()
-
-  // Check sodium ready state
-  useEffect(() => {
-    const checkCryptoReady = async () => {
-      try {
-        await whenCryptoReady()
-        setCryptoReady(true)
-      } catch (error) {
-        console.error('Failed to initialize crypto:', error)
-        setError(
-          'Failed to initialize encryption. Please refresh the extension.'
-        )
-      } finally {
-        setIsInitializing(false)
-      }
-    }
-
-    checkCryptoReady()
-  }, [])
+  const { setFlash } = useNavigation()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFlash(null)
     setError(null)
-
-    if (!cryptoReady) {
-      setError('Encryption not ready. Please wait...')
-      return
-    }
 
     if (!formData.login.trim() || !formData.password.trim()) {
       setError('Please fill in all fields')
@@ -66,23 +38,21 @@ export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
         password: formData.password
       })
 
-      // Success - callback handles navigation
       onSuccess()
     } catch (err: any) {
-      // Handle API URL configuration error
       const apiError = err as {
         status?: number
         message?: string
         details?: Record<string, any>
       }
 
+      // The api url is not set in the settings
       if (apiError.status === -1 && apiError.message?.includes('API URL')) {
         setFlash(apiError.message)
-        openSettings()
         return
       }
 
-      // Handle WMK upload failure differently - keep session, allow retry
+      // The WMK upload failed
       if (apiError.details?.wmkUploadFailed) {
         // WMK upload failed - show error but keep session
         setError('Could not initialize vault. Please try again.')
@@ -115,16 +85,12 @@ export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
     }))
   }
 
-  const initializing = mutation.isPending || !cryptoReady || isInitializing
   const disabled =
-    initializing || !formData.login.trim() || !formData.password.trim()
+    mutation.isPending || !formData.login.trim() || !formData.password.trim()
 
   return {
     formData,
     error,
-    cryptoReady,
-    isInitializing,
-    initializing,
     disabled,
     handleSubmit,
     handleChange
