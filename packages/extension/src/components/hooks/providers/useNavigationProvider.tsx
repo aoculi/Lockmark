@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState
+} from 'react'
+import { useAuthSession } from './useAuthSessionProvider'
 
 export type Route = '/login' | '/register' | '/vault'
 
@@ -31,6 +39,7 @@ export const useNavigation = () => {
   if (!context) {
     throw new Error('useNavigation must be used within a NavigationProvider')
   }
+
   return context
 }
 
@@ -43,10 +52,29 @@ type NavigationProviderProps = {
  * Navigation Provider Component
  * Provides navigation, flash messages, and settings modal state to children
  */
-export function NavigationProvider({ children, initialRoute = '/login' }: NavigationProviderProps) {
+export function NavigationProvider({
+  children,
+  initialRoute = '/login'
+}: NavigationProviderProps) {
   const [route, setRoute] = useState<Route>(initialRoute)
   const [flash, setFlashState] = useState<string | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  const { session, isLoading } = useAuthSession()
+
+  useEffect(() => {
+    if (isLoading) return
+
+    if (!session.userId && route !== '/login') {
+      setRoute('/login')
+      return
+    }
+
+    if (session.userId && route !== '/vault') {
+      setRoute('/vault')
+      return
+    }
+  }, [isLoading, session.userId])
 
   const navigate = useCallback((newRoute: Route) => {
     setRoute(newRoute)

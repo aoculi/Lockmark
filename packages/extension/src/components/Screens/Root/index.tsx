@@ -1,4 +1,8 @@
 import {
+  AuthSessionProvider,
+  useAuthSession
+} from '@/components/hooks/providers/useAuthSessionProvider'
+import {
   NavigationProvider,
   useNavigation
 } from '@/components/hooks/providers/useNavigationProvider'
@@ -8,41 +12,12 @@ import Text from '@/components/ui/Text'
 import Login from '../Login'
 import Register from '../Register'
 
+import Button from '@/components/ui/Button'
 import styles from './styles.module.css'
 
-// -----------------------------------------------------------------------------
-// HOW TO USE SETTINGS IN A CHILD COMPONENT:
-// -----------------------------------------------------------------------------
-// import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
-//
-// function MyComponent() {
-//   const { settings, isLoading, updateSettings, setShowHiddenTags, setApiUrl, setAutoLockTimeout } = useSettings()
-//
-//   // Access settings values
-//   console.log(settings.showHiddenTags)
-//   console.log(settings.apiUrl)
-//   console.log(settings.autoLockTimeout)
-//
-//   // Update a single setting
-//   await setShowHiddenTags(true)
-//   await setApiUrl('https://api.example.com')
-//   await setAutoLockTimeout('30min')
-//
-//   // Update multiple settings at once
-//   await updateSettings({ showHiddenTags: true, apiUrl: 'https://api.example.com' })
-//
-//   // Check loading state
-//   if (isLoading) return <div>Loading...</div>
-//
-//   return <div>...</div>
-// }
-// -----------------------------------------------------------------------------
-
-/**
- * Inner content component that consumes the navigation context
- */
 function RootContent() {
   const { route, flash, setFlash, navigate } = useNavigation()
+  const { clearSession } = useAuthSession()
 
   const handleLoginSuccess = () => {
     setFlash(null)
@@ -62,7 +37,12 @@ function RootContent() {
         return <Register onRegisterSuccess={handleRegisterSuccess} />
       case '/vault':
       default:
-        return <div>Vault</div>
+        return (
+          <div>
+            Vault
+            <Button onClick={() => clearSession()}>Logout</Button>
+          </div>
+        )
     }
   }
 
@@ -86,9 +66,11 @@ function RootContent() {
 export default function Root() {
   return (
     <SettingsProvider>
-      <NavigationProvider>
-        <RootContent />
-      </NavigationProvider>
+      <AuthSessionProvider>
+        <NavigationProvider>
+          <RootContent />
+        </NavigationProvider>
+      </AuthSessionProvider>
     </SettingsProvider>
   )
 }

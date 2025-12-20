@@ -1,10 +1,17 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import {
   Settings,
+  getDefaultSettings,
   getSettings,
-  setSettings as saveSettings,
-  getDefaultSettings
+  setSettings as saveSettings
 } from '@/lib/storage'
+import {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState
+} from 'react'
 
 type SettingsContextType = {
   settings: Settings
@@ -57,6 +64,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         const storedSettings = await getSettings()
         if (storedSettings) {
           setSettingsState(storedSettings)
+        } else {
+          await saveSettings(defaultSettings)
         }
       } catch (error) {
         console.error('Failed to load settings:', error)
@@ -69,24 +78,36 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   }, [])
 
   // Update multiple settings at once
-  const updateSettings = useCallback(async (newSettings: Partial<Settings>) => {
-    const updated = { ...settings, ...newSettings }
-    setSettingsState(updated)
-    await saveSettings(updated)
-  }, [settings])
+  const updateSettings = useCallback(
+    async (newSettings: Partial<Settings>) => {
+      const updated = { ...settings, ...newSettings }
+      setSettingsState(updated)
+      await saveSettings(updated)
+    },
+    [settings]
+  )
 
   // Individual setters for convenience
-  const setShowHiddenTags = useCallback(async (value: boolean) => {
-    await updateSettings({ showHiddenTags: value })
-  }, [updateSettings])
+  const setShowHiddenTags = useCallback(
+    async (value: boolean) => {
+      await updateSettings({ showHiddenTags: value })
+    },
+    [updateSettings]
+  )
 
-  const setApiUrl = useCallback(async (value: string) => {
-    await updateSettings({ apiUrl: value })
-  }, [updateSettings])
+  const setApiUrl = useCallback(
+    async (value: string) => {
+      await updateSettings({ apiUrl: value })
+    },
+    [updateSettings]
+  )
 
-  const setAutoLockTimeout = useCallback(async (value: string) => {
-    await updateSettings({ autoLockTimeout: value })
-  }, [updateSettings])
+  const setAutoLockTimeout = useCallback(
+    async (value: string) => {
+      await updateSettings({ autoLockTimeout: value })
+    },
+    [updateSettings]
+  )
 
   const contextValue: SettingsContextType = {
     settings,

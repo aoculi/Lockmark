@@ -28,11 +28,6 @@ export default defineConfig({
   manifest: (env) => {
     const basePermissions: string[] = ['storage', 'tabs']
 
-    // Only add side_panel permission for Chrome/Chromium (not Firefox)
-    if (env.browser !== 'firefox') {
-      basePermissions.push('side_panel')
-    }
-
     // Add contextMenus permission for sidebar context menu item
     basePermissions.push('contextMenus')
 
@@ -56,25 +51,6 @@ export default defineConfig({
           id: '@lockmark'
         }
       } as any
-    }
-
-    // Add commands for keyboard shortcuts
-    manifest.commands = {
-      'open-sidepanel': {
-        suggested_key: {
-          default: 'Ctrl+Shift+X',
-          mac: 'Command+Shift+X'
-        },
-        description: 'Open LockMark Sidebar'
-      }
-    }
-
-    // Add sidebar_action for Firefox (not a permission, but a manifest field)
-    if (env.browser === 'firefox') {
-      manifest.sidebar_action = {
-        default_panel: 'sidepanel/index.html',
-        default_title: 'LockMark'
-      }
     }
 
     return manifest

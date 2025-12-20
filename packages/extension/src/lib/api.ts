@@ -2,9 +2,10 @@
  * API client for secure extension
  */
 
-import { getSettings } from '@/lib/storage'
+import { LoginResponse } from '@/api/auth-api'
+import { clearStorageItem, getSettings, getStorageItem } from '@/lib/storage'
 import { keystoreManager } from '@/utils/keystore'
-import { sessionManager } from '@/utils/session'
+import { STORAGE_KEYS } from './constants'
 
 /**
  * API client types
@@ -65,7 +66,7 @@ async function buildUrl(path: string): Promise<string> {
  * @returns Bearer token header or undefined
  */
 async function getAuthHeader(): Promise<string | undefined> {
-  const session = await sessionManager.getSession()
+  const session = await getStorageItem<LoginResponse>(STORAGE_KEYS.SESSION)
   return session?.token ? `Bearer ${session.token}` : undefined
 }
 
@@ -90,9 +91,8 @@ async function parseResponseBody(response: Response): Promise<any> {
  * Clears session and keystore, then throws ApiError
  */
 async function handle401Error(data: any): Promise<never> {
-  await sessionManager.clearSession()
+  await clearStorageItem(STORAGE_KEYS.SESSION)
   await keystoreManager.zeroize()
-  sessionManager.notifyListeners()
 
   throw {
     status: 401,
@@ -259,52 +259,4 @@ export async function apiClient<T = unknown>(
 //       }
 //     })
 //   }
-// }
-
-// /**
-//  * Decrypts and parses a manifest from API response
-//  * Returns the parsed manifest and handles key cleanup
-//  */
-// export async function decryptManifest(
-//   data: ManifestApiResponse
-// ): Promise<ManifestV1> {
-//   // Ensure crypto environment (libsodium) is initialized
-//   await whenCryptoReady()
-
-//   const mak = await keystoreManager.getMAK()
-//   const aadContext = await keystoreManager.getAadContext()
-
-//   if (!mak || !aadContext) {
-//     throw new Error('Keys not available for decryption')
-//   }
-
-//   const aadManifest = new TextEncoder().encode(
-//     constructAadManifest(aadContext.userId, aadContext.vaultId)
-//   )
-//   const plaintext = decryptAEAD(
-//     base64ToUint8Array(data.ciphertext),
-//     base64ToUint8Array(data.nonce),
-//     mak,
-//     aadManifest
-//   )
-//   const manifestText = new TextDecoder().decode(plaintext)
-
-//   let manifest: ManifestV1
-//   try {
-//     manifest = JSON.parse(manifestText)
-//     if (!manifest.items || !Array.isArray(manifest.items)) {
-//       manifest.items = []
-//     }
-//     if (!manifest.tags || !Array.isArray(manifest.tags)) {
-//       manifest.tags = []
-//     }
-//     if (!manifest.version) {
-//       manifest.version = data.version
-//     }
-//   } catch (err) {
-//     manifest = { version: data.version, items: [], tags: [] }
-//   }
-
-//   zeroize(plaintext)
-//   return manifest
 // }
