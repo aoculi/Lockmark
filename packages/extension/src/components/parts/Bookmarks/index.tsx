@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { useManifestOperations } from '@/components/hooks/useManifestOperations'
 import type { Bookmark, Tag } from '@/lib/types'
-import { manifestStore } from '@/store/manifest'
+import { manifestStore } from '@/utils/manifest'
 
 import BookmarkHeader from '@/components/parts/Bookmarks/BookmarkHeader'
 import { BookmarkList } from '@/components/parts/Bookmarks/BookmarkList'

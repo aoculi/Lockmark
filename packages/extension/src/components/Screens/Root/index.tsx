@@ -6,6 +6,7 @@ import {
 import { SettingsProvider } from '@/components/hooks/providers/useSettingsProvider'
 
 import Text from '@/components/ui/Text'
+import Bookmark from '../Bookmark'
 import Bookmarks from '../Bookmarks'
 import Login from '../Login'
 import Register from '../Register'
@@ -32,8 +33,11 @@ function RootContent() {
       case '/register':
         return <Register onRegisterSuccess={handleRegisterSuccess} />
       case '/vault':
-      default:
         return <Bookmarks />
+      case '/bookmark':
+        return <Bookmark />
+      default:
+        return <Bookmark />
     }
   }
 

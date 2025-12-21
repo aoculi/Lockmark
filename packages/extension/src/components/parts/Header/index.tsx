@@ -1,4 +1,6 @@
-import { BookOpenText, Library, Settings2 } from 'lucide-react'
+import { BookOpenText, Library, Settings2, Star } from 'lucide-react'
+
+import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 
 import Button from '@/components/ui/Button'
 import Text from '@/components/ui/Text'
@@ -7,23 +9,22 @@ import styles from './styles.module.css'
 
 export default function Header({
   title,
-  displaySwitchToBookmarks = false
+  canSwitchToVault = false,
+  canSwitchToBookmark = false
 }: {
   title?: string
-  displaySwitchToBookmarks?: boolean
+  canSwitchToVault?: boolean
+  canSwitchToBookmark?: boolean
 }) {
-  // const {hasSession} = useSession()
+  const { navigate } = useNavigation()
 
-  const ToggleSizeAction = () => {
-    if (document.body.classList.contains('large')) {
-      document.body.classList.remove('large')
-      document.body.classList.add('compact')
-    } else {
-      document.body.classList.add('large')
-      document.body.classList.remove('compact')
-    }
+  const switchToVault = () => {
+    navigate('/vault')
   }
 
+  const switchToBookmark = () => {
+    navigate('/bookmark')
+  }
   return (
     <div className={styles.component}>
       <div className={styles.content}>
@@ -38,11 +39,17 @@ export default function Header({
         </div>
 
         <div className={styles.right}>
-          {displaySwitchToBookmarks && (
-            <Button onClick={ToggleSizeAction} variant='ghost'>
+          {canSwitchToVault && (
+            <Button onClick={switchToVault} variant='ghost'>
               <BookOpenText strokeWidth={2} size={18} color='white' />
             </Button>
           )}
+          {canSwitchToBookmark && (
+            <Button onClick={switchToBookmark} variant='ghost'>
+              <Star strokeWidth={2} size={18} color='white' />
+            </Button>
+          )}
+
           <Button variant='ghost'>
             <Settings2 strokeWidth={2} size={18} color='white' />
           </Button>

@@ -7,9 +7,13 @@ import {
   useEffect,
   useState
 } from 'react'
+
+import { STORAGE_KEYS } from '@/lib/constants'
+import { getStorageItem } from '@/lib/storage'
+import { ManifestV1 } from '@/lib/types'
 import { useAuthSession } from './useAuthSessionProvider'
 
-export type Route = '/login' | '/register' | '/vault'
+export type Route = '/login' | '/register' | '/vault' | '/bookmark'
 
 type NavigationContextType = {
   route: Route
@@ -71,12 +75,26 @@ export function NavigationProvider({
 
     if (!session.userId && route !== '/login' && route !== '/register') {
       setRoute('/login')
-    }
-
-    if (session.userId && route !== '/vault') {
-      setRoute('/vault')
       return
     }
+
+    const getManifest = async () => {
+      const manifest = await getStorageItem<ManifestV1>(STORAGE_KEYS.MANIFEST)
+
+      // has session and manifest
+      if (session.userId && manifest) {
+        if (route === '/login' || route === '/register') {
+          setRoute('/bookmark')
+          return
+        }
+
+        // if (route !== '/bookmark' || route !== '/bookmarks') {
+        //   setRoute('/bookmark')
+        //   return
+        // }
+      }
+    }
+    getManifest()
   }, [isLoading, session.userId, route])
 
   const navigate = useCallback((newRoute: Route) => {

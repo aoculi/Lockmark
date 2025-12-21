@@ -6,6 +6,7 @@ import {
   type AuthPhase
 } from '@/components/hooks/queries/useQueryAuth'
 import { useAuthForm } from '@/components/hooks/useAuthForm'
+import usePopupSize from '@/components/hooks/usePopupSize'
 
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
@@ -34,6 +35,7 @@ interface RegisterProps {
 }
 
 export default function Register({ onRegisterSuccess }: RegisterProps) {
+  usePopupSize('compact')
   const { register, phase } = useQueryAuth()
   const { navigate } = useNavigation()
 
