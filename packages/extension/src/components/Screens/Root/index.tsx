@@ -1,6 +1,7 @@
 import { AuthSessionProvider } from '@/components/hooks/providers/useAuthSessionProvider'
 import {
   NavigationProvider,
+  Route,
   useNavigation
 } from '@/components/hooks/providers/useNavigationProvider'
 import { SettingsProvider } from '@/components/hooks/providers/useSettingsProvider'
@@ -18,16 +19,16 @@ function RootContent() {
 
   const handleLoginSuccess = () => {
     setFlash(null)
-    navigate('/vault')
+    navigate('/bookmark')
   }
 
   const handleRegisterSuccess = () => {
     setFlash(null)
-    navigate('/vault')
+    navigate('/bookmark')
   }
 
   const renderRoute = () => {
-    switch (route) {
+    switch (route as Route) {
       case '/login':
         return <Login onLoginSuccess={handleLoginSuccess} />
       case '/register':
