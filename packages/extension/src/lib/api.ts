@@ -103,7 +103,13 @@ async function parseResponseBody(response: Response): Promise<unknown> {
  * Clears session and keystore, then throws ApiError
  */
 async function handle401Error(data: unknown): Promise<never> {
-  await clearStorageItem(STORAGE_KEYS.SESSION)
+  // Try to clear session storage, but don't fail if it errors
+  try {
+    await clearStorageItem(STORAGE_KEYS.SESSION)
+  } catch (error) {
+    // Log but don't throw - we still want to throw the 401 error
+    console.warn('Failed to clear session storage on 401:', error)
+  }
 
   const errorData = data as {
     message?: string
@@ -155,11 +161,22 @@ export async function apiClient<T = unknown>(
       mode: 'cors'
     })
   } catch (err: unknown) {
-    const error = err as { status?: number; message?: string }
-    if (error?.status === -1 && error?.message?.includes('API URL')) {
+    // Check if it's already an ApiError (from getApiUrl)
+    if (
+      err &&
+      typeof err === 'object' &&
+      'status' in err &&
+      'message' in err &&
+      (err as ApiError).status === -1 &&
+      typeof (err as ApiError).message === 'string' &&
+      (err as ApiError).message.includes('API URL')
+    ) {
       throw err as ApiError
     }
-    throw createApiError(-1, 'Network error', error?.message)
+    // Handle network errors or other unknown errors
+    const errorMessage =
+      err instanceof Error ? err.message : 'Network request failed'
+    throw createApiError(-1, 'Network error', errorMessage)
   }
 
   const data = await parseResponseBody(response)

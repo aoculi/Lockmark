@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
+import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { useManifest } from '@/components/hooks/useManifest'
 import usePopupSize from '@/components/hooks/usePopupSize'
 import { useTags } from '@/components/hooks/useTags'
 import { captureCurrentPage } from '@/lib/pageCapture'
-import { getDefaultSettings, Settings } from '@/lib/storage'
 import { MAX_TAGS_PER_ITEM } from '@/lib/validation'
 
 import Header from '@/components/parts/Header'
@@ -33,10 +33,10 @@ export default function Bookmark() {
   const { isSaving } = useManifest()
   const { addBookmark, updateBookmark, bookmarks } = useBookmarks()
   const { tags } = useTags()
+  const { settings } = useSettings()
   const bookmark =
     bookmarks.find((item) => item.id === selectedBookmark) || null
 
-  const [settings] = useState<Settings>(getDefaultSettings())
   const [form, setForm] = useState(emptyBookmark)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -183,11 +183,23 @@ export default function Bookmark() {
       return tags
     }
 
+    // Create a Set for O(1) lookup instead of O(n) array includes
+    const selectedTagIds = new Set(form.tags)
+
     // Keep already-selected hidden tags visible while hiding them from suggestions
-    const selectedHiddenTags = tags.filter(
-      (tag) => tag.hidden && form.tags.includes(tag.id)
-    )
-    const visibleTags = tags.filter((tag) => !tag.hidden)
+    const selectedHiddenTags: typeof tags = []
+    const visibleTags: typeof tags = []
+
+    // Single pass through tags array for better performance
+    for (const tag of tags) {
+      if (tag.hidden) {
+        if (selectedTagIds.has(tag.id)) {
+          selectedHiddenTags.push(tag)
+        }
+      } else {
+        visibleTags.push(tag)
+      }
+    }
 
     return [...visibleTags, ...selectedHiddenTags]
   }, [tags, settings.showHiddenTags, form.tags])

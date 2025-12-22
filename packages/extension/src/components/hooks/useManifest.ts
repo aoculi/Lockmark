@@ -17,8 +17,11 @@ export type StoredManifestData = {
 
 /**
  * Load manifest data from storage
+ * @returns Manifest data or null if not found
+ * @throws StorageError if storage operation fails (not just "not found")
  */
 export async function loadManifestData(): Promise<StoredManifestData | null> {
+  // Try new format first
   const stored = await getStorageItem<StoredManifestData>(STORAGE_KEYS.MANIFEST)
   if (stored?.manifest) {
     return stored
@@ -27,9 +30,10 @@ export async function loadManifestData(): Promise<StoredManifestData | null> {
   // Backwards compatibility: check for old separate storage format
   const oldManifest = await getStorageItem<ManifestV1>(STORAGE_KEYS.MANIFEST)
   if (oldManifest && 'items' in oldManifest) {
+    // Try to get old metadata, but don't fail if it doesn't exist
     const oldMeta = await getStorageItem<{ etag: string; version: number }>(
       'manifest_meta'
-    )
+    ).catch(() => null)
     return {
       manifest: oldManifest,
       etag: oldMeta?.etag ?? null,
@@ -68,13 +72,19 @@ export function useManifest() {
   // Load manifest on mount
   useEffect(() => {
     const load = async () => {
-      const data = await loadManifestData()
-      if (data) {
-        setManifest(data.manifest)
-        setEtag(data.etag)
-        setServerVersion(data.serverVersion)
+      try {
+        const data = await loadManifestData()
+        if (data) {
+          setManifest(data.manifest)
+          setEtag(data.etag)
+          setServerVersion(data.serverVersion)
+        }
+      } catch (error) {
+        // Log storage errors but don't crash the app
+        console.error('Failed to load manifest from storage:', error)
+      } finally {
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }
     load()
   }, [])
@@ -97,11 +107,17 @@ export function useManifest() {
       })
 
       // Update storage
-      await saveManifestData({
-        manifest: result.manifest,
-        etag: result.etag,
-        serverVersion: result.version
-      })
+      try {
+        await saveManifestData({
+          manifest: result.manifest,
+          etag: result.etag,
+          serverVersion: result.version
+        })
+      } catch (error) {
+        // Log storage error but don't fail the save operation
+        // The server already has the data, local storage is just a cache
+        console.error('Failed to save manifest to local storage:', error)
+      }
 
       // Update local state
       setManifest(result.manifest)

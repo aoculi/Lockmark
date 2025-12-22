@@ -44,7 +44,7 @@ export const useQueryAuth = () => {
       const loginData = await fetchLogin(variables)
 
       // Set session immediately after login
-      setSession(loginData)
+      await setSession(loginData)
 
       // Phase 2: Fetch manifest
       setPhase('fetching')
@@ -92,7 +92,7 @@ export const useQueryAuth = () => {
 
       // After registration, perform login flow
       const loginData = await fetchLogin(variables)
-      setSession(loginData)
+      await setSession(loginData)
 
       // Phase 2: Fetch manifest
       setPhase('fetching')
@@ -148,7 +148,7 @@ export const useQueryAuth = () => {
     },
     onSettled: async () => {
       // Clear session and storage (except settings)
-      clearSession()
+      await clearSession()
       // Clear all cached queries
       queryClient.clear()
     }

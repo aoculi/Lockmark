@@ -28,14 +28,14 @@ export default function Tags({
   const { bookmarks } = useBookmarks()
   const { navigate } = useNavigation()
 
-  const onDeleteTag = (id: string) => {
+  const onDeleteTag = async (id: string) => {
     if (
       confirm(
         'Are you sure you want to delete this tag? It will be removed from all bookmarks.'
       )
     ) {
       try {
-        deleteTag(id)
+        await deleteTag(id)
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to delete tag'
@@ -88,7 +88,10 @@ export default function Tags({
             count={bookmarks.length}
             all={true}
             active={currentTagId === 'all'}
-            onEdit={() => setSelectedTag('all')}
+            onEdit={() => {
+              setSelectedTag('all')
+              navigate('/tag')
+            }}
             onDelete={() => onDeleteTag('all')}
             icon={<TagsIcon size={18} strokeWidth={2} />}
           />
@@ -100,7 +103,10 @@ export default function Tags({
             count={bookmarkWithoutTags.length}
             all={true}
             active={currentTagId === 'unsorted'}
-            onEdit={() => setSelectedTag('unsorted')}
+            onEdit={() => {
+              setSelectedTag('unsorted')
+              navigate('/tag')
+            }}
             onDelete={() => onDeleteTag('unsorted')}
             icon={<FolderOpen size={18} strokeWidth={2} />}
           />
@@ -155,7 +161,10 @@ export default function Tags({
                   count={count}
                   all={false}
                   active={currentTagId === tag.id}
-                  onEdit={() => setSelectedTag(tag.id)}
+                  onEdit={() => {
+                    setSelectedTag(tag.id)
+                    navigate('/tag')
+                  }}
                   onDelete={() => onDeleteTag(tag.id)}
                 />
               )

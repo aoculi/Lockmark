@@ -21,10 +21,10 @@ export default function BookmarkList({ searchQuery, currentTagId }: Props) {
   const { tags, showHiddenTags } = useTags()
   const { setFlash } = useNavigation()
 
-  const onDelete = (id: string) => {
+  const onDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this bookmark?')) {
       try {
-        deleteBookmark(id)
+        await deleteBookmark(id)
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to delete bookmark'

@@ -1,7 +1,9 @@
 import { EllipsisVertical } from 'lucide-react'
+import { useMemo } from 'react'
 
+import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
-import { getTagName } from '@/lib/bookmarkUtils'
+import { createTagMap, getTagNameFromMap } from '@/lib/bookmarkUtils'
 import type { Bookmark, Tag } from '@/lib/types'
 import { formatDate, getHostname } from '@/lib/utils'
 
@@ -19,6 +21,11 @@ type Props = {
 
 export function BookmarkCard({ bookmark, tags, onDelete }: Props) {
   const { setSelectedBookmark } = useSelection()
+  const { navigate } = useNavigation()
+
+  // Memoize tag map for O(1) lookups
+  const tagMap = useMemo(() => createTagMap(tags), [tags])
+
   return (
     <div className={styles.component}>
       <a
@@ -46,7 +53,7 @@ export function BookmarkCard({ bookmark, tags, onDelete }: Props) {
               {bookmark.tags.length > 0 &&
                 bookmark.tags.map((tagId: string) => (
                   <span key={tagId} className={styles.tag}>
-                    {getTagName(tagId, tags)}
+                    {getTagNameFromMap(tagId, tagMap)}
                   </span>
                 ))}
             </div>
@@ -71,7 +78,12 @@ export function BookmarkCard({ bookmark, tags, onDelete }: Props) {
           </Button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
-          <DropdownMenu.Item onClick={() => setSelectedBookmark(bookmark.id)}>
+          <DropdownMenu.Item
+            onClick={() => {
+              setSelectedBookmark(bookmark.id)
+              navigate('/bookmark')
+            }}
+          >
             Edit
           </DropdownMenu.Item>
           <DropdownMenu.Separator />

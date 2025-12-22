@@ -1,26 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 
+import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
 import { useManifest } from '@/components/hooks/useManifest'
-import { STORAGE_KEYS } from '@/lib/constants'
-import { getStorageItem, Settings } from '@/lib/storage'
 import type { Bookmark, Tag } from '@/lib/types'
 import { generateId } from '@/lib/utils'
 import { validateTagName } from '@/lib/validation'
 
 export function useTags() {
   const { manifest, save, isSaving } = useManifest()
-  const [showHiddenTags, setShowHiddenTags] = useState(false)
-
-  // Load showHiddenTags setting
-  useEffect(() => {
-    const loadSettings = async () => {
-      const settings = await getStorageItem<Settings>(STORAGE_KEYS.SETTINGS)
-      if (settings) {
-        setShowHiddenTags(settings.showHiddenTags)
-      }
-    }
-    loadSettings()
-  }, [])
+  const { settings } = useSettings()
 
   const createTag = useCallback(
     async (tag: Omit<Tag, 'id'>) => {
@@ -54,14 +42,14 @@ export function useTags() {
         tags: [...(manifest.tags || []), newTag]
       })
     },
-    [manifest, validateTagName, save]
+    [manifest, save]
   )
 
   const updateTag = useCallback(
     async (id: string, updates: Partial<Omit<Tag, 'id' | 'created_at'>>) => {
       if (!manifest) return
 
-      const validationError = validateTagName(updates.name!)
+      const validationError = validateTagName(updates.name ?? '')
       if (validationError) {
         throw new Error(validationError)
       }
@@ -72,7 +60,7 @@ export function useTags() {
         const validationData = {
           name: updates.name ?? existingTag.name,
           hidden: updates.hidden ?? existingTag.hidden,
-          color: updates.name ?? existingTag.color
+          color: updates.color ?? existingTag.color
         }
 
         await save({
@@ -85,7 +73,7 @@ export function useTags() {
         })
       }
     },
-    [manifest, validateTagName, save]
+    [manifest, save]
   )
 
   const deleteTag = useCallback(
@@ -114,7 +102,7 @@ export function useTags() {
 
   return {
     tags: manifest?.tags || [],
-    showHiddenTags,
+    showHiddenTags: settings.showHiddenTags,
     createTag,
     updateTag,
     deleteTag,

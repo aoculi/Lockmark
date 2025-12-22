@@ -14,6 +14,21 @@ export interface Settings {
 }
 
 /**
+ * Storage error class for handling storage operation failures
+ */
+export class StorageError extends Error {
+  constructor(
+    message: string,
+    public readonly operation: 'get' | 'set' | 'remove',
+    public readonly key: string,
+    public readonly cause?: chrome.runtime.LastError
+  ) {
+    super(message)
+    this.name = 'StorageError'
+  }
+}
+
+/**
  * Check if chrome.storage.local is available
  */
 function isStorageAvailable(): boolean {
@@ -24,19 +39,27 @@ function isStorageAvailable(): boolean {
  * Get value from chrome.storage.local
  * @param key - Storage key
  * @returns Promise resolving to the value or null if not found
+ * @throws StorageError if storage operation fails
  */
 export function getStorageItem<T>(key: string): Promise<T | null> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (!isStorageAvailable()) {
-      console.warn('chrome.storage.local is not available')
-      resolve(null)
+      reject(
+        new StorageError('chrome.storage.local is not available', 'get', key)
+      )
       return
     }
 
     chrome.storage.local.get(key, (result) => {
       if (chrome.runtime.lastError) {
-        console.error('Storage get error:', chrome.runtime.lastError)
-        resolve(null)
+        reject(
+          new StorageError(
+            `Failed to get storage item: ${chrome.runtime.lastError.message}`,
+            'get',
+            key,
+            chrome.runtime.lastError
+          )
+        )
         return
       }
       resolve(result[key] ?? null)
@@ -48,23 +71,28 @@ export function getStorageItem<T>(key: string): Promise<T | null> {
  * Set value in chrome.storage.local
  * @param key - Storage key
  * @param value - Value to store
- * @returns Promise resolving to void on success, null on error
+ * @returns Promise resolving to void on success
+ * @throws StorageError if storage operation fails
  */
-export function setStorageItem(
-  key: string,
-  value: unknown
-): Promise<void | null> {
-  return new Promise((resolve) => {
+export function setStorageItem(key: string, value: unknown): Promise<void> {
+  return new Promise((resolve, reject) => {
     if (!isStorageAvailable()) {
-      console.warn('chrome.storage.local is not available')
-      resolve(null)
+      reject(
+        new StorageError('chrome.storage.local is not available', 'set', key)
+      )
       return
     }
 
     chrome.storage.local.set({ [key]: value }, () => {
       if (chrome.runtime.lastError) {
-        console.error('Storage set error:', chrome.runtime.lastError)
-        resolve(null)
+        reject(
+          new StorageError(
+            `Failed to set storage item: ${chrome.runtime.lastError.message}`,
+            'set',
+            key,
+            chrome.runtime.lastError
+          )
+        )
         return
       }
       resolve()
@@ -75,20 +103,28 @@ export function setStorageItem(
 /**
  * Remove value from chrome.storage.local
  * @param key - Storage key
- * @returns Promise resolving to void on success, null on error
+ * @returns Promise resolving to void on success
+ * @throws StorageError if storage operation fails
  */
-export function clearStorageItem(key: string): Promise<void | null> {
-  return new Promise((resolve) => {
+export function clearStorageItem(key: string): Promise<void> {
+  return new Promise((resolve, reject) => {
     if (!isStorageAvailable()) {
-      console.warn('chrome.storage.local is not available')
-      resolve(null)
+      reject(
+        new StorageError('chrome.storage.local is not available', 'remove', key)
+      )
       return
     }
 
     chrome.storage.local.remove(key, () => {
       if (chrome.runtime.lastError) {
-        console.error('Storage remove error:', chrome.runtime.lastError)
-        resolve(null)
+        reject(
+          new StorageError(
+            `Failed to remove storage item: ${chrome.runtime.lastError.message}`,
+            'remove',
+            key,
+            chrome.runtime.lastError
+          )
+        )
         return
       }
       resolve()
@@ -105,8 +141,9 @@ export function getSettings(): Promise<Settings | null> {
 
 /**
  * Set settings in chrome.storage.local
+ * @throws StorageError if storage operation fails
  */
-export function setSettings(settings: Settings): Promise<void | null> {
+export function setSettings(settings: Settings): Promise<void> {
   return setStorageItem(STORAGE_KEYS.SETTINGS, settings)
 }
 

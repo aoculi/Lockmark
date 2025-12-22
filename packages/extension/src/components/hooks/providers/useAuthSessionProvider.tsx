@@ -77,12 +77,17 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  const clearSession = useCallback(() => {
+  const clearSession = useCallback(async () => {
     setSessionState(defaultSession)
     setIsAuthenticated(false)
-    clearStorageItem(STORAGE_KEYS.SESSION)
-    clearStorageItem(STORAGE_KEYS.KEYSTORE)
-    clearStorageItem(STORAGE_KEYS.MANIFEST)
+
+    // Clear all storage items, continue even if one fails
+    const clearPromises = [
+      clearStorageItem(STORAGE_KEYS.SESSION).catch(() => {}),
+      clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
+      clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
+    ]
+    await Promise.allSettled(clearPromises)
   }, [])
 
   useEffect(() => {
@@ -105,7 +110,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
 
       // Token has expired - clear session
       if (timeUntilExpiry <= 0) {
-        clearSession()
+        await clearSession()
         setIsLoading(false)
         return
       }
@@ -123,7 +128,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       // If session was created/refreshed longer ago than autoLockTimeout, clear it
       // (even if token is still technically valid)
       if (timeSinceCreation > autoLockTimeoutMs) {
-        clearSession()
+        await clearSession()
         setIsLoading(false)
         return
       }
@@ -140,7 +145,12 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
           }
           setSessionState(updatedSession)
           setIsAuthenticated(true)
-          await setStorageItem(STORAGE_KEYS.SESSION, updatedSession)
+          try {
+            await setStorageItem(STORAGE_KEYS.SESSION, updatedSession)
+          } catch (storageError) {
+            // Storage error - log but continue with in-memory session
+            console.warn('Failed to save session to storage:', storageError)
+          }
           setIsLoading(false)
           return
         } catch (error) {
@@ -162,7 +172,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     loadAndRefreshSession()
   }, [clearSession])
 
-  const setSession = useCallback((response: LoginResponse) => {
+  const setSession = useCallback(async (response: LoginResponse) => {
     const data: AuthSession = {
       userId: response.user_id,
       token: response.token,
@@ -177,7 +187,12 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     setIsAuthenticated(true)
 
     // Sync to chrome.storage.local so api.ts can access the token
-    setStorageItem(STORAGE_KEYS.SESSION, data)
+    try {
+      await setStorageItem(STORAGE_KEYS.SESSION, data)
+    } catch (error) {
+      // Storage error - log but continue with in-memory session
+      console.warn('Failed to save session to storage:', error)
+    }
   }, [])
 
   const contextValue: AuthSessionContextType = {
