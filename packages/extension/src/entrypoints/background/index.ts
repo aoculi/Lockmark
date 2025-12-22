@@ -1,4 +1,4 @@
-import { BackgroundService } from '@/lib/background/backgroundService'
+import { BackgroundService } from '@/lib/backgroundService'
 
 export default defineBackground(() => {
   const service = new BackgroundService()

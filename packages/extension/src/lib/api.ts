@@ -4,7 +4,6 @@
 
 import { LoginResponse } from '@/api/auth-api'
 import { clearStorageItem, getSettings, getStorageItem } from '@/lib/storage'
-import { keystoreManager } from '@/utils/keystore'
 import { STORAGE_KEYS } from './constants'
 
 /**
@@ -92,7 +91,6 @@ async function parseResponseBody(response: Response): Promise<any> {
  */
 async function handle401Error(data: any): Promise<never> {
   await clearStorageItem(STORAGE_KEYS.SESSION)
-  await keystoreManager.zeroize()
 
   throw {
     status: 401,
