@@ -1,7 +1,8 @@
 import {
   BookOpenText,
   Library,
-  LockKeyhole,
+  LogOut,
+  Menu,
   Settings2,
   Star
 } from 'lucide-react'
@@ -12,6 +13,7 @@ import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 
 import Button from '@/components/ui/Button'
+import { DropdownMenu } from '@/components/ui/DropdownMenu'
 import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
@@ -38,6 +40,7 @@ export default function Header({
   const switchToBookmark = () => {
     navigate('/bookmark')
   }
+
   return (
     <div className={styles.component}>
       <div className={styles.content}>
@@ -67,23 +70,24 @@ export default function Header({
             </Button>
           )}
 
-          <Button
-            variant='ghost'
-            title='Settings'
-            onClick={() => navigate('/settings')}
-          >
-            <Settings2 strokeWidth={2} size={18} color='white' />
-          </Button>
-
-          {isAuthenticated && (
-            <Button
-              variant='ghost'
-              onClick={() => logout.mutate()}
-              title='Logout'
-            >
-              <LockKeyhole strokeWidth={2} size={18} color='white' />
-            </Button>
-          )}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button asIcon={true} variant='ghost' title='Menu'>
+                <Menu strokeWidth={2} size={18} color='white' />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onClick={() => navigate('/settings')}>
+                <Settings2 strokeWidth={1} size={18} color='white' /> Settings
+              </DropdownMenu.Item>
+              {isAuthenticated && <DropdownMenu.Separator />}
+              {isAuthenticated && (
+                <DropdownMenu.Item onClick={() => logout.mutate()}>
+                  <LogOut strokeWidth={1} size={18} color='white' /> Logout
+                </DropdownMenu.Item>
+              )}
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
         </div>
       </div>
     </div>

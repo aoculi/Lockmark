@@ -4,15 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
-
-type AutoLockTimeout =
-  | '1min'
-  | '2min'
-  | '5min'
-  | '10min'
-  | '20min'
-  | '30min'
-  | '1h'
+import usePopupSize from '@/components/hooks/usePopupSize'
 
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
@@ -23,10 +15,20 @@ import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
 
+type AutoLockTimeout =
+  | '1min'
+  | '2min'
+  | '5min'
+  | '10min'
+  | '20min'
+  | '30min'
+  | '1h'
+
 export default function Settings() {
   const { navigate } = useNavigation()
   const { isAuthenticated } = useAuthSession()
   const { settings, isLoading, updateSettings } = useSettings()
+  usePopupSize('compact')
 
   const [fields, setFields] = useState({
     showHiddenTags: false,
