@@ -1,9 +1,15 @@
+import { useEffect } from 'react'
+
 import { AuthSessionProvider } from '@/components/hooks/providers/useAuthSessionProvider'
 import {
   NavigationProvider,
   Route,
   useNavigation
 } from '@/components/hooks/providers/useNavigationProvider'
+import {
+  SelectionProvider,
+  useSelection
+} from '@/components/hooks/providers/useSelectionProvider'
 import { SettingsProvider } from '@/components/hooks/providers/useSettingsProvider'
 
 import Text from '@/components/ui/Text'
@@ -18,8 +24,7 @@ import styles from './styles.module.css'
 
 function RootContent() {
   const { route, flash, setFlash, navigate } = useNavigation()
-  const [selectedBookmark, setSelectedBookmark] = useState<string | null>(null)
-  const [selectedTag, setSelectedTag] = useState<string | null>(null)
+  const { selectedBookmark, selectedTag } = useSelection()
 
   useEffect(() => {
     if (selectedTag) {
@@ -52,12 +57,7 @@ function RootContent() {
       case '/settings':
         return <Settings />
       case '/vault':
-        return (
-          <Vault
-            setSelectedBookmark={setSelectedBookmark}
-            setSelectedTag={setSelectedTag}
-          />
-        )
+        return <Vault />
       case '/bookmark':
         return <Bookmark id={selectedBookmark} />
       case '/tag':
@@ -89,7 +89,9 @@ export default function Root() {
     <SettingsProvider>
       <AuthSessionProvider>
         <NavigationProvider>
-          <RootContent />
+          <SelectionProvider>
+            <RootContent />
+          </SelectionProvider>
         </NavigationProvider>
       </AuthSessionProvider>
     </SettingsProvider>

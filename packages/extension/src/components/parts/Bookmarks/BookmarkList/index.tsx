@@ -14,14 +14,9 @@ import styles from './styles.module.css'
 type Props = {
   searchQuery: string
   currentTagId: string | null
-  setSelectedBookmark: (id: string) => void
 }
 
-export default function BookmarkList({
-  searchQuery,
-  currentTagId,
-  setSelectedBookmark
-}: Props) {
+export default function BookmarkList({ searchQuery, currentTagId }: Props) {
   const { bookmarks, deleteBookmark } = useBookmarks()
   const { tags, showHiddenTags } = useTags()
   const { setFlash } = useNavigation()
@@ -100,7 +95,6 @@ export default function BookmarkList({
               key={bookmark.id}
               bookmark={bookmark}
               tags={tags}
-              setSelectedBookmark={setSelectedBookmark}
               onDelete={onDelete}
             />
           ))}

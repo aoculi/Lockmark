@@ -2,6 +2,7 @@ import { FolderOpen, Funnel, Plus, TagIcon, TagsIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
+import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { useTags } from '@/components/hooks/useTags'
 import type { Tag as EntityTag } from '@/lib/types'
@@ -15,13 +16,12 @@ import styles from './styles.module.css'
 
 export default function Tags({
   currentTagId,
-  onSelectFilterTag,
-  setSelectedTag
+  onSelectFilterTag
 }: {
   currentTagId: string | null
   onSelectFilterTag: (id: string) => void
-  setSelectedTag: (id: string) => void
 }) {
+  const { setSelectedTag } = useSelection()
   const [error, setError] = useState<string | null>(null)
   const [sortMode, setSortMode] = useState<'name' | 'count'>('name')
   const { tags, showHiddenTags, deleteTag } = useTags()
@@ -80,6 +80,32 @@ export default function Tags({
       {error && <ErrorCallout>{error}</ErrorCallout>}
 
       <div className={styles.content}>
+        <div className={styles.contentActionsButtons}>
+          <TagComponent
+            key='all'
+            onClick={() => onSelectFilterTag('all')}
+            name='All bookmarks'
+            count={bookmarks.length}
+            all={true}
+            active={currentTagId === 'all'}
+            onEdit={() => setSelectedTag('all')}
+            onDelete={() => onDeleteTag('all')}
+            icon={<TagsIcon size={18} strokeWidth={2} />}
+          />
+
+          <TagComponent
+            key='unsorted'
+            onClick={() => onSelectFilterTag('unsorted')}
+            name='Unsorted'
+            count={bookmarkWithoutTags.length}
+            all={true}
+            active={currentTagId === 'unsorted'}
+            onEdit={() => setSelectedTag('unsorted')}
+            onDelete={() => onDeleteTag('unsorted')}
+            icon={<FolderOpen size={18} strokeWidth={2} />}
+          />
+        </div>
+
         <div className={styles.headerActions}>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
@@ -113,32 +139,6 @@ export default function Tags({
           </Button>
         </div>
 
-        <div className={styles.contentActionsButtons}>
-          <TagComponent
-            key='all'
-            onClick={() => onSelectFilterTag('all')}
-            name='All bookmarks'
-            count={bookmarks.length}
-            all={true}
-            active={currentTagId === 'all'}
-            onEdit={() => setSelectedTag('all')}
-            onDelete={() => onDeleteTag('all')}
-            icon={<TagsIcon size={18} strokeWidth={2} />}
-          />
-
-          <TagComponent
-            key='unsorted'
-            onClick={() => onSelectFilterTag('unsorted')}
-            name='Unsorted'
-            count={bookmarkWithoutTags.length}
-            all={true}
-            active={currentTagId === 'unsorted'}
-            onEdit={() => setSelectedTag('unsorted')}
-            onDelete={() => onDeleteTag('unsorted')}
-            icon={<FolderOpen size={18} strokeWidth={2} />}
-          />
-        </div>
-
         <div className={styles.list}>
           {tags.length === 0 && (
             <p className={styles.emptyState}>No tags yet</p>
@@ -162,8 +162,6 @@ export default function Tags({
             )}
         </div>
       </div>
-
-      <div className={styles.status}>{/* <StatusIndicator /> */}</div>
     </div>
   )
 }

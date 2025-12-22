@@ -1,7 +1,8 @@
 import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
+import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import usePopupSize from '@/components/hooks/usePopupSize'
 import { useTags } from '@/components/hooks/useTags'
 import type { Tag as tagType } from '@/lib/types'
@@ -24,6 +25,8 @@ export default function Tag({ id }: { id: string | null }) {
   usePopupSize('compact')
   const { tags, createTag, updateTag } = useTags()
   const { navigate } = useNavigation()
+  const { setSelectedTag } = useSelection()
+
   const tag = tags.find((tag: tagType) => tag.id === id) || null
 
   useEffect(() => {
@@ -75,6 +78,7 @@ export default function Tag({ id }: { id: string | null }) {
         })
       }
 
+      setSelectedTag(null)
       navigate('/vault')
     } catch (error) {
       const errorMessage =
@@ -104,7 +108,7 @@ export default function Tag({ id }: { id: string | null }) {
 
   return (
     <div className={styles.component}>
-      <Header title={tag ? 'Edit' : 'New'} canSwitchToVault={true} />
+      <Header title={tag ? 'Edit tag' : 'New tag'} canSwitchToVault={true} />
 
       <div className={styles.page}>
         {saveError && <ErrorCallout>{saveError}</ErrorCallout>}
@@ -135,6 +139,16 @@ export default function Tag({ id }: { id: string | null }) {
         </div>
 
         <div className={styles.actions}>
+          <Button
+            onClick={() => {
+              setSelectedTag(null)
+              navigate('/vault')
+            }}
+            color='black'
+          >
+            Cancel
+          </Button>
+
           <Button onClick={handleSubmit} disabled={!hasChanges || isLoading}>
             {isLoading && <Loader2 className={styles.spinner} />}
             {tag ? 'Save' : 'Create'}

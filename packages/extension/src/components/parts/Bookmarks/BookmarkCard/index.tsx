@@ -1,5 +1,6 @@
 import { EllipsisVertical } from 'lucide-react'
 
+import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import { getTagName } from '@/lib/bookmarkUtils'
 import type { Bookmark, Tag } from '@/lib/types'
 import { formatDate, getHostname } from '@/lib/utils'
@@ -13,16 +14,11 @@ import styles from './styles.module.css'
 type Props = {
   bookmark: Bookmark
   tags: Tag[]
-  setSelectedBookmark: (id: string) => void
   onDelete: (id: string) => void
 }
 
-export function BookmarkCard({
-  bookmark,
-  tags,
-  setSelectedBookmark,
-  onDelete
-}: Props) {
+export function BookmarkCard({ bookmark, tags, onDelete }: Props) {
+  const { setSelectedBookmark } = useSelection()
   return (
     <div className={styles.component}>
       <a

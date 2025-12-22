@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
+import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { useManifest } from '@/components/hooks/useManifest'
 import usePopupSize from '@/components/hooks/usePopupSize'
@@ -28,12 +29,13 @@ const emptyBookmark = {
 export default function Bookmark({ id }: { id: string | null }) {
   usePopupSize('compact')
   const { navigate } = useNavigation()
+  const { setSelectedBookmark } = useSelection()
   const { isSaving } = useManifest()
   const { addBookmark, updateBookmark, bookmarks } = useBookmarks()
   const { tags } = useTags()
   const bookmark = bookmarks.find((item) => item.id === id) || null
 
-  const [settings, setSettings] = useState<Settings>(getDefaultSettings())
+  const [settings] = useState<Settings>(getDefaultSettings())
   const [form, setForm] = useState(emptyBookmark)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -55,7 +57,7 @@ export default function Bookmark({ id }: { id: string | null }) {
   // Capture current page when creating a new bookmark
   useEffect(() => {
     // if we update a page, do not capture it again
-    if (bookmark) {
+    if (bookmark || id) {
       return
     }
 
@@ -85,11 +87,11 @@ export default function Bookmark({ id }: { id: string | null }) {
     const newErrors: Record<string, string> = {}
 
     // URL validation
-    if (!form.url.trim()) {
+    if (!form.url?.trim()) {
       newErrors.url = 'URL is required'
     } else {
       try {
-        const parsed = new URL(form.url.trim())
+        const parsed = new URL(form.url?.trim())
         if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
           newErrors.url = 'URL must start with http:// or https://'
         }
@@ -99,7 +101,7 @@ export default function Bookmark({ id }: { id: string | null }) {
     }
 
     // Title validation
-    if (!form.title.trim()) {
+    if (!form.title?.trim()) {
       newErrors.title = 'Title is required'
     }
 
@@ -125,20 +127,21 @@ export default function Bookmark({ id }: { id: string | null }) {
     try {
       if (bookmark) {
         await updateBookmark(bookmark.id, {
-          url: form.url.trim(),
-          title: form.title.trim(),
-          picture: form.picture.trim(),
+          url: form.url?.trim(),
+          title: form.title?.trim(),
+          picture: form.picture?.trim(),
           tags: form.tags
         })
       } else {
         await addBookmark({
-          url: form.url.trim(),
-          title: form.title.trim(),
-          picture: form.picture.trim(),
+          url: form.url?.trim(),
+          title: form.title?.trim(),
+          picture: form.picture?.trim(),
           tags: form.tags
         })
       }
 
+      setSelectedBookmark(null)
       navigate('/vault')
     } catch (error) {
       const errorMessage =
@@ -151,7 +154,7 @@ export default function Bookmark({ id }: { id: string | null }) {
 
   // Check if there are changes and URL is set
   const hasChanges = useMemo(() => {
-    if (!form.url.trim()) {
+    if (!form.url?.trim()) {
       return false
     }
 
@@ -161,9 +164,9 @@ export default function Bookmark({ id }: { id: string | null }) {
     }
 
     // For existing bookmarks, check if any field changed
-    const urlChanged = form.url.trim() !== bookmark.url
-    const titleChanged = form.title.trim() !== bookmark.title
-    const pictureChanged = form.picture.trim() !== bookmark.picture
+    const urlChanged = form.url?.trim() !== bookmark?.url
+    const titleChanged = form.title?.trim() !== bookmark?.title
+    const pictureChanged = form.picture?.trim() !== bookmark?.picture
 
     // Check if tags changed (compare arrays)
     const tagsChanged =
@@ -252,6 +255,16 @@ export default function Bookmark({ id }: { id: string | null }) {
         </div>
 
         <div className={styles.actions}>
+          <Button
+            onClick={() => {
+              setSelectedBookmark(null)
+              navigate('/vault')
+            }}
+            color='black'
+          >
+            Cancel
+          </Button>
+
           <Button
             onClick={handleSubmit}
             disabled={!hasChanges || isLoading || isSaving}

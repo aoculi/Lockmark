@@ -84,8 +84,15 @@ type AuthSessionProviderProps = {
 export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   const [session, setSessionState] = useState<AuthSession>(defaultSession)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  const isAuthenticated = session.token !== null && session.userId !== null
+  const clearSession = useCallback(() => {
+    setSessionState(defaultSession)
+    setIsAuthenticated(false)
+    clearStorageItem(STORAGE_KEYS.SESSION)
+    clearStorageItem(STORAGE_KEYS.KEYSTORE)
+    clearStorageItem(STORAGE_KEYS.MANIFEST)
+  }, [])
 
   useEffect(() => {
     const loadAndRefreshSession = async () => {
@@ -97,6 +104,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         !session.expiresAt ||
         !session.createdAt
       ) {
+        setIsAuthenticated(false)
         setIsLoading(false)
         return
       }
@@ -140,22 +148,28 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
             createdAt: refreshResponse.created_at
           }
           setSessionState(updatedSession)
+          setIsAuthenticated(true)
           await setStorageItem(STORAGE_KEYS.SESSION, updatedSession)
           setIsLoading(false)
           return
         } catch (error) {
           // Refresh failed but token not expired yet - keep session (lenient approach)
           console.warn('Token refresh failed, using existing session:', error)
+          setSessionState(session)
+          setIsAuthenticated(true)
+          setIsLoading(false)
+          return
         }
       }
 
       // Session is valid (either no refresh needed, or refresh failed but token still valid)
       setSessionState(session)
+      setIsAuthenticated(true)
       setIsLoading(false)
     }
 
     loadAndRefreshSession()
-  }, [])
+  }, [clearSession])
 
   const setSession = useCallback((response: LoginResponse) => {
     const data: AuthSession = {
@@ -169,16 +183,10 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
 
     // Update React state
     setSessionState(data)
+    setIsAuthenticated(true)
 
     // Sync to chrome.storage.local so api.ts can access the token
     setStorageItem(STORAGE_KEYS.SESSION, data)
-  }, [])
-
-  const clearSession = useCallback(() => {
-    setSessionState(defaultSession)
-    clearStorageItem(STORAGE_KEYS.SESSION)
-    clearStorageItem(STORAGE_KEYS.KEYSTORE)
-    clearStorageItem(STORAGE_KEYS.MANIFEST)
   }, [])
 
   const contextValue: AuthSessionContextType = {

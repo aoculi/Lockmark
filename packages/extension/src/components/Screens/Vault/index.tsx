@@ -9,13 +9,7 @@ import Tags from '@/components/parts/Tags'
 
 import styles from './styles.module.css'
 
-export default function Vault({
-  setSelectedBookmark,
-  setSelectedTag
-}: {
-  setSelectedBookmark: (id: string) => void
-  setSelectedTag: (id: string) => void
-}) {
+export default function Vault() {
   usePopupSize('large')
 
   const [currentTagId, setCurrentTagId] = useState<string | null>(null)
@@ -32,7 +26,6 @@ export default function Vault({
         <Tags
           currentTagId={currentTagId}
           onSelectFilterTag={onSelectFilterTag}
-          setSelectedTag={setSelectedTag}
         />
         <div className={styles.right}>
           <BookmarkHeader
@@ -40,11 +33,7 @@ export default function Vault({
             onSearchChange={setSearchQuery}
           />
 
-          <BookmarkList
-            searchQuery={searchQuery}
-            currentTagId={currentTagId}
-            setSelectedBookmark={setSelectedBookmark}
-          />
+          <BookmarkList searchQuery={searchQuery} currentTagId={currentTagId} />
         </div>
       </div>
     </div>
