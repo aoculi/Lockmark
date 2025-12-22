@@ -1,42 +1,24 @@
-import { useEffect } from 'react'
-
 import { AuthSessionProvider } from '@/components/hooks/providers/useAuthSessionProvider'
 import {
   NavigationProvider,
   Route,
   useNavigation
 } from '@/components/hooks/providers/useNavigationProvider'
-import {
-  SelectionProvider,
-  useSelection
-} from '@/components/hooks/providers/useSelectionProvider'
+import { SelectionProvider } from '@/components/hooks/providers/useSelectionProvider'
 import { SettingsProvider } from '@/components/hooks/providers/useSettingsProvider'
 
+import Bookmark from '@/components/Screens/Bookmark'
+import Login from '@/components/Screens/Login'
+import Register from '@/components/Screens/Register'
+import Settings from '@/components/Screens/Settings'
+import Tag from '@/components/Screens/Tag'
+import Vault from '@/components/Screens/Vault'
 import Text from '@/components/ui/Text'
-import Bookmark from '../Bookmark'
-import Login from '../Login'
-import Register from '../Register'
-import Settings from '../Settings'
-import Tag from '../Tag'
-import Vault from '../Vault'
 
 import styles from './styles.module.css'
 
 function RootContent() {
   const { route, flash, setFlash, navigate } = useNavigation()
-  const { selectedBookmark, selectedTag } = useSelection()
-
-  useEffect(() => {
-    if (selectedTag) {
-      navigate('/tag')
-    }
-  }, [selectedTag])
-
-  useEffect(() => {
-    if (selectedBookmark) {
-      navigate('/bookmark')
-    }
-  }, [selectedBookmark])
 
   const handleLoginSuccess = () => {
     setFlash(null)
@@ -59,11 +41,11 @@ function RootContent() {
       case '/vault':
         return <Vault />
       case '/bookmark':
-        return <Bookmark id={selectedBookmark} />
+        return <Bookmark />
       case '/tag':
-        return <Tag id={selectedTag} />
+        return <Tag />
       default:
-        return <Bookmark id={selectedBookmark} />
+        return <Bookmark />
     }
   }
 

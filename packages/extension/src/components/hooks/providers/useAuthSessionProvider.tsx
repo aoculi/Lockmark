@@ -7,7 +7,7 @@ import {
   useState
 } from 'react'
 
-import type { LoginResponse } from '@/api/auth-api'
+import type { KdfParams, LoginResponse } from '@/api/auth-api'
 import { fetchRefreshToken } from '@/api/auth-api'
 import { MIN_REFRESH_INTERVAL, STORAGE_KEYS } from '@/lib/constants'
 import {
@@ -17,15 +17,6 @@ import {
   parseAutoLockTimeout,
   setStorageItem
 } from '@/lib/storage'
-
-export type KdfParams = {
-  algo: string
-  salt: string
-  m: number
-  t: number
-  p: number
-  hkdf_salt?: string | null
-}
 
 export type AuthSession = {
   userId: string | null

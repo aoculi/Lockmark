@@ -3,8 +3,8 @@
  */
 
 import { LoginResponse } from '@/api/auth-api'
+import { STORAGE_KEYS } from '@/lib/constants'
 import { clearStorageItem, getSettings, getStorageItem } from '@/lib/storage'
-import { STORAGE_KEYS } from './constants'
 
 /**
  * API client types
@@ -28,6 +28,21 @@ export type ApiError = {
 }
 
 /**
+ * Create an ApiError object
+ */
+export function createApiError(
+  status: number,
+  message: string,
+  details?: unknown
+): ApiError {
+  return {
+    status,
+    message,
+    details
+  }
+}
+
+/**
  * Helper functions for API client
  */
 
@@ -38,13 +53,11 @@ export type ApiError = {
 async function getApiUrl(): Promise<string> {
   const settings = await getSettings()
   if (!settings?.apiUrl || settings.apiUrl.trim() === '') {
-    throw {
-      status: -1,
-      message:
-        'API URL is not configured. Please set the API Base URL in Settings.',
-      details:
-        'The API URL must be defined in the extension settings before making API calls.'
-    } as ApiError
+    throw createApiError(
+      -1,
+      'API URL is not configured. Please set the API Base URL in Settings.',
+      'The API URL must be defined in the extension settings before making API calls.'
+    )
   }
   return settings.apiUrl.trim()
 }
@@ -74,7 +87,7 @@ async function getAuthHeader(): Promise<string | undefined> {
  * @param response - Fetch response
  * @returns Parsed data
  */
-async function parseResponseBody(response: Response): Promise<any> {
+async function parseResponseBody(response: Response): Promise<unknown> {
   const text = await response.text()
   if (text.length === 0) return null
 
@@ -89,14 +102,19 @@ async function parseResponseBody(response: Response): Promise<any> {
  * Handle 401 Unauthorized response
  * Clears session and keystore, then throws ApiError
  */
-async function handle401Error(data: any): Promise<never> {
+async function handle401Error(data: unknown): Promise<never> {
   await clearStorageItem(STORAGE_KEYS.SESSION)
 
-  throw {
-    status: 401,
-    message: data?.message || data?.error || 'Unauthorized',
-    details: data?.details
-  } as ApiError
+  const errorData = data as {
+    message?: string
+    error?: string
+    details?: unknown
+  }
+  throw createApiError(
+    401,
+    errorData?.message || errorData?.error || 'Unauthorized',
+    errorData?.details
+  )
 }
 
 /**
@@ -136,15 +154,12 @@ export async function apiClient<T = unknown>(
       credentials: 'omit',
       mode: 'cors'
     })
-  } catch (err: any) {
-    if (err?.status === -1 && err?.message?.includes('API URL')) {
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string }
+    if (error?.status === -1 && error?.message?.includes('API URL')) {
       throw err as ApiError
     }
-    throw {
-      status: -1,
-      message: 'Network error',
-      details: err?.message
-    } as ApiError
+    throw createApiError(-1, 'Network error', error?.message)
   }
 
   const data = await parseResponseBody(response)
@@ -154,11 +169,16 @@ export async function apiClient<T = unknown>(
   }
 
   if (!response.ok) {
-    throw {
-      status: response.status,
-      message: data?.message || data?.error || 'Request failed',
-      details: data?.details
-    } as ApiError
+    const errorData = data as {
+      message?: string
+      error?: string
+      details?: unknown
+    }
+    throw createApiError(
+      response.status,
+      errorData?.message || errorData?.error || 'Request failed',
+      errorData?.details
+    )
   }
 
   return {

@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 
+import { useManifest } from '@/components/hooks/useManifest'
 import type { Bookmark } from '@/lib/types'
 import { generateId } from '@/lib/utils'
 import { validateBookmarkInput } from '@/lib/validation'
-import { useManifest } from './useManifest'
 
 export function useBookmarks() {
   const { manifest, save, isSaving } = useManifest()

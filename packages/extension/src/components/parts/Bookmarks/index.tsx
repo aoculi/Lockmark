@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { Bookmark } from '@/lib/types'
 
 import BookmarkHeader from '@/components/parts/Bookmarks/BookmarkHeader'
-import { BookmarkList } from '@/components/parts/Bookmarks/BookmarkList'
+import BookmarkList from '@/components/parts/Bookmarks/BookmarkList'
 
 import styles from './styles.module.css'
 
@@ -28,11 +28,7 @@ export default function Bookmarks({
         onSearchChange={setSearchQuery}
       />
 
-      <BookmarkList
-        searchQuery={searchQuery}
-        currentTagId={currentTagId}
-        onEdit={handleShowBookmarkModal}
-      />
+      <BookmarkList searchQuery={searchQuery} currentTagId={currentTagId} />
     </div>
   )
 }

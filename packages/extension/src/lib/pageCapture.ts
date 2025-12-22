@@ -3,7 +3,7 @@
  * Handles getting current tab data and creating bookmark drafts
  */
 
-import type { Bookmark } from './types'
+import type { Bookmark } from '@/lib/types'
 
 /** A draft bookmark created from captured page data */
 export type BookmarkDraft = Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
@@ -31,17 +31,31 @@ export function isBookmarkableUrl(url: string): boolean {
  * @returns A result object containing either a bookmark draft or an error message
  */
 export async function captureCurrentPage(): Promise<CaptureResult> {
+  type TabResponse =
+    | { ok: true; tab: { url: string; title: string; picture?: string } }
+    | { ok: false; error: string }
+
   try {
-    const response = await new Promise<any>((resolve) => {
+    const response = await new Promise<TabResponse | undefined>((resolve) => {
       chrome.runtime.sendMessage({ type: 'tabs:getCurrent' }, (response) => {
         resolve(response)
       })
     })
 
-    if (!response?.ok || !response?.tab) {
+    if (!response) {
       return {
         ok: false,
-        error: response?.error || 'Unable to get current page information'
+        error: 'Unable to get current page information'
+      }
+    }
+
+    if (!response.ok || !response.tab) {
+      return {
+        ok: false,
+        error:
+          'error' in response
+            ? response.error
+            : 'Unable to get current page information'
       }
     }
 

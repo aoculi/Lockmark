@@ -26,14 +26,15 @@ const emptyBookmark = {
   tags: [] as string[]
 }
 
-export default function Bookmark({ id }: { id: string | null }) {
+export default function Bookmark() {
   usePopupSize('compact')
   const { navigate } = useNavigation()
-  const { setSelectedBookmark } = useSelection()
+  const { selectedBookmark, setSelectedBookmark } = useSelection()
   const { isSaving } = useManifest()
   const { addBookmark, updateBookmark, bookmarks } = useBookmarks()
   const { tags } = useTags()
-  const bookmark = bookmarks.find((item) => item.id === id) || null
+  const bookmark =
+    bookmarks.find((item) => item.id === selectedBookmark) || null
 
   const [settings] = useState<Settings>(getDefaultSettings())
   const [form, setForm] = useState(emptyBookmark)
@@ -57,7 +58,7 @@ export default function Bookmark({ id }: { id: string | null }) {
   // Capture current page when creating a new bookmark
   useEffect(() => {
     // if we update a page, do not capture it again
-    if (bookmark || id) {
+    if (bookmark || selectedBookmark) {
       return
     }
 
@@ -81,7 +82,7 @@ export default function Bookmark({ id }: { id: string | null }) {
     }
 
     loadCurrentPage()
-  }, [bookmark])
+  }, [bookmark, selectedBookmark])
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}

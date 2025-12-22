@@ -37,6 +37,7 @@ export const useQueryAuth = () => {
 
   const login = useMutation<LoginResponse, ApiError, LoginInput>({
     mutationKey: QUERY_KEYS.login(),
+    retry: false,
     mutationFn: async (variables) => {
       // Phase 1: Authenticate
       setPhase('authenticating')
@@ -83,6 +84,7 @@ export const useQueryAuth = () => {
 
   const register = useMutation<RegisterResponse, ApiError, RegisterInput>({
     mutationKey: QUERY_KEYS.register(),
+    retry: false,
     mutationFn: async (variables) => {
       // Phase 1: Register
       setPhase('authenticating')

@@ -3,8 +3,11 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState
 } from 'react'
+
+import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 
 type SelectionContextType = {
   selectedBookmark: string | null
@@ -47,6 +50,7 @@ export function SelectionProvider({ children }: SelectionProviderProps) {
     null
   )
   const [selectedTag, setSelectedTagState] = useState<string | null>(null)
+  const { navigate } = useNavigation()
 
   const setSelectedBookmark = useCallback((id: string | null) => {
     setSelectedBookmarkState(id)
@@ -60,6 +64,18 @@ export function SelectionProvider({ children }: SelectionProviderProps) {
     setSelectedBookmarkState(null)
     setSelectedTagState(null)
   }, [])
+
+  useEffect(() => {
+    if (selectedTag) {
+      navigate('/tag')
+    }
+  }, [selectedTag, navigate])
+
+  useEffect(() => {
+    if (selectedBookmark) {
+      navigate('/bookmark')
+    }
+  }, [selectedBookmark, navigate])
 
   const contextValue: SelectionContextType = {
     selectedBookmark,

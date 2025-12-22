@@ -21,13 +21,13 @@ const defaultTag = {
   name: '',
   hidden: false
 }
-export default function Tag({ id }: { id: string | null }) {
+export default function Tag() {
   usePopupSize('compact')
   const { tags, createTag, updateTag } = useTags()
   const { navigate } = useNavigation()
-  const { setSelectedTag } = useSelection()
+  const { selectedTag, setSelectedTag } = useSelection()
 
-  const tag = tags.find((tag: tagType) => tag.id === id) || null
+  const tag = tags.find((tag: tagType) => tag.id === selectedTag) || null
 
   useEffect(() => {
     if (tag) {

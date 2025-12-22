@@ -39,7 +39,8 @@ export function useQueryVault() {
     queryKey: QUERY_KEYS.manifest(),
     queryFn: fetchVaultManifest,
     enabled: false,
-    staleTime: 0
+    staleTime: 0,
+    retry: false
   })
 
   const prefetchVaultManifest = async () => {

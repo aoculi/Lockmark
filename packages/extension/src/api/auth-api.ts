@@ -1,15 +1,20 @@
 import { apiClient } from '@/lib/api'
 
+/**
+ * KDF (Key Derivation Function) parameters
+ */
+export type KdfParams = {
+  algo: string
+  salt: string
+  m: number
+  t: number
+  p: number
+  hkdf_salt?: string | null
+}
+
 export type RegisterResponse = {
   user_id: string
-  kdf: {
-    algo: string
-    salt: string
-    m: number
-    t: number
-    p: number
-    hkdf_salt?: string | null
-  }
+  kdf: KdfParams
 }
 
 export type RegisterInput = {
@@ -33,7 +38,7 @@ export type LoginResponse = {
   token: string
   expires_at: number
   created_at: number
-  kdf: any
+  kdf: KdfParams
   wrapped_mk: string | null
 }
 

@@ -1,8 +1,9 @@
 import type { UseMutationResult } from '@tanstack/react-query'
 import { useState } from 'react'
 
+import type { LoginResponse, RegisterResponse } from '@/api/auth-api'
+import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import type { ApiError } from '@/lib/api'
-import { useNavigation } from './providers/useNavigationProvider'
 
 export type AuthFormData = {
   login: string
@@ -11,7 +12,12 @@ export type AuthFormData = {
 
 export type UseAuthFormOptions = {
   onSuccess: () => void
-  mutation: UseMutationResult<any, ApiError, AuthFormData, unknown>
+  mutation: UseMutationResult<
+    LoginResponse | RegisterResponse,
+    ApiError,
+    AuthFormData,
+    unknown
+  >
 }
 
 export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
@@ -39,11 +45,11 @@ export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
       })
 
       onSuccess()
-    } catch (err: any) {
+    } catch (err: unknown) {
       const apiError = err as {
         status?: number
         message?: string
-        details?: Record<string, any>
+        details?: Record<string, unknown>
       }
 
       // The api url is not set in the settings

@@ -12,17 +12,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 0,
       refetchOnWindowFocus: false,
-      retry: (
-        failureCount: number,
-        _error?: unknown,
-        _ctx?: { query?: any }
-      ) => {
-        const query = _ctx?.query
-        const key = query?.queryKey as readonly unknown[]
-        const isAuth = Array.isArray(key) && key[0] === 'auth'
-        const isManifest =
-          Array.isArray(key) && key[0] === 'vault' && key[1] === 'manifest'
-        if (isAuth || isManifest) return false
+      retry: (failureCount: number): boolean => {
         return failureCount < 3
       }
     },

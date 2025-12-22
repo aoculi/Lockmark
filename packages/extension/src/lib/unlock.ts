@@ -7,8 +7,8 @@
  * - Provides zeroize functionality to clear sensitive data
  */
 
-import type { KdfParams } from '@/components/hooks/providers/useAuthSessionProvider'
-import { apiClient, type ApiError } from '@/lib/api'
+import type { KdfParams } from '@/api/auth-api'
+import { apiClient, createApiError, type ApiError } from '@/lib/api'
 import { AAD_LABELS, constructAadWmk, STORAGE_KEYS } from '@/lib/constants'
 import {
   base64ToUint8Array,
@@ -137,21 +137,11 @@ export async function unlock(input: UnlockInput): Promise<UnlockResult> {
         }
       } catch (error: unknown) {
         const apiError = error as ApiError
-        if (
-          apiError.status === -1 ||
-          (apiError.status >= 400 && apiError.status < 500)
-        ) {
-          throw {
-            status: apiError.status,
-            message: 'Could not initialize vault',
-            details: { wmkUploadFailed: true, isFirstUnlock: true }
-          } as ApiError
-        }
-        throw {
-          status: apiError.status || 500,
-          message: 'Could not initialize vault',
-          details: { wmkUploadFailed: true, isFirstUnlock: true }
-        } as ApiError
+        const status = apiError.status || 500
+        throw createApiError(status, 'Could not initialize vault', {
+          wmkUploadFailed: true,
+          isFirstUnlock: true
+        })
       }
     }
 
