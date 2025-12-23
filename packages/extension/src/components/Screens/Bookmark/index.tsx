@@ -21,6 +21,9 @@ import Textarea from '@/components/ui/Textarea'
 import styles from './styles.module.css'
 
 const emptyBookmark = {
+  id: '',
+  created_at: 0,
+  updated_at: 0,
   url: '',
   title: '',
   note: '',
@@ -36,10 +39,15 @@ export default function Bookmark() {
   const { addBookmark, updateBookmark, bookmarks } = useBookmarks()
   const { tags } = useTags()
   const { settings } = useSettings()
-  const bookmark =
-    bookmarks.find((item) => item.id === selectedBookmark) || null
+  let bookmark = bookmarks.find((item) => item.id === selectedBookmark) || null
+  if (selectedBookmark === 'blank') {
+    bookmark = emptyBookmark
+  }
 
-  const [form, setForm] = useState(emptyBookmark)
+  const [form, setForm] =
+    useState<Omit<typeof emptyBookmark, 'id' | 'created_at' | 'updated_at'>>(
+      emptyBookmark
+    )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [captureError, setCaptureError] = useState<string | null>(null)

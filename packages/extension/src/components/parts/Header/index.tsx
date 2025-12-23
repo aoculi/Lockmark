@@ -1,5 +1,6 @@
 import {
   BookOpenText,
+  ChevronDown,
   Library,
   LogOut,
   Menu,
@@ -28,7 +29,7 @@ export default function Header({
   canSwitchToBookmark?: boolean
 }) {
   const { navigate } = useNavigation()
-  const { resetSelection } = useSelection()
+  const { resetSelection, setSelectedBookmark } = useSelection()
   const { logout } = useQueryAuth()
   const { isAuthenticated } = useAuthSession()
 
@@ -38,6 +39,11 @@ export default function Header({
   }
 
   const switchToBookmark = () => {
+    navigate('/bookmark')
+  }
+
+  const switchToBlankBookmark = () => {
+    setSelectedBookmark('blank')
     navigate('/bookmark')
   }
 
@@ -61,13 +67,32 @@ export default function Header({
             </Button>
           )}
           {canSwitchToBookmark && isAuthenticated && (
-            <Button
-              onClick={switchToBookmark}
-              variant='ghost'
-              title='New bookmark'
-            >
-              <Star strokeWidth={2} size={18} color='white' />
-            </Button>
+            <>
+              <Button
+                asIcon={true}
+                onClick={switchToBookmark}
+                title='New bookmark'
+                className={styles.newBookmarkButton}
+              >
+                <Star strokeWidth={2} size={18} color='white' />
+              </Button>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <Button
+                    className={styles.moreBookmarkOptionsButton}
+                    asIcon={true}
+                    title='More bookmark options'
+                  >
+                    <ChevronDown strokeWidth={2} size={13} color='white' />
+                  </Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content>
+                  <DropdownMenu.Item onClick={switchToBlankBookmark}>
+                    New blank bookmark
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            </>
           )}
 
           <DropdownMenu.Root>

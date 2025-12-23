@@ -25,3 +25,15 @@
 .leftIcon {
   margin-top: -2px;
 }
+
+.newBookmarkButton {
+  width: 40px !important;
+}
+
+.moreBookmarkOptionsButton {
+  margin-left: 1px;
+  width: 25px !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+  margin-right: 10px !important;
+}
