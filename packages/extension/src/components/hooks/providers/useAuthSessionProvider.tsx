@@ -22,7 +22,7 @@ export type AuthSession = {
   userId: string | null
   token: string | null
   expiresAt: number | null
-  createdAt: number | null // When session was created or last refreshed
+  createdAt: number | null
   kdf: KdfParams | null
   wrappedMk: string | null
 }
@@ -52,10 +52,6 @@ export const AuthSessionContext = createContext<AuthSessionContextType>({
   clearSession: () => {}
 })
 
-/**
- * Hook to use the auth session context
- * Must be used within an AuthSessionProvider
- */
 export const useAuthSession = () => {
   const context = useContext(AuthSessionContext)
   if (!context) {
@@ -68,10 +64,6 @@ type AuthSessionProviderProps = {
   children: ReactNode
 }
 
-/**
- * Auth Session Provider Component
- * Stores user session and profile data in memory after login
- */
 export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   const [session, setSessionState] = useState<AuthSession>(defaultSession)
   const [isLoading, setIsLoading] = useState(true)
@@ -81,13 +73,11 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     setSessionState(defaultSession)
     setIsAuthenticated(false)
 
-    // Clear all storage items, continue even if one fails
-    const clearPromises = [
+    await Promise.allSettled([
       clearStorageItem(STORAGE_KEYS.SESSION).catch(() => {}),
       clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
       clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
-    ]
-    await Promise.allSettled(clearPromises)
+    ])
   }, [])
 
   useEffect(() => {
@@ -115,7 +105,6 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         return
       }
 
-      // Get autoLockTimeout from settings
       const settings = await getSettings()
       const autoLockTimeoutMs = settings
         ? parseAutoLockTimeout(settings.autoLockTimeout)
@@ -133,7 +122,6 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         return
       }
 
-      // If token was is created more than MIN_REFRESH_INTERVAL minute ago, refresh it proactively
       if (timeSinceCreation > MIN_REFRESH_INTERVAL) {
         try {
           const refreshResponse = await fetchRefreshToken()
@@ -148,13 +136,11 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
           try {
             await setStorageItem(STORAGE_KEYS.SESSION, updatedSession)
           } catch (storageError) {
-            // Storage error - log but continue with in-memory session
             console.warn('Failed to save session to storage:', storageError)
           }
           setIsLoading(false)
           return
         } catch (error) {
-          // Refresh failed but token not expired yet - keep session (lenient approach)
           console.warn('Token refresh failed, using existing session:', error)
           setSessionState(session)
           setIsAuthenticated(true)
@@ -163,7 +149,6 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         }
       }
 
-      // Session is valid (either no refresh needed, or refresh failed but token still valid)
       setSessionState(session)
       setIsAuthenticated(true)
       setIsLoading(false)
@@ -182,15 +167,12 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       wrappedMk: response.wrapped_mk
     }
 
-    // Update React state
     setSessionState(data)
     setIsAuthenticated(true)
 
-    // Sync to chrome.storage.local so api.ts can access the token
     try {
       await setStorageItem(STORAGE_KEYS.SESSION, data)
     } catch (error) {
-      // Storage error - log but continue with in-memory session
       console.warn('Failed to save session to storage:', error)
     }
   }, [])

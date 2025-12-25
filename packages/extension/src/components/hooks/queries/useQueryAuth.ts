@@ -35,7 +35,7 @@ export type AuthPhase =
 
 export const useQueryAuth = () => {
   const { setSession, clearSession } = useAuthSession()
-  const { setManifestFromLogin } = useManifest()
+  const { setManifestFromLogin, clear: clearManifest } = useManifest()
   const queryClient = useQueryClient()
   const [phase, setPhase] = useState<AuthPhase>('idle')
 
@@ -80,7 +80,6 @@ export const useQueryAuth = () => {
           serverVersion: encryptedManifest.version
         }
         await saveManifestData(manifestData)
-        // Update provider state directly to avoid race conditions
         setManifestFromLogin(manifestData)
       }
 
@@ -104,7 +103,6 @@ export const useQueryAuth = () => {
       // Phase 2: Fetch manifest
       setPhase('fetching')
       let encryptedManifest = await fetchVaultManifest().catch(() => null)
-
       if (!encryptedManifest) {
         await fetchVault()
         encryptedManifest = await fetchVaultManifest().catch(() => null)
@@ -130,7 +128,6 @@ export const useQueryAuth = () => {
           serverVersion: encryptedManifest.version
         }
         await saveManifestData(manifestData)
-        // Update provider state directly to avoid race conditions
         setManifestFromLogin(manifestData)
       }
 
@@ -157,9 +154,8 @@ export const useQueryAuth = () => {
       }
     },
     onSettled: async () => {
-      // Clear session and storage (except settings)
       await clearSession()
-      // Clear all cached queries
+      clearManifest()
       queryClient.clear()
     }
   })

@@ -7,31 +7,23 @@ import {
   useState
 } from 'react'
 
-import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { useQueryVault } from '@/components/hooks/queries/useQueryVault'
 import { STORAGE_KEYS } from '@/lib/constants'
-import { getStorageItem, setStorageItem } from '@/lib/storage'
+import { clearStorageItem, getStorageItem, setStorageItem } from '@/lib/storage'
 import type { ManifestV1 } from '@/lib/types'
 
-/**
- * Manifest data stored in chrome.storage.local
- */
 export type StoredManifestData = {
   manifest: ManifestV1
   etag: string | null
   serverVersion: number
 }
 
-/**
- * Load manifest data from storage
- */
 export async function loadManifestData(): Promise<StoredManifestData | null> {
   const stored = await getStorageItem<StoredManifestData>(STORAGE_KEYS.MANIFEST)
   if (stored?.manifest) {
     return stored
   }
 
-  // Backwards compatibility: check for old separate storage format
   const oldManifest = await getStorageItem<ManifestV1>(STORAGE_KEYS.MANIFEST)
   if (oldManifest && 'items' in oldManifest) {
     const oldMeta = await getStorageItem<{ etag: string; version: number }>(
@@ -47,9 +39,6 @@ export async function loadManifestData(): Promise<StoredManifestData | null> {
   return null
 }
 
-/**
- * Save manifest data to storage
- */
 export async function saveManifestData(
   data: StoredManifestData
 ): Promise<void> {
@@ -66,15 +55,12 @@ type ManifestContextType = {
     version: number
   }>
   reload: () => Promise<void>
+  clear: () => void
   setManifestFromLogin: (data: StoredManifestData) => void
 }
 
 const ManifestContext = createContext<ManifestContextType | null>(null)
 
-/**
- * Hook to use the manifest context
- * Must be used within a ManifestProvider
- */
 export function useManifest() {
   const context = useContext(ManifestContext)
   if (!context) {
@@ -87,20 +73,14 @@ type ManifestProviderProps = {
   children: ReactNode
 }
 
-/**
- * Manifest Provider Component
- * Shares manifest state across all components
- */
 export function ManifestProvider({ children }: ManifestProviderProps) {
   const { saveManifest: saveManifestMutation } = useQueryVault()
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuthSession()
 
   const [manifest, setManifest] = useState<ManifestV1 | null>(null)
   const [etag, setEtag] = useState<string | null>(null)
   const [serverVersion, setServerVersion] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load manifest function
   const loadManifest = useCallback(async () => {
     try {
       const data = await loadManifestData()
@@ -109,7 +89,6 @@ export function ManifestProvider({ children }: ManifestProviderProps) {
         setEtag(data.etag)
         setServerVersion(data.serverVersion)
       } else {
-        // Clear state if no manifest found
         setManifest(null)
         setEtag(null)
         setServerVersion(0)
@@ -121,19 +100,16 @@ export function ManifestProvider({ children }: ManifestProviderProps) {
     }
   }, [])
 
-  // Load manifest on mount
   useEffect(() => {
     loadManifest()
   }, [loadManifest])
 
-  // Clear manifest when user logs out
-  useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      setManifest(null)
-      setEtag(null)
-      setServerVersion(0)
-    }
-  }, [isAuthenticated, isAuthLoading])
+  const clear = useCallback(() => {
+    setManifest(null)
+    setEtag(null)
+    setServerVersion(0)
+    clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
+  }, [])
 
   /**
    * Save an updated manifest to server and storage
@@ -151,7 +127,6 @@ export function ManifestProvider({ children }: ManifestProviderProps) {
         baseSnapshot: manifest
       })
 
-      // Update storage
       try {
         await saveManifestData({
           manifest: result.manifest,
@@ -162,7 +137,6 @@ export function ManifestProvider({ children }: ManifestProviderProps) {
         console.error('Failed to save manifest to local storage:', error)
       }
 
-      // Update shared state - all consumers will re-render
       setManifest({ ...result.manifest })
       setEtag(result.etag)
       setServerVersion(result.version)
@@ -172,17 +146,10 @@ export function ManifestProvider({ children }: ManifestProviderProps) {
     [manifest, etag, serverVersion, saveManifestMutation]
   )
 
-  /**
-   * Reload manifest from storage
-   */
   const reload = useCallback(async () => {
     await loadManifest()
   }, [loadManifest])
 
-  /**
-   * Set manifest directly from login flow
-   * This avoids race conditions with storage polling
-   */
   const setManifestFromLogin = useCallback((data: StoredManifestData) => {
     setManifest(data.manifest)
     setEtag(data.etag)
@@ -196,6 +163,7 @@ export function ManifestProvider({ children }: ManifestProviderProps) {
     isSaving: saveManifestMutation.isPending,
     save,
     reload,
+    clear,
     setManifestFromLogin
   }
 
