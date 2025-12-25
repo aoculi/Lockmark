@@ -10,7 +10,6 @@ import {
 
 import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 
 import Button from '@/components/ui/Button'
@@ -29,23 +28,8 @@ export default function Header({
   canSwitchToBookmark?: boolean
 }) {
   const { navigate } = useNavigation()
-  const { resetSelection, setSelectedBookmark } = useSelection()
   const { logout } = useQueryAuth()
   const { isAuthenticated } = useAuthSession()
-
-  const switchToVault = () => {
-    resetSelection()
-    navigate('/vault')
-  }
-
-  const switchToBookmark = () => {
-    navigate('/bookmark')
-  }
-
-  const switchToBlankBookmark = () => {
-    setSelectedBookmark('blank')
-    navigate('/bookmark')
-  }
 
   return (
     <div className={styles.component}>
@@ -62,7 +46,11 @@ export default function Header({
 
         <div className={styles.right}>
           {canSwitchToVault && isAuthenticated && (
-            <Button onClick={switchToVault} variant='ghost' title='Vault'>
+            <Button
+              onClick={() => navigate('/vault')}
+              variant='ghost'
+              title='Vault'
+            >
               <BookOpenText strokeWidth={2} size={18} color='white' />
             </Button>
           )}
@@ -70,7 +58,7 @@ export default function Header({
             <>
               <Button
                 asIcon={true}
-                onClick={switchToBookmark}
+                onClick={() => navigate('/bookmark')}
                 title='New bookmark'
                 className={styles.newBookmarkButton}
               >
@@ -87,7 +75,9 @@ export default function Header({
                   </Button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content>
-                  <DropdownMenu.Item onClick={switchToBlankBookmark}>
+                  <DropdownMenu.Item
+                    onClick={() => navigate('/bookmark', { bookmark: 'blank' })}
+                  >
                     New blank bookmark
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>

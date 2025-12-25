@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { useManifest } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import usePopupSize from '@/components/hooks/usePopupSize'
@@ -33,8 +32,7 @@ const emptyBookmark = {
 
 export default function Bookmark() {
   usePopupSize('compact')
-  const { navigate } = useNavigation()
-  const { selectedBookmark, setSelectedBookmark } = useSelection()
+  const { navigate, selectedBookmark } = useNavigation()
   const { isSaving } = useManifest()
   const { addBookmark, updateBookmark, bookmarks } = useBookmarks()
   const { tags } = useTags()
@@ -156,7 +154,6 @@ export default function Bookmark() {
         })
       }
 
-      setSelectedBookmark(null)
       navigate('/vault')
     } catch (error) {
       const errorMessage =
@@ -298,7 +295,6 @@ export default function Bookmark() {
         <div className={styles.actions}>
           <Button
             onClick={() => {
-              setSelectedBookmark(null)
               navigate('/vault')
             }}
             color='black'

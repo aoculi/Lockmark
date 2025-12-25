@@ -2,7 +2,6 @@ import { FolderOpen, Funnel, Plus, TagIcon, TagsIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { useTags } from '@/components/hooks/useTags'
 import type { Tag as EntityTag } from '@/lib/types'
@@ -22,7 +21,6 @@ export default function Tags({
   currentTagId: string | null
   onSelectFilterTag: (id: string) => void
 }) {
-  const { setSelectedTag } = useSelection()
   const [error, setError] = useState<string | null>(null)
   const [sortMode, setSortMode] = useState<'name' | 'count'>('name')
   const { tags, showHiddenTags, deleteTag } = useTags()
@@ -91,8 +89,7 @@ export default function Tags({
             all={true}
             active={currentTagId === 'all'}
             onEdit={() => {
-              setSelectedTag('all')
-              navigate('/tag')
+              navigate('/tag', { tag: 'all' })
             }}
             onDelete={() => onDeleteTag('all')}
             icon={<TagsIcon size={18} strokeWidth={2} />}
@@ -107,8 +104,7 @@ export default function Tags({
             all={true}
             active={currentTagId === 'unsorted'}
             onEdit={() => {
-              setSelectedTag('unsorted')
-              navigate('/tag')
+              navigate('/tag', { tag: 'unsorted' })
             }}
             onDelete={() => onDeleteTag('unsorted')}
             icon={<FolderOpen size={18} strokeWidth={2} />}
@@ -174,8 +170,7 @@ export default function Tags({
                     all={false}
                     active={currentTagId === tag.id}
                     onEdit={() => {
-                      setSelectedTag(tag.id)
-                      navigate('/tag')
+                      navigate('/tag', { tag: tag.id })
                     }}
                     onDelete={() => onDeleteTag(tag.id)}
                   />

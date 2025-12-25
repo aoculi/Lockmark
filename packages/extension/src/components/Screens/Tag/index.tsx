@@ -2,7 +2,6 @@ import { Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import usePopupSize from '@/components/hooks/usePopupSize'
 import { useTags } from '@/components/hooks/useTags'
 import type { Tag as tagType } from '@/lib/types'
@@ -26,8 +25,7 @@ const defaultTag = {
 export default function Tag() {
   usePopupSize('compact')
   const { tags, createTag, updateTag } = useTags()
-  const { navigate } = useNavigation()
-  const { selectedTag, setSelectedTag } = useSelection()
+  const { navigate, selectedTag } = useNavigation()
 
   const tag = tags.find((tag: tagType) => tag.id === selectedTag) || null
 
@@ -83,7 +81,6 @@ export default function Tag() {
         })
       }
 
-      setSelectedTag(null)
       navigate('/vault')
     } catch (error) {
       const errorMessage =
@@ -158,7 +155,6 @@ export default function Tag() {
         <div className={styles.actions}>
           <Button
             onClick={() => {
-              setSelectedTag(null)
               navigate('/vault')
             }}
             color='black'

@@ -14,16 +14,22 @@ export type Route =
   | '/tag'
   | '/settings'
 
+type NavigationOptions = { bookmark?: string | null; tag?: string | null }
+
 type NavigationContextType = {
   route: Route
   flash: string | null
-  navigate: (route: Route) => void
+  selectedBookmark: string | null
+  selectedTag: string | null
+  navigate: (route: Route, options?: NavigationOptions) => void
   setFlash: (message: string | null) => void
 }
 
 export const NavigationContext = createContext<NavigationContextType>({
   route: '/login',
   flash: null,
+  selectedBookmark: null,
+  selectedTag: null,
   navigate: () => {},
   setFlash: () => {}
 })
@@ -52,10 +58,33 @@ export function NavigationProvider({
 }: NavigationProviderProps) {
   const [route, setRoute] = useState<Route>(initialRoute)
   const [flash, setFlashState] = useState<string | null>(null)
+  const [selectedBookmark, setSelectedBookmark] = useState<string | null>(null)
+  const [selectedTag, setSelectedTag] = useState<string | null>(null)
 
-  const navigate = useCallback((newRoute: Route) => {
-    setRoute(newRoute)
-  }, [])
+  const navigate = useCallback(
+    (newRoute: Route, options?: NavigationOptions) => {
+      setRoute(newRoute)
+
+      if (options?.bookmark) {
+        setSelectedBookmark(options.bookmark)
+        setSelectedTag(null)
+      } else if (options?.tag) {
+        setSelectedTag(options.tag)
+        setSelectedBookmark(null)
+      } else {
+        // When no options provided, reset selection based on route to match current behavior
+        if (newRoute === '/bookmark') {
+          setSelectedBookmark(null)
+        } else if (newRoute === '/tag') {
+          setSelectedTag(null)
+        } else if (newRoute === '/vault') {
+          setSelectedBookmark(null)
+          setSelectedTag(null)
+        }
+      }
+    },
+    []
+  )
 
   const setFlash = useCallback((message: string | null) => {
     setFlashState(message)
@@ -64,6 +93,8 @@ export function NavigationProvider({
   const contextValue: NavigationContextType = {
     route,
     flash,
+    selectedBookmark,
+    selectedTag,
     navigate,
     setFlash
   }

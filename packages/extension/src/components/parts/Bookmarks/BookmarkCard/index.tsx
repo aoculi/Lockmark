@@ -2,7 +2,6 @@ import { EllipsisVertical } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { useSelection } from '@/components/hooks/providers/useSelectionProvider'
 import {
   createTagMap,
   getTagColor,
@@ -24,7 +23,6 @@ type Props = {
 }
 
 export function BookmarkCard({ bookmark, tags, onDelete }: Props) {
-  const { setSelectedBookmark } = useSelection()
   const { navigate } = useNavigation()
 
   // Memoize tag map for O(1) lookups
@@ -97,8 +95,7 @@ export function BookmarkCard({ bookmark, tags, onDelete }: Props) {
         <DropdownMenu.Content>
           <DropdownMenu.Item
             onClick={() => {
-              setSelectedBookmark(bookmark.id)
-              navigate('/bookmark')
+              navigate('/bookmark', { bookmark: bookmark.id })
             }}
           >
             Edit

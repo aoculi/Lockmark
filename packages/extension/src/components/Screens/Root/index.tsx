@@ -5,7 +5,6 @@ import {
   Route,
   useNavigation
 } from '@/components/hooks/providers/useNavigationProvider'
-import { SelectionProvider } from '@/components/hooks/providers/useSelectionProvider'
 import { SettingsProvider } from '@/components/hooks/providers/useSettingsProvider'
 import { useRouteGuard } from '@/components/hooks/useRouteGuard'
 
@@ -65,9 +64,7 @@ export default function Root() {
       <AuthSessionProvider>
         <ManifestProvider>
           <NavigationProvider>
-            <SelectionProvider>
-              <RootContent />
-            </SelectionProvider>
+            <RootContent />
           </NavigationProvider>
         </ManifestProvider>
       </AuthSessionProvider>
