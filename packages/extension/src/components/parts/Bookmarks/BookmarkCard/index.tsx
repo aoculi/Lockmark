@@ -70,6 +70,7 @@ export function BookmarkCard({ bookmark, tags, onDelete }: BookmarkCardProps) {
         className={styles.card}
         href={bookmark.url}
         target='_blank'
+        title={bookmark.url}
         rel='noopener noreferrer'
       >
         {bookmark.picture && (
@@ -82,70 +83,68 @@ export function BookmarkCard({ bookmark, tags, onDelete }: BookmarkCardProps) {
           <Text size='2' weight='medium' color='white' className={styles.name}>
             {bookmark.title || '(Untitled)'}
           </Text>
-          <Text size='2' color='light'>
-            {getHostname(bookmark.url)}
-          </Text>
 
-          <div className={styles.tagsContainer}>
-            <div className={styles.tagsWrapper}>
-              {bookmark.tags.length > 0 && (
-                <div className={styles.tags}>
-                  {bookmark.tags.map((tagId: string) => {
-                    const colorInfo = getTagColor(tagId, tags)
-                    return (
-                      <span
-                        key={tagId}
-                        className={[
-                          styles.tag,
-                          colorInfo ? styles.colored : ''
-                        ].join(' ')}
-                        style={{
-                          backgroundColor: colorInfo?.tagColor ?? 'transparent',
-                          color: colorInfo?.textColor ?? 'white'
-                        }}
-                      >
-                        {getTagNameFromMap(tagId, tagMap)}
-                      </span>
-                    )
-                  })}
-                </div>
-              )}
-              <DropdownMenu.Root
-                open={tagManagerOpen}
-                onOpenChange={setTagManagerOpen}
-              >
-                <DropdownMenu.Trigger asChild>
-                  <Button
-                    asIcon={true}
-                    color='dark'
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                    }}
-                    title='Manage tags'
-                  >
-                    <TagIcon size={16} />
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content className={styles.tagManagerDropdown}>
-                  <TagSelectorField
-                    tags={tags}
-                    selectedTags={selectedTags}
-                    onChange={handleTagsChange}
-                  />
-                </DropdownMenu.Content>
-              </DropdownMenu.Root>
-            </div>
-
-            <Text
-              size='1'
-              color='light'
-              style={{
-                textAlign: 'right'
-              }}
-            >
-              Updated: {formatDate(bookmark.updated_at)}
+          <div className={styles.secondaryLine}>
+            <Text size='2' color='light'>
+              {getHostname(bookmark.url)}
             </Text>
+
+            <div className={styles.tagsContainer}>
+              <div className={styles.tagsWrapper}>
+                {bookmark.tags.length > 0 && (
+                  <div className={styles.tags}>
+                    {bookmark.tags.map((tagId: string) => {
+                      const colorInfo = getTagColor(tagId, tags)
+                      return (
+                        <span
+                          key={tagId}
+                          className={[
+                            styles.tag,
+                            colorInfo ? styles.colored : ''
+                          ].join(' ')}
+                          style={{
+                            backgroundColor:
+                              colorInfo?.tagColor ?? 'transparent',
+                            color: colorInfo?.textColor ?? 'white'
+                          }}
+                        >
+                          {getTagNameFromMap(tagId, tagMap)}
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+                <DropdownMenu.Root
+                  open={tagManagerOpen}
+                  onOpenChange={setTagManagerOpen}
+                >
+                  <DropdownMenu.Trigger asChild>
+                    <Button
+                      asIcon={true}
+                      color='dark'
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                      }}
+                      title='Manage tags'
+                    >
+                      <TagIcon size={16} />
+                    </Button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content className={styles.tagManagerDropdown}>
+                    <TagSelectorField
+                      tags={tags}
+                      selectedTags={selectedTags}
+                      onChange={handleTagsChange}
+                    />
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              </div>
+
+              <Text size='1' color='light' className={styles.updatedText}>
+                Updated: {formatDate(bookmark.updated_at)}
+              </Text>
+            </div>
           </div>
         </div>
       </a>

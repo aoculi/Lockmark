@@ -58,7 +58,7 @@ export default function BookmarkList({
   }, [bookmarks, showHiddenTags, hiddenTagIds])
 
   // Filter bookmarks based on search and selected tags
-  const filteredBookmarks = useMemo(() => {
+  const { pinnedBookmarks, nonPinnedBookmarks } = useMemo(() => {
     let filtered = filterBookmarks(visibleBookmarks, tags, searchQuery)
 
     // Filter by selected tags (if any are selected)
@@ -77,34 +77,33 @@ export default function BookmarkList({
       }
     }
 
-    // Sort bookmarks - pinned items first, then by sort mode
-    const sorted = [...filtered]
+    // Separate pinned and non-pinned bookmarks
+    const pinned: Bookmark[] = []
+    const nonPinned: Bookmark[] = []
+
+    filtered.forEach((bookmark) => {
+      if (bookmark.pinned) {
+        pinned.push(bookmark)
+      } else {
+        nonPinned.push(bookmark)
+      }
+    })
+
+    // Sort pinned bookmarks
     if (sortMode === 'title') {
-      sorted.sort((a, b) => {
-        // Pinned items first
-        const aPinned = a.pinned ?? false
-        const bPinned = b.pinned ?? false
-        if (aPinned !== bPinned) {
-          return aPinned ? -1 : 1
-        }
-        // Then by title
-        return a.title.localeCompare(b.title)
-      })
+      pinned.sort((a, b) => a.title.localeCompare(b.title))
     } else {
-      // Sort by updated_at (most recent first), but pinned items first
-      sorted.sort((a, b) => {
-        // Pinned items first
-        const aPinned = a.pinned ?? false
-        const bPinned = b.pinned ?? false
-        if (aPinned !== bPinned) {
-          return aPinned ? -1 : 1
-        }
-        // Then by updated_at (most recent first)
-        return b.updated_at - a.updated_at
-      })
+      pinned.sort((a, b) => b.updated_at - a.updated_at)
     }
 
-    return sorted
+    // Sort non-pinned bookmarks
+    if (sortMode === 'title') {
+      nonPinned.sort((a, b) => a.title.localeCompare(b.title))
+    } else {
+      nonPinned.sort((a, b) => b.updated_at - a.updated_at)
+    }
+
+    return { pinnedBookmarks: pinned, nonPinnedBookmarks: nonPinned }
   }, [
     visibleBookmarks,
     tags,
@@ -122,13 +121,24 @@ export default function BookmarkList({
             ? 'No bookmarks yet. Click "Add Bookmark" to get started.'
             : 'No visible bookmarks. Enable hidden tags in settings or add new bookmarks.'}
         </Text>
-      ) : filteredBookmarks.length === 0 ? (
+      ) : pinnedBookmarks.length === 0 && nonPinnedBookmarks.length === 0 ? (
         <Text size='2' color='light' style={{ padding: '20px 20px 0' }}>
           No bookmarks match your search.
         </Text>
       ) : (
         <div className={styles.list}>
-          {filteredBookmarks.map((bookmark: Bookmark) => (
+          {pinnedBookmarks.map((bookmark: Bookmark) => (
+            <BookmarkCard
+              key={bookmark.id}
+              bookmark={bookmark}
+              tags={tags}
+              onDelete={onDelete}
+            />
+          ))}
+          {pinnedBookmarks.length > 0 && nonPinnedBookmarks.length > 0 && (
+            <div className={styles.separator} />
+          )}
+          {nonPinnedBookmarks.map((bookmark: Bookmark) => (
             <BookmarkCard
               key={bookmark.id}
               bookmark={bookmark}
