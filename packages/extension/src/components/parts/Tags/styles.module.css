@@ -54,7 +54,10 @@
   text-decoration: none;
   padding: 10px 20px;
   align-items: center;
-  transition: background-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  border: 2px solid transparent;
 }
 
 .tag.active {
@@ -64,6 +67,12 @@
 .tag:hover,
 .tag.active:hover {
   background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.tag.dragOver {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: var(--primary);
+  transform: scale(1.02);
 }
 
 .tagIconLabelWrapper {

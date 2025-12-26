@@ -1,5 +1,23 @@
 .component {
   position: relative;
+  cursor: grab;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.component:active {
+  cursor: grabbing;
+}
+
+.component.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+  cursor: grabbing;
+}
+
+.component.dragging .card {
+  pointer-events: none;
 }
 
 .card {

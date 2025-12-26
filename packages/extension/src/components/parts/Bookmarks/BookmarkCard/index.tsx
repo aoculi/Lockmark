@@ -1,5 +1,5 @@
 import { EllipsisVertical } from 'lucide-react'
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import {
@@ -7,6 +7,7 @@ import {
   getTagColor,
   getTagNameFromMap
 } from '@/lib/bookmarkUtils'
+import { setupBookmarkDrag } from '@/lib/dragAndDrop'
 import type { Bookmark, Tag } from '@/lib/types'
 import { formatDate, getHostname } from '@/lib/utils'
 
@@ -16,20 +17,44 @@ import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
 
-type Props = {
+type BookmarkCardProps = {
   bookmark: Bookmark
   tags: Tag[]
   onDelete: (id: string) => void
 }
 
-export function BookmarkCard({ bookmark, tags, onDelete }: Props) {
+export function BookmarkCard({ bookmark, tags, onDelete }: BookmarkCardProps) {
   const { navigate } = useNavigation()
+  const [isDragging, setIsDragging] = useState(false)
 
-  // Memoize tag map for O(1) lookups
   const tagMap = useMemo(() => createTagMap(tags), [tags])
 
+  const handleDragStart = useCallback(
+    (e: React.DragEvent) => {
+      setIsDragging(true)
+      setupBookmarkDrag(e, bookmark.id)
+    },
+    [bookmark.id]
+  )
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  const componentClassName = [
+    styles.component,
+    isDragging ? styles.dragging : ''
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div className={styles.component}>
+    <div
+      className={componentClassName}
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <a
         className={styles.card}
         href={bookmark.url}
@@ -64,7 +89,7 @@ export function BookmarkCard({ bookmark, tags, onDelete }: Props) {
                       ].join(' ')}
                       style={{
                         backgroundColor: colorInfo?.tagColor ?? 'transparent',
-                        color: colorInfo?.textColor ?? 'inherit'
+                        color: colorInfo?.textColor ?? 'white'
                       }}
                     >
                       {getTagNameFromMap(tagId, tagMap)}
