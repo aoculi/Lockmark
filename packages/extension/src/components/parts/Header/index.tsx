@@ -7,6 +7,7 @@ import {
   Settings2,
   Star
 } from 'lucide-react'
+import React from 'react'
 
 import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
@@ -21,11 +22,13 @@ import styles from './styles.module.css'
 export default function Header({
   title,
   canSwitchToVault = false,
-  canSwitchToBookmark = false
+  canSwitchToBookmark = false,
+  rightContent
 }: {
   title?: string
   canSwitchToVault?: boolean
   canSwitchToBookmark?: boolean
+  rightContent?: React.ReactNode
 }) {
   const { navigate } = useNavigation()
   const { logout } = useQueryAuth()
@@ -45,6 +48,7 @@ export default function Header({
         </div>
 
         <div className={styles.right}>
+          {rightContent}
           {canSwitchToVault && isAuthenticated && (
             <Button
               onClick={() => navigate('/vault')}

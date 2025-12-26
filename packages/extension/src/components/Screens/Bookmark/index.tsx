@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useManifest } from '@/components/hooks/providers/useManifestProvider'
@@ -7,7 +7,7 @@ import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import usePopupSize from '@/components/hooks/usePopupSize'
 import { useTags } from '@/components/hooks/useTags'
-import { captureCurrentPage } from '@/lib/pageCapture'
+import { captureCurrentPage, refreshBookmarkMetadata } from '@/lib/pageCapture'
 import { MAX_TAGS_PER_ITEM } from '@/lib/validation'
 
 import Header from '@/components/parts/Header'
@@ -50,6 +50,7 @@ export default function Bookmark() {
   const [isLoading, setIsLoading] = useState(false)
   const [captureError, setCaptureError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Initialize form when editing an existing bookmark
   useEffect(() => {
@@ -93,6 +94,38 @@ export default function Bookmark() {
 
     loadCurrentPage()
   }, [bookmark, selectedBookmark])
+
+  const handleRefreshMetadata = async () => {
+    if (!form.url?.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        url: 'URL is required to refresh metadata'
+      }))
+      return
+    }
+
+    setIsRefreshing(true)
+    setCaptureError(null)
+
+    try {
+      const result = await refreshBookmarkMetadata(form.url.trim())
+      if (result.ok) {
+        setForm((prev) => ({
+          ...prev,
+          title: result.title,
+          picture: result.favicon
+        }))
+      } else {
+        setCaptureError(result.error)
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to refresh metadata'
+      setCaptureError(errorMessage)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -222,7 +255,36 @@ export default function Bookmark() {
 
   return (
     <div className={styles.component}>
-      <Header title={bookmark ? 'Edit' : 'New'} canSwitchToVault={true} />
+      <Header
+        title={bookmark ? 'Edit' : 'New'}
+        canSwitchToVault={true}
+        rightContent={
+          bookmark && bookmark.id ? (
+            <Button
+              onClick={handleRefreshMetadata}
+              disabled={!form.url?.trim() || isRefreshing || isLoading}
+              asIcon
+              variant='ghost'
+              className={styles.refreshButton}
+              title='Refresh title and favicon from URL'
+            >
+              {isRefreshing ? (
+                <Loader2
+                  className={styles.refreshIcon}
+                  size={18}
+                  color='white'
+                />
+              ) : (
+                <RefreshCw
+                  className={styles.refreshIcon}
+                  size={18}
+                  color='white'
+                />
+              )}
+            </Button>
+          ) : null
+        }
+      />
 
       <div className={styles.page}>
         {captureError && <ErrorCallout>{captureError}</ErrorCallout>}

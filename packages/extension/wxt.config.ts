@@ -34,7 +34,11 @@ export default defineConfig({
     const manifest: any = {
       name: 'LockMark',
       description: 'Secure Bookmarks Vault',
-      host_permissions: ['http://127.0.0.1:3500/*', 'http://localhost:3500/*'],
+      host_permissions: [
+        'http://127.0.0.1:3500/*',
+        'http://localhost:3500/*',
+        '<all_urls>' // Allow fetching metadata from any URL
+      ],
       permissions: basePermissions,
       content_security_policy: {
         extension_pages:
