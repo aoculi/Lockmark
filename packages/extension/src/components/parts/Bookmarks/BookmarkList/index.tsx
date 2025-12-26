@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { Funnel } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
@@ -7,6 +8,8 @@ import { filterBookmarks } from '@/lib/bookmarkUtils'
 import type { Bookmark } from '@/lib/types'
 
 import { BookmarkCard } from '@/components/parts/Bookmarks/BookmarkCard'
+import Button from '@/components/ui/Button'
+import { DropdownMenu } from '@/components/ui/DropdownMenu'
 import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
@@ -17,6 +20,7 @@ type Props = {
 }
 
 export default function BookmarkList({ searchQuery, currentTagId }: Props) {
+  const [sortMode, setSortMode] = useState<'updated_at' | 'title'>('updated_at')
   const { bookmarks, deleteBookmark } = useBookmarks()
   const { tags, showHiddenTags } = useTags()
   const { setFlash } = useNavigation()
@@ -65,18 +69,50 @@ export default function BookmarkList({ searchQuery, currentTagId }: Props) {
       }
     }
 
-    return filtered
-  }, [visibleBookmarks, tags, searchQuery, currentTagId])
+    // Sort bookmarks
+    const sorted = [...filtered]
+    if (sortMode === 'title') {
+      sorted.sort((a, b) => a.title.localeCompare(b.title))
+    } else {
+      // Sort by updated_at (most recent first)
+      sorted.sort((a, b) => b.updated_at - a.updated_at)
+    }
+
+    return sorted
+  }, [visibleBookmarks, tags, searchQuery, currentTagId, sortMode])
 
   return (
     <div className={styles.container}>
-      <Text size='2' color='light' style={{ padding: '20px 20px 0' }}>
-        Bookmarks ({filteredBookmarks.length}
-        {filteredBookmarks.length !== visibleBookmarks.length
-          ? ` of ${visibleBookmarks.length}`
-          : ''}
-        )
-      </Text>
+      <div className={styles.header}>
+        <Text size='2' color='light'>
+          Bookmarks ({filteredBookmarks.length}
+          {filteredBookmarks.length !== visibleBookmarks.length
+            ? ` of ${visibleBookmarks.length}`
+            : ''}
+          )
+        </Text>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <Button asIcon={true} size='sm' variant='ghost' color='light'>
+              <Funnel strokeWidth={2} size={16} />
+            </Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Item
+              onClick={() => setSortMode('updated_at')}
+              disabled={sortMode === 'updated_at'}
+            >
+              Sort by updated date
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => setSortMode('title')}
+              disabled={sortMode === 'title'}
+            >
+              Sort by title
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      </div>
 
       {visibleBookmarks.length === 0 ? (
         <Text size='2' color='light' style={{ padding: '20px 20px 0' }}>

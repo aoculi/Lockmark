@@ -73,21 +73,12 @@ export default function Bookmark() {
         (b) => b.url.trim().toLowerCase() === trimmedUrl.toLowerCase()
       )
       if (duplicate) {
-        setErrors((prev) => ({
-          ...prev,
-          url: 'This page is already bookmarked'
-        }))
+        setSaveError('This page is already bookmarked')
       } else {
-        setErrors((prev) => ({
-          ...prev,
-          url: ''
-        }))
+        setSaveError(null)
       }
     } else {
-      setErrors((prev) => ({
-        ...prev,
-        url: ''
-      }))
+      setSaveError(null)
     }
   }, [form.url, bookmarks, bookmark])
 
