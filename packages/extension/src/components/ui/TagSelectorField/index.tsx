@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { getTagColor } from '@/lib/bookmarkUtils'
 import type { Tag as EntityTag } from '@/lib/types'
 
 import styles from './styles.module.css'
@@ -122,17 +123,25 @@ export const TagSelectorField = ({
           {/* Selected tags displayed as badges */}
           {selectedTagObjects.length > 0 && (
             <div className={styles.selectedTags}>
-              {selectedTagObjects.map((tag) => (
-                <Button
-                  key={tag.id}
-                  color='light'
-                  size='sm'
-                  onClick={(e) => handleRemoveTag(tag.id, e)}
-                >
-                  <span className={styles.tagName}>{tag.name}</span>
-                  <X className={styles.removeIcon} height='12' width='12' />
-                </Button>
-              ))}
+              {selectedTagObjects.map((tag) => {
+                const colorInfo = getTagColor(tag.id, tags)
+                return (
+                  <Button
+                    key={tag.id}
+                    color='light'
+                    size='sm'
+                    onClick={(e) => handleRemoveTag(tag.id, e)}
+                    className={colorInfo ? styles.coloredTag : ''}
+                    style={{
+                      backgroundColor: colorInfo?.tagColor ?? undefined,
+                      color: colorInfo?.textColor ?? undefined
+                    }}
+                  >
+                    <span className={styles.tagName}>{tag.name}</span>
+                    <X className={styles.removeIcon} height='12' width='12' />
+                  </Button>
+                )
+              })}
             </div>
           )}
         </div>

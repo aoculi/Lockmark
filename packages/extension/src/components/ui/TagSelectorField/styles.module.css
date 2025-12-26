@@ -39,6 +39,14 @@
   opacity: 1;
 }
 
+.coloredTag {
+  border: none !important;
+}
+
+.coloredSuggestion {
+  border: none !important;
+}
+
 .suggestions {
   position: absolute;
   top: 100%;
