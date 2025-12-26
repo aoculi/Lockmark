@@ -65,6 +65,32 @@ export default function Bookmark() {
     }
   }, [bookmark])
 
+  // Check for duplicate URL when creating a new bookmark
+  useEffect(() => {
+    if (!bookmark && form.url?.trim()) {
+      const trimmedUrl = form.url.trim()
+      const duplicate = bookmarks.find(
+        (b) => b.url.trim().toLowerCase() === trimmedUrl.toLowerCase()
+      )
+      if (duplicate) {
+        setErrors((prev) => ({
+          ...prev,
+          url: 'This page is already bookmarked'
+        }))
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          url: ''
+        }))
+      }
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        url: ''
+      }))
+    }
+  }, [form.url, bookmarks, bookmark])
+
   // Capture current page when creating a new bookmark
   useEffect(() => {
     // if we update a page, do not capture it again
