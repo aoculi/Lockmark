@@ -44,7 +44,7 @@ function RootContent() {
   }
 
   return (
-    <>
+    <div className={styles.container}>
       {flash && (
         <div className={styles.flash}>
           <TriangleAlert size={16} color='white' />
@@ -54,7 +54,7 @@ function RootContent() {
         </div>
       )}
       {renderRoute()}
-    </>
+    </div>
   )
 }
 
