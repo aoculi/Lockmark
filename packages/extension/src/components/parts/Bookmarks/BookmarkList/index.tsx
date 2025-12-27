@@ -16,13 +16,17 @@ type Props = {
   currentTagId: string | null
   sortMode: 'updated_at' | 'title'
   selectedTags: string[]
+  selectedBookmarkIds: Set<string>
+  onSelectedBookmarkIdsChange: (ids: Set<string>) => void
 }
 
 export default function BookmarkList({
   searchQuery,
   currentTagId,
   sortMode,
-  selectedTags
+  selectedTags,
+  selectedBookmarkIds,
+  onSelectedBookmarkIdsChange
 }: Props) {
   const { bookmarks, deleteBookmark } = useBookmarks()
   const { tags, showHiddenTags } = useTags()
@@ -39,6 +43,16 @@ export default function BookmarkList({
         setTimeout(() => setFlash(null), 5000)
       }
     }
+  }
+
+  const handleBookmarkToggle = (id: string) => {
+    const newSelected = new Set(selectedBookmarkIds)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    onSelectedBookmarkIdsChange(newSelected)
   }
 
   // Create a set of hidden tag IDs for efficient lookup
@@ -133,6 +147,8 @@ export default function BookmarkList({
               bookmark={bookmark}
               tags={tags}
               onDelete={onDelete}
+              isSelected={selectedBookmarkIds.has(bookmark.id)}
+              onToggleSelect={() => handleBookmarkToggle(bookmark.id)}
             />
           ))}
           {pinnedBookmarks.length > 0 && nonPinnedBookmarks.length > 0 && (
@@ -144,6 +160,8 @@ export default function BookmarkList({
               bookmark={bookmark}
               tags={tags}
               onDelete={onDelete}
+              isSelected={selectedBookmarkIds.has(bookmark.id)}
+              onToggleSelect={() => handleBookmarkToggle(bookmark.id)}
             />
           ))}
         </div>

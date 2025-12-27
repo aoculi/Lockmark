@@ -21,6 +21,7 @@
 
 /* Hover effect */
 .checkboxContainer:hover input ~ .checkmark {
+  border-color: var(--border-hover);
   background-color: var(--background-2);
 }
 

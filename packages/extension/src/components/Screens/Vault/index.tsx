@@ -14,6 +14,9 @@ export default function Vault() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortMode, setSortMode] = useState<'updated_at' | 'title'>('updated_at')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedBookmarkIds, setSelectedBookmarkIds] = useState<Set<string>>(
+    new Set()
+  )
 
   return (
     <div className={styles.component}>
@@ -26,6 +29,10 @@ export default function Vault() {
           onSortModeChange={setSortMode}
           selectedTags={selectedTags}
           onSelectedTagsChange={setSelectedTags}
+          selectedBookmarkIds={selectedBookmarkIds}
+          onDeleteSelected={() => {
+            setSelectedBookmarkIds(new Set())
+          }}
         />
 
         <BookmarkList
@@ -33,6 +40,8 @@ export default function Vault() {
           currentTagId={null}
           sortMode={sortMode}
           selectedTags={selectedTags}
+          selectedBookmarkIds={selectedBookmarkIds}
+          onSelectedBookmarkIdsChange={setSelectedBookmarkIds}
         />
       </div>
     </div>

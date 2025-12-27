@@ -39,7 +39,7 @@ export default function Register() {
 
   const onRegisterSuccess = () => {
     setFlash(null)
-    navigate('/bookmark')
+    navigate('/vault')
   }
 
   const { formData, error, disabled, handleSubmit, handleChange } = useAuthForm(

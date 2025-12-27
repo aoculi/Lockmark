@@ -18,6 +18,7 @@ import type { Bookmark, Tag } from '@/lib/types'
 import { formatDate, getHostname } from '@/lib/utils'
 
 import Button from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { DropdownMenu } from '@/components/ui/DropdownMenu'
 import { TagSelectorField } from '@/components/ui/TagSelectorField'
 import Text from '@/components/ui/Text'
@@ -28,9 +29,17 @@ type BookmarkCardProps = {
   bookmark: Bookmark
   tags: Tag[]
   onDelete: (id: string) => void
+  isSelected: boolean
+  onToggleSelect: () => void
 }
 
-export function BookmarkCard({ bookmark, tags, onDelete }: BookmarkCardProps) {
+export function BookmarkCard({
+  bookmark,
+  tags,
+  onDelete,
+  isSelected,
+  onToggleSelect
+}: BookmarkCardProps) {
   const { navigate } = useNavigation()
   const { updateBookmark } = useBookmarks()
   const [tagManagerOpen, setTagManagerOpen] = useState(false)
@@ -73,6 +82,20 @@ export function BookmarkCard({ bookmark, tags, onDelete }: BookmarkCardProps) {
         title={bookmark.url}
         rel='noopener noreferrer'
       >
+        <div className={styles.checkboxWrapper}>
+          <Checkbox
+            checked={isSelected}
+            onChange={(e) => {
+              e.stopPropagation()
+              onToggleSelect()
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+            }}
+            title='Select bookmark'
+          />
+        </div>
+
         {bookmark.picture && (
           <div className={styles.picture}>
             <img src={bookmark.picture} alt={bookmark?.title} />
