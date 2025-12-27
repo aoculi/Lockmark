@@ -44,7 +44,7 @@ export default function Header({
       <div className={styles.content}>
         <div className={styles.left}>
           <div className={styles.leftIcon}>
-            <Library strokeWidth={2} size={20} color='orange' />
+            <Library strokeWidth={2} size={20} />
           </div>
 
           <Text as='h1' size='2' weight='medium'>

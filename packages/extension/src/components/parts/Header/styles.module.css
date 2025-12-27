@@ -14,7 +14,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: orange;
+  color: var(--secondary);
 }
 
 .right {
@@ -24,6 +24,7 @@
 
 .leftIcon {
   margin-top: -2px;
+  color: var(--secondary);
 }
 
 .newBookmarkButton {
