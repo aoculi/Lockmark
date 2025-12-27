@@ -127,6 +127,15 @@ export default function BookmarkList({
     selectedTags
   ])
 
+  const totalBookmarksCount = pinnedBookmarks.length + nonPinnedBookmarks.length
+
+  // Count how many of the displayed bookmarks are selected
+  const selectedCount = useMemo(() => {
+    return [...pinnedBookmarks, ...nonPinnedBookmarks].filter((bookmark) =>
+      selectedBookmarkIds.has(bookmark.id)
+    ).length
+  }, [pinnedBookmarks, nonPinnedBookmarks, selectedBookmarkIds])
+
   return (
     <div className={styles.container}>
       {visibleBookmarks.length === 0 ? (
@@ -140,31 +149,40 @@ export default function BookmarkList({
           No bookmarks match your search.
         </Text>
       ) : (
-        <div className={styles.list}>
-          {pinnedBookmarks.map((bookmark: Bookmark) => (
-            <BookmarkCard
-              key={bookmark.id}
-              bookmark={bookmark}
-              tags={tags}
-              onDelete={onDelete}
-              isSelected={selectedBookmarkIds.has(bookmark.id)}
-              onToggleSelect={() => handleBookmarkToggle(bookmark.id)}
-            />
-          ))}
-          {pinnedBookmarks.length > 0 && nonPinnedBookmarks.length > 0 && (
-            <div className={styles.separator} />
-          )}
-          {nonPinnedBookmarks.map((bookmark: Bookmark) => (
-            <BookmarkCard
-              key={bookmark.id}
-              bookmark={bookmark}
-              tags={tags}
-              onDelete={onDelete}
-              isSelected={selectedBookmarkIds.has(bookmark.id)}
-              onToggleSelect={() => handleBookmarkToggle(bookmark.id)}
-            />
-          ))}
-        </div>
+        <>
+          <div className={styles.countContainer}>
+            <Text size='2' color='light' align='right'>
+              {totalBookmarksCount}{' '}
+              {totalBookmarksCount === 1 ? 'bookmark' : 'bookmarks'}
+              {selectedCount > 0 && ` (${selectedCount} selected)`}
+            </Text>
+          </div>
+          <div className={styles.list}>
+            {pinnedBookmarks.map((bookmark: Bookmark) => (
+              <BookmarkCard
+                key={bookmark.id}
+                bookmark={bookmark}
+                tags={tags}
+                onDelete={onDelete}
+                isSelected={selectedBookmarkIds.has(bookmark.id)}
+                onToggleSelect={() => handleBookmarkToggle(bookmark.id)}
+              />
+            ))}
+            {pinnedBookmarks.length > 0 && nonPinnedBookmarks.length > 0 && (
+              <div className={styles.separator} />
+            )}
+            {nonPinnedBookmarks.map((bookmark: Bookmark) => (
+              <BookmarkCard
+                key={bookmark.id}
+                bookmark={bookmark}
+                tags={tags}
+                onDelete={onDelete}
+                isSelected={selectedBookmarkIds.has(bookmark.id)}
+                onToggleSelect={() => handleBookmarkToggle(bookmark.id)}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
