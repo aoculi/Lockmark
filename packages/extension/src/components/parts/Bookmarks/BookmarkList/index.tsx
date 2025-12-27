@@ -1,15 +1,12 @@
-import { Funnel } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { useTags } from '@/components/hooks/useTags'
-import { filterBookmarks } from '@/lib/bookmarkUtils'
+import { processBookmarks } from '@/lib/bookmarkUtils'
 import type { Bookmark } from '@/lib/types'
 
 import { BookmarkCard } from '@/components/parts/Bookmarks/BookmarkCard'
-import Button from '@/components/ui/Button'
-import { DropdownMenu } from '@/components/ui/DropdownMenu'
 import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
@@ -17,10 +14,20 @@ import styles from './styles.module.css'
 type Props = {
   searchQuery: string
   currentTagId: string | null
+  sortMode: 'updated_at' | 'title'
+  selectedTags: string[]
+  selectedBookmarkIds: Set<string>
+  onSelectedBookmarkIdsChange: (ids: Set<string>) => void
 }
 
-export default function BookmarkList({ searchQuery, currentTagId }: Props) {
-  const [sortMode, setSortMode] = useState<'updated_at' | 'title'>('updated_at')
+export default function BookmarkList({
+  searchQuery,
+  currentTagId,
+  sortMode,
+  selectedTags,
+  selectedBookmarkIds,
+  onSelectedBookmarkIdsChange
+}: Props) {
   const { bookmarks, deleteBookmark } = useBookmarks()
   const { tags, showHiddenTags } = useTags()
   const { setFlash } = useNavigation()
@@ -30,108 +37,82 @@ export default function BookmarkList({ searchQuery, currentTagId }: Props) {
       try {
         await deleteBookmark(id)
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to delete bookmark'
-        setFlash(errorMessage)
+        setFlash(
+          'Failed to delete bookmark: ' +
+            ((error as Error).message ?? 'Unknown error')
+        )
+
         setTimeout(() => setFlash(null), 5000)
       }
     }
   }
 
-  // Create a set of hidden tag IDs for efficient lookup
-  const hiddenTagIds = useMemo(() => {
-    return new Set(tags.filter((tag) => tag.hidden).map((tag) => tag.id))
-  }, [tags])
-
-  // Bookmarks that should be visible given the hidden tag setting
-  const visibleBookmarks = useMemo(() => {
-    if (showHiddenTags) {
-      return bookmarks
-    }
-
-    return bookmarks.filter(
-      (bookmark) => !bookmark.tags.some((tagId) => hiddenTagIds.has(tagId))
-    )
-  }, [bookmarks, showHiddenTags, hiddenTagIds])
-
-  // Filter bookmarks based on search and selected tag
-  const filteredBookmarks = useMemo(() => {
-    let filtered = filterBookmarks(visibleBookmarks, tags, searchQuery)
-
-    // Filter by selected tag (if not "all" or null)
-    if (currentTagId && currentTagId !== 'all') {
-      if (currentTagId === 'unsorted') {
-        filtered = filtered.filter((bookmark) => bookmark.tags.length === 0)
-      } else {
-        filtered = filtered.filter((bookmark) =>
-          bookmark.tags.includes(currentTagId)
-        )
-      }
-    }
-
-    // Sort bookmarks
-    const sorted = [...filtered]
-    if (sortMode === 'title') {
-      sorted.sort((a, b) => a.title.localeCompare(b.title))
+  const handleBookmarkToggle = (id: string) => {
+    const newSelected = new Set(selectedBookmarkIds)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
     } else {
-      // Sort by updated_at (most recent first)
-      sorted.sort((a, b) => b.updated_at - a.updated_at)
+      newSelected.add(id)
     }
+    onSelectedBookmarkIdsChange(newSelected)
+  }
 
-    return sorted
-  }, [visibleBookmarks, tags, searchQuery, currentTagId, sortMode])
+  // Process bookmarks: filter and sort
+  const { visibleBookmarks, pinnedBookmarks, nonPinnedBookmarks } = useMemo(
+    () =>
+      processBookmarks(bookmarks, tags, {
+        searchQuery,
+        selectedTags,
+        sortMode,
+        showHiddenTags,
+        currentTagId
+      }),
+    [
+      bookmarks,
+      tags,
+      searchQuery,
+      selectedTags,
+      sortMode,
+      showHiddenTags,
+      currentTagId
+    ]
+  )
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <Text size='2' color='light'>
-          Bookmarks ({filteredBookmarks.length}
-          {filteredBookmarks.length !== visibleBookmarks.length
-            ? ` of ${visibleBookmarks.length}`
-            : ''}
-          )
-        </Text>
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <Button asIcon={true} size='sm' variant='ghost' color='light'>
-              <Funnel strokeWidth={2} size={16} />
-            </Button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Item
-              onClick={() => setSortMode('updated_at')}
-              disabled={sortMode === 'updated_at'}
-            >
-              Sort by updated date
-            </DropdownMenu.Item>
-            <DropdownMenu.Item
-              onClick={() => setSortMode('title')}
-              disabled={sortMode === 'title'}
-            >
-              Sort by title
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
-      </div>
-
       {visibleBookmarks.length === 0 ? (
         <Text size='2' color='light' style={{ padding: '20px 20px 0' }}>
           {bookmarks.length === 0
             ? 'No bookmarks yet. Click "Add Bookmark" to get started.'
             : 'No visible bookmarks. Enable hidden tags in settings or add new bookmarks.'}
         </Text>
-      ) : filteredBookmarks.length === 0 ? (
+      ) : pinnedBookmarks.length === 0 && nonPinnedBookmarks.length === 0 ? (
         <Text size='2' color='light' style={{ padding: '20px 20px 0' }}>
           No bookmarks match your search.
         </Text>
       ) : (
         <div className={styles.list}>
-          {filteredBookmarks.map((bookmark: Bookmark) => (
+          {pinnedBookmarks.map((bookmark: Bookmark) => (
             <BookmarkCard
               key={bookmark.id}
               bookmark={bookmark}
               tags={tags}
               onDelete={onDelete}
+              isSelected={selectedBookmarkIds.has(bookmark.id)}
+              onToggleSelect={() => handleBookmarkToggle(bookmark.id)}
+            />
+          ))}
+          {pinnedBookmarks.length > 0 && nonPinnedBookmarks.length > 0 && (
+            <div className={styles.separator} />
+          )}
+          {nonPinnedBookmarks.map((bookmark: Bookmark) => (
+            <BookmarkCard
+              key={bookmark.id}
+              bookmark={bookmark}
+              tags={tags}
+              onDelete={onDelete}
+              isSelected={selectedBookmarkIds.has(bookmark.id)}
+              onToggleSelect={() => handleBookmarkToggle(bookmark.id)}
             />
           ))}
         </div>

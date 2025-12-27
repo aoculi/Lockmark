@@ -7,34 +7,68 @@
   align-items: center;
   height: 41px;
   border-bottom: 1px solid var(--border);
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--background-2);
+  gap: 10px;
 }
 
-.searchBarContainer {
+.actionsContainer {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  padding: 0 20px;
+  gap: 8px;
+  padding: 0 0 0 8px;
 }
 
-.searchInput {
-  position: absolute;
-  inset: 0;
-  border: none;
-  margin: 0;
-  padding: 0 0 0 45px;
-  background: none;
-  box-shadow: none;
-  outline: none;
-  z-index: 0;
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px !important;
+  white-space: nowrap;
+}
+
+.actionLabel {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chevron {
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.tagBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background-color: var(--primary);
   color: white;
-  font-size: 14px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
 }
 
-.searchInput::placeholder {
-  font-size: 14px;
-  color: var(--text-light);
+.filterDropdown {
+  min-width: 300px;
+  max-width: 400px;
+  padding: 5px !important;
+}
+
+.countContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 20px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
 }
 .addBookmarkButton {
   width: 35px !important;

@@ -1,3 +1,5 @@
+import { TriangleAlert } from 'lucide-react'
+
 import { AuthSessionProvider } from '@/components/hooks/providers/useAuthSessionProvider'
 import { ManifestProvider } from '@/components/hooks/providers/useManifestProvider'
 import {
@@ -42,16 +44,17 @@ function RootContent() {
   }
 
   return (
-    <>
+    <div className={styles.container}>
       {flash && (
         <div className={styles.flash}>
-          <Text align='center' size='2' weight='regular' color='light'>
+          <TriangleAlert size={16} color='white' />
+          <Text size='2' weight='regular' color='white'>
             {flash}
           </Text>
         </div>
       )}
       {renderRoute()}
-    </>
+    </div>
   )
 }
 

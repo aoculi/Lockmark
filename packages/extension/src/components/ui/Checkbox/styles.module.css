@@ -1,7 +1,6 @@
 .checkboxContainer {
   position: relative;
   height: 15px;
-  margin-right: 10px;
 }
 
 .checkboxContainer input[type='checkbox'] {
@@ -22,6 +21,7 @@
 
 /* Hover effect */
 .checkboxContainer:hover input ~ .checkmark {
+  border-color: var(--border-hover);
   background-color: var(--background-2);
 }
 
@@ -47,4 +47,10 @@
 /* Display checkmark when checked */
 .checkboxContainer input:checked ~ .checkmark::after {
   display: block;
+}
+
+.labelContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }

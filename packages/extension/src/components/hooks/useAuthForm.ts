@@ -25,16 +25,14 @@ export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
     login: '',
     password: ''
   })
-  const [error, setError] = useState<string | null>(null)
   const { setFlash } = useNavigation()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFlash(null)
-    setError(null)
 
     if (!formData.login.trim() || !formData.password.trim()) {
-      setError('Please fill in all fields')
+      setFlash('Please fill in all fields')
       return
     }
 
@@ -61,7 +59,7 @@ export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
       // The WMK upload failed
       if (apiError.details?.wmkUploadFailed) {
         // WMK upload failed - show error but keep session
-        setError('Could not initialize vault. Please try again.')
+        setFlash('Could not initialize vault. Please try again.')
         return
       }
 
@@ -77,13 +75,13 @@ export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
           }
         }
 
-        setError(
+        setFlash(
           lines.length > 0
             ? `${baseMessage}\n${lines.map((l) => `• ${l}`).join('\n')}`
             : baseMessage
         )
       } else {
-        setError(baseMessage)
+        setFlash(baseMessage)
       }
     }
   }
@@ -101,7 +99,6 @@ export function useAuthForm({ onSuccess, mutation }: UseAuthFormOptions) {
 
   return {
     formData,
-    error,
     disabled,
     handleSubmit,
     handleChange

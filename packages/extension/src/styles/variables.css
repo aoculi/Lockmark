@@ -3,9 +3,11 @@
   --text-light: #8d9096;
 
   --border: #464b57;
+  --border-hover: #6f7075;
   --border-radius: 2px;
 
   --primary: #6e56cf;
+  --secondary: rgb(223, 186, 118);
 
   --background-1: #57585e;
   --background-2: #2f343e;

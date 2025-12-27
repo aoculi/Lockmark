@@ -1,5 +1,19 @@
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
 .flash {
-  background-color: rgba(0, 0, 0, 0.5);
-  color: var(--text-light);
-  padding: 10px;
+  background-color: var(--background-1);
+  padding: 5px 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+
+  font-size: 14px;
+  word-break: break-word;
+  white-space: pre-line;
 }

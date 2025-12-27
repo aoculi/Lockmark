@@ -1,40 +1,24 @@
 .container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   overflow: hidden;
   position: relative;
 }
 
-.special {
-  background: radial-gradient(
-    circle,
-    var(--background-1) 0%,
-    var(--background-3) 70%
-  );
-
-  position: absolute;
-  z-index: -1;
-  top: -80%;
-  width: 800px;
-  height: 800px;
-}
-
-.menu {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 3;
-}
-
 .content {
-  padding: 100px;
   position: relative;
-  margin: 0 auto;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 30px;
+  margin: 0 auto;
+  padding: 0 50px;
   z-index: 2;
+  height: auto;
 }
 
 .form {
@@ -42,18 +26,20 @@
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  z-index: 2;
+  position: relative;
 }
 .form button {
   margin-top: 20px;
   cursor: pointer;
 }
 
-.loginLink {
+.registerLink {
   margin-top: 20px;
   text-align: center;
 }
 
-.loginLink button:hover {
+.registerLink button:hover {
   cursor: pointer !important;
 }
 

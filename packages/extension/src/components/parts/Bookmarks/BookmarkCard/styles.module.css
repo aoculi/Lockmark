@@ -1,54 +1,58 @@
 .component {
   position: relative;
-  cursor: grab;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-.component:active {
-  cursor: grabbing;
-}
-
-.component.dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-  cursor: grabbing;
-}
-
-.component.dragging .card {
-  pointer-events: none;
+  display: flex;
+  align-items: stretch;
 }
 
 .card {
-  padding: 10px 20px;
+  padding: 10px 15px;
   transition: background-color 0.2s ease;
+  border-radius: var(--border-radius);
   display: flex;
   flex-direction: row;
   text-decoration: none;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  flex: 1;
 }
 
 .card:hover {
   background-color: rgba(255, 255, 255, 0.07);
 }
 
+.checkboxWrapper {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  z-index: 4;
+}
+
 .picture {
-  margin: 5px 15px 0 0;
+  margin: 0 0 0 0;
+  flex-shrink: 0;
 }
 .picture img {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   object-fit: cover;
 }
 .content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  width: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 .name {
-  padding-right: 40px;
+  margin-top: -3px;
+  padding-right: 120px;
+  width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
 }
 
 .header {
@@ -58,7 +62,15 @@
   margin-bottom: 8px;
 }
 
+.secondaryLine {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
 .tagsContainer {
+  flex: 1;
   display: flex;
   flex-direction: row;
   gap: 4px;
@@ -67,22 +79,44 @@
   justify-content: space-between;
 }
 
+.tagsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: 8px 0;
+  margin: 3px 0;
+}
+
+.tagButton {
+  flex-shrink: 0;
+}
+
+.tagButtonLabel {
+  font-size: 12px;
+}
+
+.tagManagerDropdown {
+  min-width: 300px;
+  max-width: 400px;
+  padding: 12px !important;
 }
 
 .tag {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 3px 7px;
   background-color: transparent;
   border: 1px solid var(--primary);
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   color: white;
   font-size: 11px;
   font-weight: 500;
+  line-height: 1;
 }
 
 .colored {
@@ -92,11 +126,15 @@
 
 .updatedText {
   text-align: right;
+  padding-top: 15px;
 }
 
-.dropdownMenu {
+.actions {
   position: absolute;
   top: 12px;
   right: 20px;
   z-index: 3;
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }

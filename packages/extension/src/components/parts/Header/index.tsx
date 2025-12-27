@@ -4,6 +4,7 @@ import {
   Library,
   LogOut,
   Menu,
+  Search,
   Settings2,
   Star
 } from 'lucide-react'
@@ -23,12 +24,16 @@ export default function Header({
   title,
   canSwitchToVault = false,
   canSwitchToBookmark = false,
-  rightContent
+  rightContent,
+  searchQuery,
+  onSearchChange
 }: {
   title?: string
   canSwitchToVault?: boolean
   canSwitchToBookmark?: boolean
   rightContent?: React.ReactNode
+  searchQuery?: string
+  onSearchChange?: (query: string) => void
 }) {
   const { navigate } = useNavigation()
   const { logout } = useQueryAuth()
@@ -39,13 +44,26 @@ export default function Header({
       <div className={styles.content}>
         <div className={styles.left}>
           <div className={styles.leftIcon}>
-            <Library strokeWidth={2} size={20} color='orange' />
+            <Library strokeWidth={2} size={20} />
           </div>
 
           <Text as='h1' size='2' weight='medium'>
             {title ? title : 'LockMark'}
           </Text>
         </div>
+
+        {searchQuery !== undefined && onSearchChange && (
+          <div className={styles.searchBarContainer}>
+            <Search strokeWidth={1} size={16} />
+            <input
+              type='text'
+              placeholder='Search bookmarks...'
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
+        )}
 
         <div className={styles.right}>
           {rightContent}

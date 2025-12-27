@@ -10,7 +10,6 @@ import usePopupSize from '@/components/hooks/usePopupSize'
 
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
-import ErrorCallout from '@/components/ui/ErrorCallout'
 import Input from '@/components/ui/Input'
 
 import styles from './styles.module.css'
@@ -39,22 +38,18 @@ export default function Login() {
 
   const onLoginSuccess = () => {
     setFlash(null)
-    navigate('/bookmark')
+    navigate('/vault')
   }
 
-  const { formData, error, disabled, handleSubmit, handleChange } = useAuthForm(
-    {
-      onSuccess: onLoginSuccess,
-      mutation
-    }
-  )
+  const { formData, disabled, handleSubmit, handleChange } = useAuthForm({
+    onSuccess: onLoginSuccess,
+    mutation
+  })
 
   return (
     <div className={styles.container}>
       <Header title='Login' />
       <div className={styles.content}>
-        {error && <ErrorCallout>{error}</ErrorCallout>}
-
         <form onSubmit={handleSubmit} className={styles.form}>
           <Input
             size='lg'

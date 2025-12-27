@@ -11,11 +11,13 @@ import styles from './styles.module.css'
 export const TagSelectorField = ({
   tags,
   selectedTags,
-  onChange
+  onChange,
+  isDropdownOpen
 }: {
   tags: EntityTag[]
   selectedTags: string[]
   onChange: (selectedTags: string[]) => void
+  isDropdownOpen?: boolean
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -81,6 +83,17 @@ export const TagSelectorField = ({
     }
   }
 
+  // Auto-focus input when dropdown opens
+  useEffect(() => {
+    if (isDropdownOpen === true) {
+      // Small delay to ensure the dropdown is fully rendered
+      const timer = setTimeout(() => {
+        inputRef.current?.focus()
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+  }, [isDropdownOpen])
+
   // Reset highlighted index when filtered tags change
   useEffect(() => {
     setHighlightedIndex(0)
@@ -108,7 +121,7 @@ export const TagSelectorField = ({
       <Input
         ref={inputRef}
         size='lg'
-        placeholder={selectedTagObjects.length > 0 ? '' : 'Select tags...'}
+        placeholder='Select tags...'
         value={searchQuery}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           setSearchQuery(e.target.value)
@@ -118,45 +131,49 @@ export const TagSelectorField = ({
         onKeyDown={handleKeyDown}
       >
         <Tag size={16} />
-
-        <div className={styles.inputContent}>
-          {/* Selected tags displayed as badges */}
-          {selectedTagObjects.length > 0 && (
-            <div className={styles.selectedTags}>
-              {selectedTagObjects.map((tag) => {
-                const colorInfo = getTagColor(tag.id, tags)
-                return (
-                  <Button
-                    key={tag.id}
-                    color='light'
-                    size='sm'
-                    onClick={(e) => handleRemoveTag(tag.id, e)}
-                    className={colorInfo ? styles.coloredTag : ''}
-                    style={{
-                      backgroundColor: colorInfo?.tagColor ?? undefined,
-                      color: colorInfo?.textColor ?? undefined
-                    }}
-                  >
-                    <span className={styles.tagName}>{tag.name}</span>
-                    <X className={styles.removeIcon} height='12' width='12' />
-                  </Button>
-                )
-              })}
-            </div>
-          )}
-        </div>
       </Input>
 
+      {/* Selected tags displayed below the input */}
+      {selectedTagObjects.length > 0 && (
+        <div className={styles.selectedTagsContainer}>
+          <div className={styles.selectedTags}>
+            {selectedTagObjects.map((tag) => {
+              const colorInfo = getTagColor(tag.id, tags)
+              return (
+                <Button
+                  key={tag.id}
+                  color='light'
+                  size='sm'
+                  onClick={(e) => handleRemoveTag(tag.id, e)}
+                  className={colorInfo ? styles.coloredTag : ''}
+                  style={{
+                    backgroundColor: colorInfo?.tagColor ?? undefined,
+                    color: colorInfo?.textColor ?? undefined
+                  }}
+                >
+                  <span className={styles.tagName}>{tag.name}</span>
+                  <X className={styles.removeIcon} height='12' width='12' />
+                </Button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Autocomplete suggestions */}
-      {isOpen && filteredTags.length > 0 && (
+      {(isDropdownOpen ?? isOpen) && filteredTags.length > 0 && (
         <div ref={suggestionsRef} className={styles.suggestions}>
           <div className={styles.suggestionsList}>
             {filteredTags.map((tag, index) => (
               <Button
                 key={tag.id}
-                variant={index === highlightedIndex ? 'solid' : 'solid'}
-                color={index === highlightedIndex ? 'primary' : 'dark'}
-                className={`${styles.suggestionItem}`}
+                variant='ghost'
+                color='dark'
+                className={`${styles.suggestionItem} ${
+                  index === highlightedIndex
+                    ? styles.suggestionItemHighlighted
+                    : ''
+                }`}
                 onClick={() => handleSelectTag(tag.id)}
                 onMouseEnter={() => setHighlightedIndex(index)}
               >
