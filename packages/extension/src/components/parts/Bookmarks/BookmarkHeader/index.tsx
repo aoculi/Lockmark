@@ -142,6 +142,7 @@ export default function BookmarkHeader({
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>
+
             <DropdownMenu.Root open={filterOpen} onOpenChange={setFilterOpen}>
               <DropdownMenu.Trigger asChild>
                 <Button
@@ -170,9 +171,11 @@ export default function BookmarkHeader({
                   tags={tags}
                   selectedTags={selectedTags}
                   onChange={onSelectedTagsChange}
+                  isDropdownOpen={filterOpen}
                 />
               </DropdownMenu.Content>
             </DropdownMenu.Root>
+
             <Button
               onClick={() => navigate('/tag')}
               size='sm'

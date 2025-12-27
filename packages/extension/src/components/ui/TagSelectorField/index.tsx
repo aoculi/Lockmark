@@ -11,11 +11,13 @@ import styles from './styles.module.css'
 export const TagSelectorField = ({
   tags,
   selectedTags,
-  onChange
+  onChange,
+  isDropdownOpen
 }: {
   tags: EntityTag[]
   selectedTags: string[]
   onChange: (selectedTags: string[]) => void
+  isDropdownOpen?: boolean
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -80,6 +82,17 @@ export const TagSelectorField = ({
       onChange(selectedTags.slice(0, -1))
     }
   }
+
+  // Auto-focus input when dropdown opens
+  useEffect(() => {
+    if (isDropdownOpen === true) {
+      // Small delay to ensure the dropdown is fully rendered
+      const timer = setTimeout(() => {
+        inputRef.current?.focus()
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+  }, [isDropdownOpen])
 
   // Reset highlighted index when filtered tags change
   useEffect(() => {
@@ -148,15 +161,19 @@ export const TagSelectorField = ({
       )}
 
       {/* Autocomplete suggestions */}
-      {isOpen && filteredTags.length > 0 && (
+      {(isDropdownOpen ?? isOpen) && filteredTags.length > 0 && (
         <div ref={suggestionsRef} className={styles.suggestions}>
           <div className={styles.suggestionsList}>
             {filteredTags.map((tag, index) => (
               <Button
                 key={tag.id}
-                variant={index === highlightedIndex ? 'solid' : 'solid'}
-                color={index === highlightedIndex ? 'primary' : 'dark'}
-                className={`${styles.suggestionItem}`}
+                variant='ghost'
+                color='dark'
+                className={`${styles.suggestionItem} ${
+                  index === highlightedIndex
+                    ? styles.suggestionItemHighlighted
+                    : ''
+                }`}
                 onClick={() => handleSelectTag(tag.id)}
                 onMouseEnter={() => setHighlightedIndex(index)}
               >
