@@ -76,6 +76,7 @@ export default function Header({
               <BookOpenText strokeWidth={2} size={18} color='white' />
             </Button>
           )}
+
           {canSwitchToBookmark && isAuthenticated && (
             <>
               <Button

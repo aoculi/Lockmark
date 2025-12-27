@@ -12,6 +12,7 @@ export type Route =
   | '/vault'
   | '/bookmark'
   | '/tag'
+  | '/tags'
   | '/settings'
 
 type NavigationOptions = { bookmark?: string | null; tag?: string | null }
@@ -77,6 +78,8 @@ export function NavigationProvider({
         if (newRoute === '/bookmark') {
           setSelectedBookmark(null)
         } else if (newRoute === '/tag') {
+          setSelectedTag(null)
+        } else if (newRoute === '/tags') {
           setSelectedTag(null)
         } else if (newRoute === '/vault') {
           setSelectedBookmark(null)

@@ -3,7 +3,6 @@ import {
   ChevronDown,
   HeartMinus,
   HeartPlus,
-  Tag,
   Tags,
   Trash2
 } from 'lucide-react'
@@ -210,15 +209,15 @@ export default function BookmarkHeader({
             </DropdownMenu.Root>
 
             <Button
-              onClick={() => navigate('/tag')}
+              onClick={() => navigate('/tags')}
               size='sm'
               variant='ghost'
               color='light'
               className={styles.actionButton}
-              title='Create a new tag'
+              title='Manage tags'
             >
-              <Tag strokeWidth={2} size={16} />
-              <span className={styles.actionLabel}>New tag</span>
+              <Tags strokeWidth={2} size={16} />
+              <span className={styles.actionLabel}>Manage tags</span>
             </Button>
           </>
         )}

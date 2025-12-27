@@ -17,7 +17,6 @@ export default function Vault() {
   const [selectedBookmarkIds, setSelectedBookmarkIds] = useState<Set<string>>(
     new Set()
   )
-
   return (
     <div className={styles.component}>
       <Header

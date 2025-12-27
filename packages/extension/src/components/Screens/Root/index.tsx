@@ -15,6 +15,7 @@ import Login from '@/components/Screens/Login'
 import Register from '@/components/Screens/Register'
 import Settings from '@/components/Screens/Settings'
 import Tag from '@/components/Screens/Tag'
+import Tags from '@/components/Screens/Tags'
 import Vault from '@/components/Screens/Vault'
 import Text from '@/components/ui/Text'
 
@@ -38,6 +39,8 @@ function RootContent() {
         return <Bookmark />
       case '/tag':
         return <Tag />
+      case '/tags':
+        return <Tags />
       default:
         return <Bookmark />
     }

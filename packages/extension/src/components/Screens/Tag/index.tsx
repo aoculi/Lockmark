@@ -28,6 +28,10 @@ export default function Tag() {
 
   const tag = tags.find((tag: tagType) => tag.id === selectedTag) || null
 
+  const [form, setForm] = useState(defaultTag)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(false)
+
   useEffect(() => {
     if (tag) {
       setForm({
@@ -37,10 +41,6 @@ export default function Tag() {
       })
     }
   }, [tag])
-
-  const [form, setForm] = useState(defaultTag)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
