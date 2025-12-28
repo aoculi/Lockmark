@@ -29,6 +29,71 @@ export function isBookmarkableUrl(url: string): boolean {
 }
 
 /**
+ * Gets all open tabs in all windows
+ * @returns Array of bookmark drafts from all open tabs
+ */
+export async function captureAllTabs(): Promise<BookmarkDraft[]> {
+  try {
+    // Check if chrome.tabs is available
+    if (!chrome.tabs || typeof chrome.tabs.query !== 'function') {
+      return []
+    }
+
+    // Query for all tabs
+    const queryOptions = {}
+    let tabs: chrome.tabs.Tab[]
+
+    // Try Promise-based approach first (Manifest V3)
+    const queryResult = chrome.tabs.query(queryOptions)
+    if (queryResult && typeof queryResult.then === 'function') {
+      tabs = await queryResult
+    } else {
+      // Fallback to callback-based API
+      tabs = await new Promise<chrome.tabs.Tab[]>((resolve, reject) => {
+        chrome.tabs.query(queryOptions, (tabs) => {
+          if (chrome.runtime.lastError) {
+            reject(
+              new Error(chrome.runtime.lastError.message || 'Unknown error')
+            )
+            return
+          }
+          resolve(tabs || [])
+        })
+      })
+    }
+
+    if (!tabs || tabs.length === 0) {
+      return []
+    }
+
+    // Filter and convert tabs to bookmark drafts
+    const bookmarks: BookmarkDraft[] = []
+    for (const tab of tabs) {
+      if (!tab?.url || !tab?.title) {
+        continue
+      }
+
+      if (!isBookmarkableUrl(tab.url)) {
+        continue
+      }
+
+      bookmarks.push({
+        url: tab.url,
+        title: tab.title,
+        note: '',
+        picture: tab.favIconUrl || '',
+        tags: []
+      })
+    }
+
+    return bookmarks
+  } catch (error) {
+    console.error('Error capturing all tabs:', error)
+    return []
+  }
+}
+
+/**
  * Captures the current page data and returns a bookmark draft.
  * Uses chrome.tabs.query directly to get the current active tab.
  *
