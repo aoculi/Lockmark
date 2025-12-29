@@ -2,14 +2,9 @@ import { Loader2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
-import {
-  loadManifestData,
-  useManifest
-} from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
-import { useBookmarks } from '@/components/hooks/useBookmarks'
-import { useTags } from '@/components/hooks/useTags'
+import { useBookmarkImport } from '@/components/hooks/useBookmarkImport'
 
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
@@ -19,11 +14,6 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import Text from '@/components/ui/Text'
-
-import {
-  prepareBookmarksForImport,
-  processBookmarkImport
-} from '@/lib/bookmarkImport'
 
 import styles from './styles.module.css'
 
@@ -37,91 +27,51 @@ type AutoLockTimeout =
   | '1h'
   | 'never'
 
+interface SettingsFields {
+  showHiddenTags: boolean
+  apiUrl: string
+  autoLockTimeout: AutoLockTimeout
+}
+
+const DEFAULT_FIELDS: SettingsFields = {
+  showHiddenTags: false,
+  apiUrl: '',
+  autoLockTimeout: '20min'
+}
+
 export default function Settings() {
   const { settings, isLoading, updateSettings } = useSettings()
   const { flash, setFlash } = useNavigation()
-  const { addBookmarks } = useBookmarks()
-  const { tags, createTag } = useTags()
-  const { manifest, reload: reloadManifest } = useManifest()
   const { isAuthenticated } = useAuthSession()
 
-  const [fields, setFields] = useState({
-    showHiddenTags: false,
-    apiUrl: '',
-    autoLockTimeout: '20min' as AutoLockTimeout
-  })
-  const [originalFields, setOriginalFields] = useState({
-    showHiddenTags: false,
-    apiUrl: '',
-    autoLockTimeout: '20min' as AutoLockTimeout
-  })
+  const [fields, setFields] = useState<SettingsFields>(DEFAULT_FIELDS)
+  const [originalFields, setOriginalFields] =
+    useState<SettingsFields>(DEFAULT_FIELDS)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('api')
 
-  // Import state
-  const [importFile, setImportFile] = useState<File | null>(null)
   const [createFolderTags, setCreateFolderTags] = useState(true)
   const [importDuplicates, setImportDuplicates] = useState(false)
-  const [isImporting, setIsImporting] = useState(false)
-  const [importError, setImportError] = useState<string | null>(null)
-  const [importSuccess, setImportSuccess] = useState<string | null>(null)
 
-  // Sync fields when settings load
+  const { importFile, setImportFile, isImporting, handleImport } =
+    useBookmarkImport({
+      createFolderTags,
+      importDuplicates
+    })
+
   useEffect(() => {
     if (!isLoading) {
-      setFields({
+      const loadedFields: SettingsFields = {
         showHiddenTags: settings.showHiddenTags,
         apiUrl: settings.apiUrl,
         autoLockTimeout:
           (settings.autoLockTimeout as AutoLockTimeout) || '20min'
-      })
-      setOriginalFields({
-        showHiddenTags: settings.showHiddenTags,
-        apiUrl: settings.apiUrl,
-        autoLockTimeout:
-          (settings.autoLockTimeout as AutoLockTimeout) || '20min'
-      })
+      }
+      setFields(loadedFields)
+      setOriginalFields(loadedFields)
     }
   }, [isLoading, settings])
 
-  const handleApiSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-    try {
-      await updateSettings({
-        showHiddenTags: fields.showHiddenTags,
-        apiUrl: fields.apiUrl,
-        autoLockTimeout: fields.autoLockTimeout
-      })
-      setOriginalFields({ ...fields })
-    } catch (error) {
-      console.error('Error saving settings:', error)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleSecuritySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-    try {
-      await updateSettings({
-        showHiddenTags: fields.showHiddenTags,
-        apiUrl: fields.apiUrl,
-        autoLockTimeout: fields.autoLockTimeout
-      })
-      setOriginalFields({ ...fields })
-    } catch (error) {
-      console.error('Error saving settings:', error)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const hasChanged = JSON.stringify(fields) !== JSON.stringify(originalFields)
-  const version = chrome.runtime.getManifest().version
-
-  // Switch to API tab if user is on a locked tab and becomes unauthenticated
   useEffect(() => {
     if (
       !isAuthenticated &&
@@ -131,89 +81,36 @@ export default function Settings() {
     }
   }, [isAuthenticated, activeTab])
 
-  const handleImport = async () => {
-    if (!importFile) {
-      setFlash('Please select a bookmark file')
-      return
-    }
-
-    setIsImporting(true)
-    setImportError(null)
-    setImportSuccess(null)
-    setFlash(null)
-
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSaving(true)
     try {
-      // Step 1: Process the bookmark file
-      const processResult = await processBookmarkImport({
-        file: importFile,
-        createFolderTags,
-        existingTags: tags
+      await updateSettings({
+        showHiddenTags: fields.showHiddenTags,
+        apiUrl: fields.apiUrl,
+        autoLockTimeout: fields.autoLockTimeout
       })
-
-      if (processResult.errors.length > 0) {
-        console.warn('Import warnings:', processResult.errors)
-      }
-
-      if (processResult.bookmarksWithPaths.length === 0) {
-        setFlash('No valid bookmarks found in the file')
-        setIsImporting(false)
-        return
-      }
-
-      // Step 2: Create tags if needed
-      if (processResult.tagsToCreate.length > 0) {
-        for (const tagToCreate of processResult.tagsToCreate) {
-          try {
-            await createTag(tagToCreate)
-          } catch (error) {
-            console.error(`Error creating tag "${tagToCreate.name}":`, error)
-          }
-        }
-        // Reload manifest to get the newly created tags with their IDs
-        await reloadManifest()
-      }
-
-      // Step 3: Get updated tags and manifest
-      const latestManifestData = await loadManifestData()
-      const updatedTags =
-        latestManifestData?.manifest.tags || manifest?.tags || []
-      const updatedBookmarks =
-        latestManifestData?.manifest.items || manifest?.items || []
-
-      // Step 4: Prepare bookmarks (map tags and filter duplicates)
-      const prepareResult = prepareBookmarksForImport({
-        bookmarksWithPaths: processResult.bookmarksWithPaths,
-        createFolderTags,
-        importDuplicates,
-        tags: updatedTags,
-        existingBookmarks: updatedBookmarks
-      })
-
-      // Step 5: Add all bookmarks in a single batch operation
-      if (prepareResult.bookmarksToImport.length === 0) {
-        const message =
-          prepareResult.duplicatesCount > 0
-            ? `All ${prepareResult.totalBookmarks} bookmark${prepareResult.totalBookmarks !== 1 ? 's' : ''} are duplicates and were skipped`
-            : 'No bookmarks to import'
-        setFlash(message)
-        setImportFile(null)
-        return
-      }
-
-      await addBookmarks(prepareResult.bookmarksToImport)
-      let successMessage = `Successfully imported ${prepareResult.bookmarksToImport.length} bookmark${prepareResult.bookmarksToImport.length !== 1 ? 's' : ''}`
-      if (prepareResult.duplicatesCount > 0) {
-        successMessage += ` (${prepareResult.duplicatesCount} duplicate${prepareResult.duplicatesCount !== 1 ? 's' : ''} skipped)`
-      }
-      setFlash(successMessage)
-      setImportFile(null)
+      setOriginalFields({ ...fields })
     } catch (error) {
-      const errorMessage = `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      setFlash(errorMessage)
+      console.error('Error saving settings:', error)
     } finally {
-      setIsImporting(false)
+      setIsSaving(false)
     }
   }
+
+  const handleCancel = () => {
+    window.close()
+  }
+
+  const updateField = <K extends keyof SettingsFields>(
+    key: K,
+    value: SettingsFields[K]
+  ) => {
+    setFields((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const hasChanged = JSON.stringify(fields) !== JSON.stringify(originalFields)
+  const version = chrome.runtime.getManifest().version
 
   if (isLoading) {
     return (
@@ -224,10 +121,6 @@ export default function Settings() {
         </div>
       </div>
     )
-  }
-
-  const handleCancel = () => {
-    window.close()
   }
 
   return (
@@ -258,7 +151,7 @@ export default function Settings() {
             </Tabs.List>
 
             <Tabs.Content value='api'>
-              <form onSubmit={handleApiSubmit} className={styles.form}>
+              <form onSubmit={handleSaveSettings} className={styles.form}>
                 <div className={styles.field}>
                   <Text as='label' size='3' weight='medium'>
                     API Base URL
@@ -267,9 +160,7 @@ export default function Settings() {
                     type='url'
                     placeholder='http://127.0.0.1:3500'
                     value={fields.apiUrl}
-                    onChange={(e) =>
-                      setFields({ ...fields, apiUrl: e.target.value })
-                    }
+                    onChange={(e) => updateField('apiUrl', e.target.value)}
                   />
                   <Text size='2' color='light'>
                     The URL where your LockMark API server is running. Default
@@ -277,23 +168,16 @@ export default function Settings() {
                   </Text>
                 </div>
 
-                <div className={styles.actionsContainer}>
-                  <div className={styles.actions}>
-                    <Button onClick={handleCancel} color='black'>
-                      Cancel
-                    </Button>
-
-                    <Button type='submit' disabled={!hasChanged || isSaving}>
-                      {isSaving && <Loader2 className={styles.spinner} />}
-                      {isSaving ? 'Saving...' : 'Save'}
-                    </Button>
-                  </div>
-                </div>
+                <SettingsActions
+                  hasChanged={hasChanged}
+                  isSaving={isSaving}
+                  onCancel={handleCancel}
+                />
               </form>
             </Tabs.Content>
 
             <Tabs.Content value='security'>
-              <form onSubmit={handleSecuritySubmit} className={styles.form}>
+              <form onSubmit={handleSaveSettings} className={styles.form}>
                 <div className={styles.field}>
                   <Text as='label' size='3' weight='medium'>
                     Auto-lock Timeout
@@ -301,10 +185,10 @@ export default function Settings() {
                   <Select
                     value={fields.autoLockTimeout}
                     onChange={(e) =>
-                      setFields({
-                        ...fields,
-                        autoLockTimeout: e.target.value as AutoLockTimeout
-                      })
+                      updateField(
+                        'autoLockTimeout',
+                        e.target.value as AutoLockTimeout
+                      )
                     }
                   >
                     <option value='1min'>1 minute</option>
@@ -326,10 +210,7 @@ export default function Settings() {
                     <Checkbox
                       checked={fields.showHiddenTags}
                       onChange={(e) =>
-                        setFields({
-                          ...fields,
-                          showHiddenTags: e.target.checked
-                        })
+                        updateField('showHiddenTags', e.target.checked)
                       }
                       label='Display hidden tags'
                     />
@@ -340,18 +221,11 @@ export default function Settings() {
                   </Text>
                 </div>
 
-                <div className={styles.actionsContainer}>
-                  <div className={styles.actions}>
-                    <Button onClick={handleCancel} color='black'>
-                      Cancel
-                    </Button>
-
-                    <Button type='submit' disabled={!hasChanged || isSaving}>
-                      {isSaving && <Loader2 className={styles.spinner} />}
-                      {isSaving ? 'Saving...' : 'Save'}
-                    </Button>
-                  </div>
-                </div>
+                <SettingsActions
+                  hasChanged={hasChanged}
+                  isSaving={isSaving}
+                  onCancel={handleCancel}
+                />
               </form>
             </Tabs.Content>
 
@@ -374,7 +248,6 @@ export default function Settings() {
                     onChange={setImportFile}
                     disabled={isImporting}
                     description='Select a bookmark export file (.html or .json) from Chrome or Firefox'
-                    error={importError || undefined}
                   />
                 </div>
 
@@ -405,14 +278,6 @@ export default function Settings() {
                   </Text>
                 </div>
 
-                {importSuccess && (
-                  <div className={styles.successMessage}>
-                    <Text size='2' color='light'>
-                      {importSuccess}
-                    </Text>
-                  </div>
-                )}
-
                 <div className={styles.actionsContainer}>
                   <div className={styles.actions}>
                     <Button
@@ -436,6 +301,33 @@ export default function Settings() {
             </Tabs.Content>
           </Tabs.Root>
         </div>
+      </div>
+    </div>
+  )
+}
+
+interface SettingsActionsProps {
+  hasChanged: boolean
+  isSaving: boolean
+  onCancel: () => void
+}
+
+function SettingsActions({
+  hasChanged,
+  isSaving,
+  onCancel
+}: SettingsActionsProps) {
+  return (
+    <div className={styles.actionsContainer}>
+      <div className={styles.actions}>
+        <Button onClick={onCancel} color='black'>
+          Cancel
+        </Button>
+
+        <Button type='submit' disabled={!hasChanged || isSaving}>
+          {isSaving && <Loader2 className={styles.spinner} />}
+          {isSaving ? 'Saving...' : 'Save'}
+        </Button>
       </div>
     </div>
   )

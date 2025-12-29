@@ -75,10 +75,3 @@
     transform: rotate(360deg);
   }
 }
-
-.successMessage {
-  padding: 10px;
-  background-color: var(--background-3);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
-}

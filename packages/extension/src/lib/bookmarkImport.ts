@@ -40,9 +40,7 @@ export function detectBrowserType(
       if (data.version && data.roots) {
         return 'chrome'
       }
-    } catch {
-      // Not valid JSON
-    }
+    } catch {}
   }
 
   if (content.includes('NETSCAPE-Bookmark-file-1')) {
@@ -110,10 +108,22 @@ function firefoxTimestampToMs(timestamp: number): number {
   return Math.floor(timestamp / 1000)
 }
 
+interface BookmarkCollector {
+  bookmarks: ParsedBookmark[]
+  folders: Set<string>
+  errors: string[]
+}
+
+function createCollector(): BookmarkCollector {
+  return {
+    bookmarks: [],
+    folders: new Set<string>(),
+    errors: []
+  }
+}
+
 function addBookmark(
-  bookmarks: ParsedBookmark[],
-  folders: Set<string>,
-  errors: string[],
+  collector: BookmarkCollector,
   url: string,
   title: string,
   folderPath: string[],
@@ -121,20 +131,20 @@ function addBookmark(
   lastModified?: number
 ): void {
   if (!url) {
-    errors.push(`Bookmark missing URL: ${title || 'Unknown'}`)
+    collector.errors.push(`Bookmark missing URL: ${title || 'Unknown'}`)
     return
   }
 
   if (!isValidUrl(url)) {
-    errors.push(`Invalid URL: ${url} (${title || 'Unknown'})`)
+    collector.errors.push(`Invalid URL: ${url} (${title || 'Unknown'})`)
     return
   }
 
   folderPath.forEach((folder) => {
-    if (folder) folders.add(folder)
+    if (folder) collector.folders.add(folder)
   })
 
-  bookmarks.push({
+  collector.bookmarks.push({
     url,
     title: title || 'Untitled',
     folderPath: [...folderPath].filter(Boolean),
@@ -143,32 +153,36 @@ function addBookmark(
   })
 }
 
-export function parseChromeJsonBookmarkFile(content: string): ImportResult {
-  const bookmarks: ParsedBookmark[] = []
-  const folders = new Set<string>()
-  const errors: string[] = []
+function toImportResult(collector: BookmarkCollector): ImportResult {
+  return {
+    bookmarks: collector.bookmarks,
+    folders: Array.from(collector.folders).sort(),
+    errors: collector.errors
+  }
+}
+
+function parseChromeJsonBookmarkFile(content: string): ImportResult {
+  const collector = createCollector()
 
   try {
     const data: ChromeBookmarkRoot = JSON.parse(content)
 
     if (!data.roots) {
-      errors.push('Invalid Chrome bookmark JSON format: missing roots')
-      return { bookmarks, folders: [], errors }
+      collector.errors.push(
+        'Invalid Chrome bookmark JSON format: missing roots'
+      )
+      return toImportResult(collector)
     }
 
     function traverseNode(
       node: ChromeBookmarkNode,
       folderPath: string[] = []
     ): void {
-      if (!node.type) {
-        return
-      }
+      if (!node.type) return
 
       if (node.type === 'url') {
         addBookmark(
-          bookmarks,
-          folders,
-          errors,
+          collector,
           node.url!,
           node.name,
           folderPath,
@@ -180,7 +194,7 @@ export function parseChromeJsonBookmarkFile(content: string): ImportResult {
       } else if (node.type === 'folder') {
         const folderName = node.name || 'Untitled Folder'
         const newPath = [...folderPath, folderName]
-        folders.add(folderName)
+        collector.folders.add(folderName)
 
         if (node.children?.length) {
           node.children.forEach((child) => traverseNode(child, newPath))
@@ -188,39 +202,30 @@ export function parseChromeJsonBookmarkFile(content: string): ImportResult {
       }
     }
 
-    if (data.roots.bookmark_bar) {
-      traverseNode(data.roots.bookmark_bar, [])
-    }
-    if (data.roots.other) {
-      traverseNode(data.roots.other, [])
-    }
-    if (data.roots.synced) {
-      traverseNode(data.roots.synced, [])
-    }
+    const roots = [data.roots.bookmark_bar, data.roots.other, data.roots.synced]
+    roots.forEach((root) => {
+      if (root) traverseNode(root, [])
+    })
   } catch (error) {
-    errors.push(
+    collector.errors.push(
       `Failed to parse JSON: ${error instanceof Error ? error.message : 'Unknown error'}`
     )
   }
 
-  return {
-    bookmarks,
-    folders: Array.from(folders).sort(),
-    errors
-  }
+  return toImportResult(collector)
 }
 
-export function parseFirefoxJsonBookmarkFile(content: string): ImportResult {
-  const bookmarks: ParsedBookmark[] = []
-  const folders = new Set<string>()
-  const errors: string[] = []
+function parseFirefoxJsonBookmarkFile(content: string): ImportResult {
+  const collector = createCollector()
 
   try {
     const data: FirefoxBookmarkNode = JSON.parse(content)
 
     if (data.guid !== 'root________') {
-      errors.push('Invalid Firefox bookmark JSON format: missing root')
-      return { bookmarks, folders: [], errors }
+      collector.errors.push(
+        'Invalid Firefox bookmark JSON format: missing root'
+      )
+      return toImportResult(collector)
     }
 
     function traverseNode(
@@ -229,9 +234,7 @@ export function parseFirefoxJsonBookmarkFile(content: string): ImportResult {
     ): void {
       if (node.typeCode === 1) {
         addBookmark(
-          bookmarks,
-          folders,
-          errors,
+          collector,
           node.uri!,
           node.title,
           folderPath,
@@ -244,7 +247,7 @@ export function parseFirefoxJsonBookmarkFile(content: string): ImportResult {
         const folderName = node.title || 'Untitled Folder'
         if (folderName) {
           const newPath = [...folderPath, folderName]
-          folders.add(folderName)
+          collector.folders.add(folderName)
 
           if (node.children?.length) {
             node.children.forEach((child) => traverseNode(child, newPath))
@@ -259,28 +262,22 @@ export function parseFirefoxJsonBookmarkFile(content: string): ImportResult {
       data.children.forEach((child) => traverseNode(child, []))
     }
   } catch (error) {
-    errors.push(
+    collector.errors.push(
       `Failed to parse JSON: ${error instanceof Error ? error.message : 'Unknown error'}`
     )
   }
 
-  return {
-    bookmarks,
-    folders: Array.from(folders).sort(),
-    errors
-  }
+  return toImportResult(collector)
 }
 
-export function parseHtmlBookmarkFile(content: string): ImportResult {
-  const bookmarks: ParsedBookmark[] = []
-  const folders = new Set<string>()
-  const errors: string[] = []
+function parseHtmlBookmarkFile(content: string): ImportResult {
+  const collector = createCollector()
 
   if (!content.includes('NETSCAPE-Bookmark-file-1')) {
-    errors.push(
+    collector.errors.push(
       'Invalid bookmark file format. Expected Netscape Bookmark File Format.'
     )
-    return { bookmarks, folders: [], errors }
+    return toImportResult(collector)
   }
 
   const parser = new DOMParser()
@@ -294,9 +291,7 @@ export function parseHtmlBookmarkFile(content: string): ImportResult {
       bookmarkDl = bookmarkDl.parentElement
     }
 
-    if (!bookmarkDl) {
-      return path
-    }
+    if (!bookmarkDl) return path
 
     let currentDl: Element | null = bookmarkDl
 
@@ -306,9 +301,7 @@ export function parseHtmlBookmarkFile(content: string): ImportResult {
         dt = dt.parentElement
       }
 
-      if (!dt) {
-        break
-      }
+      if (!dt) break
 
       const h3 = dt.querySelector('H3')
       if (h3?.textContent?.trim()) {
@@ -320,9 +313,7 @@ export function parseHtmlBookmarkFile(content: string): ImportResult {
         parentDl = parentDl.parentElement
       }
 
-      if (!parentDl) {
-        break
-      }
+      if (!parentDl) break
 
       currentDl = parentDl
     }
@@ -338,12 +329,12 @@ export function parseHtmlBookmarkFile(content: string): ImportResult {
       const title = link.textContent?.trim() || 'Untitled'
 
       if (!href) {
-        errors.push(`Bookmark missing URL: ${title}`)
+        collector.errors.push(`Bookmark missing URL: ${title}`)
         return
       }
 
       if (!isValidUrl(href)) {
-        errors.push(`Invalid URL: ${href} (${title})`)
+        collector.errors.push(`Invalid URL: ${href} (${title})`)
         return
       }
 
@@ -351,9 +342,9 @@ export function parseHtmlBookmarkFile(content: string): ImportResult {
       const lastModified = link.getAttribute('LAST_MODIFIED')
 
       const folderPath = getFolderPath(link)
-      folderPath.forEach((folder) => folders.add(folder))
+      folderPath.forEach((folder) => collector.folders.add(folder))
 
-      bookmarks.push({
+      collector.bookmarks.push({
         url: href,
         title,
         folderPath,
@@ -363,7 +354,7 @@ export function parseHtmlBookmarkFile(content: string): ImportResult {
           : undefined
       })
     } catch (error) {
-      errors.push(
+      collector.errors.push(
         `Error parsing bookmark: ${error instanceof Error ? error.message : 'Unknown error'}`
       )
     }
@@ -373,18 +364,54 @@ export function parseHtmlBookmarkFile(content: string): ImportResult {
   folderHeaders.forEach((h3) => {
     const folderName = h3.textContent?.trim()
     if (folderName) {
-      folders.add(folderName)
+      collector.folders.add(folderName)
     }
   })
 
-  return {
-    bookmarks,
-    folders: Array.from(folders).sort(),
-    errors
-  }
+  return toImportResult(collector)
 }
 
-export function convertToBookmarks(
+type FileFormat = 'html' | 'json' | 'unknown'
+type JsonFormat = 'chrome' | 'firefox' | 'unknown'
+
+function detectFileFormat(content: string): FileFormat {
+  const trimmed = content.trim()
+
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      JSON.parse(trimmed)
+      return 'json'
+    } catch {}
+  }
+
+  if (
+    trimmed.includes('NETSCAPE-Bookmark-file-1') ||
+    trimmed.includes('<HTML>') ||
+    trimmed.includes('<html>')
+  ) {
+    return 'html'
+  }
+
+  return 'unknown'
+}
+
+function detectJsonFormat(content: string): JsonFormat {
+  try {
+    const parsed = JSON.parse(content)
+
+    if (parsed.guid === 'root________' && parsed.root === 'placesRoot') {
+      return 'firefox'
+    }
+
+    if (parsed.version && parsed.roots) {
+      return 'chrome'
+    }
+  } catch {}
+
+  return 'unknown'
+}
+
+function convertToBookmarks(
   parsedBookmarks: ParsedBookmark[],
   createFolderTags: boolean,
   existingTags: Tag[]
@@ -395,15 +422,12 @@ export function convertToBookmarks(
   }>
   tagsToCreate: Omit<Tag, 'id'>[]
 } {
-  const bookmarks: Array<{
-    bookmark: Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
-    folderPath: string[]
-  }> = []
-  const tagsToCreate: Omit<Tag, 'id'>[] = []
   const tagNameToId = new Map<string, string>()
   existingTags.forEach((tag) => {
     tagNameToId.set(tag.name.toLowerCase(), tag.id)
   })
+
+  const tagsToCreate: Omit<Tag, 'id'>[] = []
 
   if (createFolderTags) {
     const folderSet = new Set<string>()
@@ -425,20 +449,19 @@ export function convertToBookmarks(
     })
   }
 
-  parsedBookmarks.forEach((parsed) => {
+  const bookmarks = parsedBookmarks.map((parsed) => {
     const tagIds: string[] = []
 
     if (createFolderTags) {
       parsed.folderPath.forEach((folder) => {
-        const lowerName = folder.toLowerCase()
-        const tagId = tagNameToId.get(lowerName)
+        const tagId = tagNameToId.get(folder.toLowerCase())
         if (tagId) {
           tagIds.push(tagId)
         }
       })
     }
 
-    bookmarks.push({
+    return {
       bookmark: {
         url: parsed.url,
         title: parsed.title,
@@ -447,90 +470,19 @@ export function convertToBookmarks(
         tags: tagIds
       },
       folderPath: parsed.folderPath
-    })
+    }
   })
 
   return { bookmarks, tagsToCreate }
 }
 
-export function mapFolderPathsToTagIds(
-  bookmarksWithPaths: Array<{
-    bookmark: Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
-    folderPath: string[]
-  }>,
-  tags: Tag[]
-): Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>[] {
-  const tagNameToId = new Map<string, string>()
-  tags.forEach((tag) => {
-    tagNameToId.set(tag.name.toLowerCase(), tag.id)
-  })
-
-  return bookmarksWithPaths.map(({ bookmark, folderPath }) => {
-    const tagIds = new Set(bookmark.tags || [])
-
-    folderPath.forEach((folder) => {
-      const tagId = tagNameToId.get(folder.toLowerCase())
-      if (tagId) {
-        tagIds.add(tagId)
-      }
-    })
-
-    return {
-      url: bookmark.url,
-      title: bookmark.title,
-      note: bookmark.note,
-      picture: bookmark.picture,
-      tags: Array.from(tagIds)
-    }
-  })
-}
-
-function detectFileFormat(content: string): 'html' | 'json' | 'unknown' {
-  const trimmed = content.trim()
-
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-    try {
-      const parsed = JSON.parse(trimmed)
-      return 'json'
-    } catch {
-      // Not valid JSON
-    }
-  }
-
-  if (
-    trimmed.includes('NETSCAPE-Bookmark-file-1') ||
-    trimmed.includes('<HTML>') ||
-    trimmed.includes('<html>')
-  ) {
-    return 'html'
-  }
-
-  return 'unknown'
-}
-
-function detectJsonFormat(content: string): 'chrome' | 'firefox' | 'unknown' {
-  try {
-    const parsed = JSON.parse(content)
-
-    if (parsed.guid === 'root________' && parsed.root === 'placesRoot') {
-      return 'firefox'
-    }
-
-    if (parsed.version && parsed.roots) {
-      return 'chrome'
-    }
-  } catch {
-    // Not valid JSON
-  }
-
-  return 'unknown'
-}
-
-export async function processBookmarkFile(
-  file: File,
-  createFolderTags: boolean,
+export interface ProcessBookmarkImportOptions {
+  file: File
+  createFolderTags: boolean
   existingTags: Tag[]
-): Promise<{
+}
+
+export interface ProcessBookmarkImportResult {
   bookmarksWithPaths: Array<{
     bookmark: Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
     folderPath: string[]
@@ -538,7 +490,12 @@ export async function processBookmarkFile(
   tagsToCreate: Omit<Tag, 'id'>[]
   errors: string[]
   browserType: BrowserType
-}> {
+}
+
+export async function processBookmarkImport(
+  options: ProcessBookmarkImportOptions
+): Promise<ProcessBookmarkImportResult> {
+  const { file, createFolderTags, existingTags } = options
   const errors: string[] = []
 
   try {
@@ -616,22 +573,6 @@ export async function processBookmarkFile(
   }
 }
 
-export interface ProcessBookmarkImportOptions {
-  file: File
-  createFolderTags: boolean
-  existingTags: Tag[]
-}
-
-export interface ProcessBookmarkImportResult {
-  bookmarksWithPaths: Array<{
-    bookmark: Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
-    folderPath: string[]
-  }>
-  tagsToCreate: Omit<Tag, 'id'>[]
-  errors: string[]
-  browserType: BrowserType
-}
-
 export interface PrepareBookmarksForImportOptions {
   bookmarksWithPaths: Array<{
     bookmark: Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
@@ -649,33 +590,6 @@ export interface PrepareBookmarksForImportResult {
   totalBookmarks: number
 }
 
-/**
- * Process bookmark file and extract bookmarks with folder paths
- * This is the first step - it processes the file and identifies tags to create
- */
-export async function processBookmarkImport(
-  options: ProcessBookmarkImportOptions
-): Promise<ProcessBookmarkImportResult> {
-  const { file, createFolderTags, existingTags } = options
-
-  const processResult = await processBookmarkFile(
-    file,
-    createFolderTags,
-    existingTags
-  )
-
-  return {
-    bookmarksWithPaths: processResult.bookmarksWithPaths,
-    tagsToCreate: processResult.tagsToCreate,
-    errors: processResult.errors,
-    browserType: processResult.browserType
-  }
-}
-
-/**
- * Prepare bookmarks for import by mapping tags and filtering duplicates
- * This is the second step - call after tags have been created
- */
 export function prepareBookmarksForImport(
   options: PrepareBookmarksForImportOptions
 ): PrepareBookmarksForImportResult {
@@ -687,17 +601,35 @@ export function prepareBookmarksForImport(
     existingBookmarks
   } = options
 
-  // Map folder paths to tag IDs if needed
-  let updatedBookmarks: Array<
-    Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
-  >
-  if (createFolderTags) {
-    updatedBookmarks = mapFolderPathsToTagIds(bookmarksWithPaths, tags)
-  } else {
-    updatedBookmarks = bookmarksWithPaths.map(({ bookmark }) => bookmark)
-  }
+  const tagNameToId = new Map<string, string>()
+  tags.forEach((tag) => {
+    tagNameToId.set(tag.name.toLowerCase(), tag.id)
+  })
 
-  // Filter out duplicates if importDuplicates is false
+  const updatedBookmarks = bookmarksWithPaths.map(
+    ({ bookmark, folderPath }) => {
+      if (!createFolderTags) {
+        return bookmark
+      }
+
+      const tagIds = new Set(bookmark.tags || [])
+      folderPath.forEach((folder) => {
+        const tagId = tagNameToId.get(folder.toLowerCase())
+        if (tagId) {
+          tagIds.add(tagId)
+        }
+      })
+
+      return {
+        url: bookmark.url,
+        title: bookmark.title,
+        note: bookmark.note,
+        picture: bookmark.picture,
+        tags: Array.from(tagIds)
+      }
+    }
+  )
+
   let bookmarksToImport = updatedBookmarks
   let duplicatesCount = 0
 
@@ -712,7 +644,7 @@ export function prepareBookmarksForImport(
         duplicatesCount++
       } else {
         filtered.push(bookmark)
-        existingUrls.add(normalizedUrl) // Track duplicates within the import itself
+        existingUrls.add(normalizedUrl)
       }
     }
     bookmarksToImport = filtered
