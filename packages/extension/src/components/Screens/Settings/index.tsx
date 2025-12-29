@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
+import { useBookmarkExport } from '@/components/hooks/useBookmarkExport'
 import { useBookmarkImport } from '@/components/hooks/useBookmarkImport'
+import { useBookmarks } from '@/components/hooks/useBookmarks'
 
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
@@ -59,6 +61,20 @@ export default function Settings() {
       importDuplicates
     })
 
+  const {
+    isExporting,
+    exportWithTags,
+    setExportWithTags,
+    duplicateToAllTags,
+    setDuplicateToAllTags,
+    handleExport
+  } = useBookmarkExport({
+    exportWithTags: true,
+    duplicateToAllTags: false
+  })
+
+  const { bookmarks } = useBookmarks()
+
   useEffect(() => {
     if (!isLoading) {
       const loadedFields: SettingsFields = {
@@ -75,7 +91,9 @@ export default function Settings() {
   useEffect(() => {
     if (
       !isAuthenticated &&
-      (activeTab === 'security' || activeTab === 'import-export')
+      (activeTab === 'security' ||
+        activeTab === 'import' ||
+        activeTab === 'export')
     ) {
       setActiveTab('api')
     }
@@ -145,8 +163,11 @@ export default function Settings() {
               <Tabs.Trigger value='security' disabled={!isAuthenticated}>
                 Security
               </Tabs.Trigger>
-              <Tabs.Trigger value='import-export' disabled={!isAuthenticated}>
-                Import/export
+              <Tabs.Trigger value='import' disabled={!isAuthenticated}>
+                Import
+              </Tabs.Trigger>
+              <Tabs.Trigger value='export' disabled={!isAuthenticated}>
+                Export
               </Tabs.Trigger>
             </Tabs.List>
 
@@ -229,7 +250,7 @@ export default function Settings() {
               </form>
             </Tabs.Content>
 
-            <Tabs.Content value='import-export'>
+            <Tabs.Content value='import'>
               <div className={styles.form}>
                 <div className={styles.field}>
                   <Text as='label' size='3' weight='medium'>
@@ -294,6 +315,80 @@ export default function Settings() {
                     >
                       {isImporting && <Loader2 className={styles.spinner} />}
                       {isImporting ? 'Importing...' : 'Import Bookmarks'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Tabs.Content>
+
+            <Tabs.Content value='export'>
+              <div className={styles.form}>
+                <div className={styles.field}>
+                  <Text as='label' size='3' weight='medium'>
+                    Export Bookmarks
+                  </Text>
+                  <Text size='2' color='light'>
+                    Export your bookmarks to an HTML file compatible with Chrome
+                    and Firefox
+                  </Text>
+                </div>
+
+                <div className={styles.field}>
+                  <Text size='2' color='light'>
+                    {bookmarks.length === 0
+                      ? 'No bookmarks to export'
+                      : `Ready to export ${bookmarks.length} bookmark${bookmarks.length === 1 ? '' : 's'}`}
+                  </Text>
+                </div>
+
+                <div className={styles.field}>
+                  <Text as='label' size='2'>
+                    <Checkbox
+                      checked={exportWithTags}
+                      onChange={(e) => setExportWithTags(e.target.checked)}
+                      label='Include tags as folders'
+                    />
+                  </Text>
+                  <Text size='2' color='light'>
+                    Organize bookmarks into folders based on their tags
+                  </Text>
+                </div>
+
+                {exportWithTags && (
+                  <div className={styles.field}>
+                    <Text as='label' size='2'>
+                      <Checkbox
+                        checked={duplicateToAllTags}
+                        onChange={(e) =>
+                          setDuplicateToAllTags(e.target.checked)
+                        }
+                        label='Duplicate bookmarks to all tag folders'
+                      />
+                    </Text>
+                    <Text size='2' color='light'>
+                      When enabled, bookmarks with multiple tags will appear in
+                      each tag's folder. When disabled, bookmarks will only
+                      appear in their first tag's folder.
+                    </Text>
+                  </div>
+                )}
+
+                <div className={styles.actionsContainer}>
+                  <div className={styles.actions}>
+                    <Button
+                      onClick={handleCancel}
+                      color='black'
+                      disabled={isExporting}
+                    >
+                      Cancel
+                    </Button>
+
+                    <Button
+                      onClick={handleExport}
+                      disabled={bookmarks.length === 0 || isExporting}
+                    >
+                      {isExporting && <Loader2 className={styles.spinner} />}
+                      {isExporting ? 'Exporting...' : 'Export Bookmarks'}
                     </Button>
                   </div>
                 </div>
