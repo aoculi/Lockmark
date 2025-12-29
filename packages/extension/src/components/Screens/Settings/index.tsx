@@ -82,23 +82,6 @@ export default function Settings() {
     }
   }, [isLoading, settings])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-    try {
-      await updateSettings({
-        showHiddenTags: fields.showHiddenTags,
-        apiUrl: fields.apiUrl,
-        autoLockTimeout: fields.autoLockTimeout
-      })
-      setOriginalFields({ ...fields })
-    } catch (error) {
-      console.error('Error saving settings:', error)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
   const handleApiSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
@@ -278,7 +261,8 @@ export default function Settings() {
                     }
                   />
                   <Text size='2' color='light'>
-                    Enter the base URL for the API endpoint
+                    The URL where your LockMark API server is running. Default
+                    is http://127.0.0.1:3500 for local-first usage.
                   </Text>
                 </div>
 
@@ -338,6 +322,10 @@ export default function Settings() {
                       label='Display hidden tags'
                     />
                   </Text>
+                  <Text size='2' color='light'>
+                    Show tags marked as hidden in tag lists and include
+                    bookmarks with hidden tags in results
+                  </Text>
                 </div>
 
                 <div className={styles.actionsContainer}>
@@ -362,8 +350,7 @@ export default function Settings() {
                     Import Bookmarks
                   </Text>
                   <Text size='2' color='light'>
-                    Import bookmarks from Chrome, Firefox, or Safari export
-                    files
+                    Import bookmarks from Chrome or Firefox export files
                   </Text>
                 </div>
 
@@ -374,7 +361,7 @@ export default function Settings() {
                     value={importFile}
                     onChange={setImportFile}
                     disabled={isImporting}
-                    description='Select a bookmark export file (.html or .json) from Chrome, Firefox, or Safari'
+                    description='Select a bookmark export file (.html or .json) from Chrome or Firefox'
                     error={importError || undefined}
                   />
                 </div>
@@ -388,8 +375,7 @@ export default function Settings() {
                     />
                   </Text>
                   <Text size='2' color='light'>
-                    If enabled, each folder in the bookmark file will be created
-                    as a tag and assigned to bookmarks in that folder
+                    Each folder in the bookmark file will be created as a tag
                   </Text>
                 </div>
 
