@@ -615,3 +615,112 @@ export async function processBookmarkFile(
     }
   }
 }
+
+export interface ProcessBookmarkImportOptions {
+  file: File
+  createFolderTags: boolean
+  existingTags: Tag[]
+}
+
+export interface ProcessBookmarkImportResult {
+  bookmarksWithPaths: Array<{
+    bookmark: Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
+    folderPath: string[]
+  }>
+  tagsToCreate: Omit<Tag, 'id'>[]
+  errors: string[]
+  browserType: BrowserType
+}
+
+export interface PrepareBookmarksForImportOptions {
+  bookmarksWithPaths: Array<{
+    bookmark: Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
+    folderPath: string[]
+  }>
+  createFolderTags: boolean
+  importDuplicates: boolean
+  tags: Tag[]
+  existingBookmarks: Bookmark[]
+}
+
+export interface PrepareBookmarksForImportResult {
+  bookmarksToImport: Array<Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>>
+  duplicatesCount: number
+  totalBookmarks: number
+}
+
+/**
+ * Process bookmark file and extract bookmarks with folder paths
+ * This is the first step - it processes the file and identifies tags to create
+ */
+export async function processBookmarkImport(
+  options: ProcessBookmarkImportOptions
+): Promise<ProcessBookmarkImportResult> {
+  const { file, createFolderTags, existingTags } = options
+
+  const processResult = await processBookmarkFile(
+    file,
+    createFolderTags,
+    existingTags
+  )
+
+  return {
+    bookmarksWithPaths: processResult.bookmarksWithPaths,
+    tagsToCreate: processResult.tagsToCreate,
+    errors: processResult.errors,
+    browserType: processResult.browserType
+  }
+}
+
+/**
+ * Prepare bookmarks for import by mapping tags and filtering duplicates
+ * This is the second step - call after tags have been created
+ */
+export function prepareBookmarksForImport(
+  options: PrepareBookmarksForImportOptions
+): PrepareBookmarksForImportResult {
+  const {
+    bookmarksWithPaths,
+    createFolderTags,
+    importDuplicates,
+    tags,
+    existingBookmarks
+  } = options
+
+  // Map folder paths to tag IDs if needed
+  let updatedBookmarks: Array<
+    Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
+  >
+  if (createFolderTags) {
+    updatedBookmarks = mapFolderPathsToTagIds(bookmarksWithPaths, tags)
+  } else {
+    updatedBookmarks = bookmarksWithPaths.map(({ bookmark }) => bookmark)
+  }
+
+  // Filter out duplicates if importDuplicates is false
+  let bookmarksToImport = updatedBookmarks
+  let duplicatesCount = 0
+
+  if (!importDuplicates) {
+    const existingUrls = new Set(
+      existingBookmarks.map((b) => b.url.trim().toLowerCase())
+    )
+    const filtered: typeof updatedBookmarks = []
+    for (const bookmark of updatedBookmarks) {
+      const normalizedUrl = bookmark.url.trim().toLowerCase()
+      if (existingUrls.has(normalizedUrl)) {
+        duplicatesCount++
+      } else {
+        filtered.push(bookmark)
+        existingUrls.add(normalizedUrl) // Track duplicates within the import itself
+      }
+    }
+    bookmarksToImport = filtered
+  }
+
+  return {
+    bookmarksToImport,
+    duplicatesCount,
+    totalBookmarks: updatedBookmarks.length
+  }
+}

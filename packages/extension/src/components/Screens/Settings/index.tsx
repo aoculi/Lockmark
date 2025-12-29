@@ -21,8 +21,8 @@ import { Tabs } from '@/components/ui/Tabs'
 import Text from '@/components/ui/Text'
 
 import {
-  mapFolderPathsToTagIds,
-  processBookmarkFile
+  prepareBookmarksForImport,
+  processBookmarkImport
 } from '@/lib/bookmarkImport'
 
 import styles from './styles.module.css'
@@ -61,6 +61,7 @@ export default function Settings() {
   // Import state
   const [importFile, setImportFile] = useState<File | null>(null)
   const [createFolderTags, setCreateFolderTags] = useState(true)
+  const [importDuplicates, setImportDuplicates] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [importSuccess, setImportSuccess] = useState<string | null>(null)
@@ -142,61 +143,70 @@ export default function Settings() {
     setFlash(null)
 
     try {
-      const result = await processBookmarkFile(
-        importFile,
+      // Step 1: Process the bookmark file
+      const processResult = await processBookmarkImport({
+        file: importFile,
         createFolderTags,
-        tags
-      )
+        existingTags: tags
+      })
 
-      if (result.errors.length > 0) {
-        console.warn('Import warnings:', result.errors)
+      if (processResult.errors.length > 0) {
+        console.warn('Import warnings:', processResult.errors)
       }
 
-      if (result.bookmarksWithPaths.length === 0) {
+      if (processResult.bookmarksWithPaths.length === 0) {
         setFlash('No valid bookmarks found in the file')
         setIsImporting(false)
         return
       }
 
-      if (result.tagsToCreate.length > 0) {
-        for (const tagToCreate of result.tagsToCreate) {
+      // Step 2: Create tags if needed
+      if (processResult.tagsToCreate.length > 0) {
+        for (const tagToCreate of processResult.tagsToCreate) {
           try {
             await createTag(tagToCreate)
           } catch (error) {
             console.error(`Error creating tag "${tagToCreate.name}":`, error)
           }
         }
+        // Reload manifest to get the newly created tags with their IDs
+        await reloadManifest()
       }
 
-      await reloadManifest()
-
+      // Step 3: Get updated tags and manifest
       const latestManifestData = await loadManifestData()
       const updatedTags =
         latestManifestData?.manifest.tags || manifest?.tags || []
+      const updatedBookmarks =
+        latestManifestData?.manifest.items || manifest?.items || []
 
-      let updatedBookmarks
-      if (createFolderTags) {
-        updatedBookmarks = mapFolderPathsToTagIds(
-          result.bookmarksWithPaths,
-          updatedTags
-        )
-      } else {
-        updatedBookmarks = result.bookmarksWithPaths.map(
-          ({ bookmark }) => bookmark
-        )
-      }
+      // Step 4: Prepare bookmarks (map tags and filter duplicates)
+      const prepareResult = prepareBookmarksForImport({
+        bookmarksWithPaths: processResult.bookmarksWithPaths,
+        createFolderTags,
+        importDuplicates,
+        tags: updatedTags,
+        existingBookmarks: updatedBookmarks
+      })
 
-      // Add all bookmarks in a single batch operation to avoid version conflicts
-      try {
-        await addBookmarks(updatedBookmarks)
-        const successMessage = `Successfully imported ${updatedBookmarks.length} bookmark${updatedBookmarks.length !== 1 ? 's' : ''}`
-        setFlash(successMessage)
+      // Step 5: Add all bookmarks in a single batch operation
+      if (prepareResult.bookmarksToImport.length === 0) {
+        const message =
+          prepareResult.duplicatesCount > 0
+            ? `All ${prepareResult.totalBookmarks} bookmark${prepareResult.totalBookmarks !== 1 ? 's' : ''} are duplicates and were skipped`
+            : 'No bookmarks to import'
+        setFlash(message)
         setImportFile(null)
-      } catch (error) {
-        const errorMessage = `Failed to import bookmarks: ${error instanceof Error ? error.message : 'Unknown error'}`
-        setFlash(errorMessage)
-        throw error
+        return
       }
+
+      await addBookmarks(prepareResult.bookmarksToImport)
+      let successMessage = `Successfully imported ${prepareResult.bookmarksToImport.length} bookmark${prepareResult.bookmarksToImport.length !== 1 ? 's' : ''}`
+      if (prepareResult.duplicatesCount > 0) {
+        successMessage += ` (${prepareResult.duplicatesCount} duplicate${prepareResult.duplicatesCount !== 1 ? 's' : ''} skipped)`
+      }
+      setFlash(successMessage)
+      setImportFile(null)
     } catch (error) {
       const errorMessage = `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       setFlash(errorMessage)
@@ -378,6 +388,20 @@ export default function Settings() {
                   </Text>
                   <Text size='2' color='light'>
                     Each folder in the bookmark file will be created as a tag
+                  </Text>
+                </div>
+
+                <div className={styles.field}>
+                  <Text as='label' size='2'>
+                    <Checkbox
+                      checked={importDuplicates}
+                      onChange={(e) => setImportDuplicates(e.target.checked)}
+                      label='Import duplicate bookmarks'
+                    />
+                  </Text>
+                  <Text size='2' color='light'>
+                    When enabled, bookmarks with URLs that already exist will be
+                    imported. When disabled, duplicates will be skipped.
                   </Text>
                 </div>
 
