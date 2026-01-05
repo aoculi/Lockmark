@@ -1,0 +1,75 @@
+.component {
+  display: flex;
+  align-items: stretch;
+}
+
+.card {
+  padding: 10px 12px;
+  transition: background-color 0.2s ease;
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: row;
+  text-decoration: none;
+  gap: 10px;
+  overflow: hidden;
+  flex: 1;
+  align-items: center;
+}
+
+.card:hover {
+  background-color: var(--background-2);
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  gap: 2px;
+}
+
+.collectionInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.tagInfo {
+  padding-left: 24px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}

@@ -13,15 +13,22 @@ export type Route =
   | '/bookmark'
   | '/tag'
   | '/tags'
+  | '/collection'
+  | '/collections'
   | '/settings'
 
-type NavigationOptions = { bookmark?: string | null; tag?: string | null }
+type NavigationOptions = {
+  bookmark?: string | null
+  tag?: string | null
+  collection?: string | null
+}
 
 type NavigationContextType = {
   route: Route
   flash: string | null
   selectedBookmark: string | null
   selectedTag: string | null
+  selectedCollection: string | null
   navigate: (route: Route, options?: NavigationOptions) => void
   setFlash: (message: string | null) => void
 }
@@ -31,6 +38,7 @@ export const NavigationContext = createContext<NavigationContextType>({
   flash: null,
   selectedBookmark: null,
   selectedTag: null,
+  selectedCollection: null,
   navigate: () => {},
   setFlash: () => {}
 })
@@ -61,6 +69,9 @@ export function NavigationProvider({
   const [flash, setFlashState] = useState<string | null>(null)
   const [selectedBookmark, setSelectedBookmark] = useState<string | null>(null)
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(
+    null
+  )
 
   const navigate = useCallback(
     (newRoute: Route, options?: NavigationOptions) => {
@@ -70,9 +81,15 @@ export function NavigationProvider({
       if (options?.bookmark) {
         setSelectedBookmark(options.bookmark)
         setSelectedTag(null)
+        setSelectedCollection(null)
       } else if (options?.tag) {
         setSelectedTag(options.tag)
         setSelectedBookmark(null)
+        setSelectedCollection(null)
+      } else if (options?.collection) {
+        setSelectedCollection(options.collection)
+        setSelectedBookmark(null)
+        setSelectedTag(null)
       } else {
         // When no options provided, reset selection based on route to match current behavior
         if (newRoute === '/bookmark') {
@@ -81,9 +98,14 @@ export function NavigationProvider({
           setSelectedTag(null)
         } else if (newRoute === '/tags') {
           setSelectedTag(null)
+        } else if (newRoute === '/collection') {
+          setSelectedCollection(null)
+        } else if (newRoute === '/collections') {
+          setSelectedCollection(null)
         } else if (newRoute === '/vault') {
           setSelectedBookmark(null)
           setSelectedTag(null)
+          setSelectedCollection(null)
         }
       }
     },
@@ -99,6 +121,7 @@ export function NavigationProvider({
     flash,
     selectedBookmark,
     selectedTag,
+    selectedCollection,
     navigate,
     setFlash
   }

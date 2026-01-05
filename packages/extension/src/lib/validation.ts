@@ -3,6 +3,7 @@
  */
 export const MAX_TAGS_PER_ITEM = 15
 export const MAX_TAG_NAME_LENGTH = 32
+export const MAX_COLLECTION_NAME_LENGTH = 50
 export const MANIFEST_SIZE_WARNING_THRESHOLD = 4 * 1024 * 1024 // 4MB (warn before 5MB limit)
 
 /**
@@ -68,6 +69,20 @@ export function validateTagName(name: string): string | null {
   }
   if (trimmed.length > MAX_TAG_NAME_LENGTH) {
     return `Tag name cannot exceed ${MAX_TAG_NAME_LENGTH} characters`
+  }
+  return null
+}
+
+/**
+ * Collection name validation
+ */
+export function validateCollectionName(name: string): string | null {
+  const trimmed = name.trim()
+  if (!trimmed) {
+    return 'Collection name is required'
+  }
+  if (trimmed.length > MAX_COLLECTION_NAME_LENGTH) {
+    return `Collection name cannot exceed ${MAX_COLLECTION_NAME_LENGTH} characters`
   }
   return null
 }

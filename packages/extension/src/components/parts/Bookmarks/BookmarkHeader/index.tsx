@@ -1,6 +1,7 @@
 import {
   ArrowUpDown,
   ChevronDown,
+  FolderOpen,
   HeartMinus,
   HeartPlus,
   Tags,
@@ -251,7 +252,19 @@ export default function BookmarkHeader({
               title='Manage tags'
             >
               <Tags strokeWidth={2} size={16} />
-              <span className={styles.actionLabel}>Manage tags</span>
+              <span className={styles.actionLabel}>Tags</span>
+            </Button>
+
+            <Button
+              onClick={() => navigate('/collections')}
+              size='sm'
+              variant='ghost'
+              color='light'
+              className={styles.actionButton}
+              title='Manage collections'
+            >
+              <FolderOpen strokeWidth={2} size={16} />
+              <span className={styles.actionLabel}>Collections</span>
             </Button>
           </>
         )}

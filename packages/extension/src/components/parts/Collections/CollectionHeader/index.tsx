@@ -10,7 +10,7 @@ import styles from './styles.module.css'
 
 type SortMode = 'alphabetical' | 'bookmarkCount'
 
-export default function TagHeader({
+export default function CollectionHeader({
   sortMode,
   onSortModeChange
 }: {
@@ -30,7 +30,7 @@ export default function TagHeader({
               variant='ghost'
               color='light'
               className={styles.actionButton}
-              title='Sort tags'
+              title='Sort collections'
             >
               <ArrowUpDown strokeWidth={2} size={16} />
               <span className={styles.actionLabel}>Sort</span>
@@ -60,9 +60,9 @@ export default function TagHeader({
         <Button
           asIcon={true}
           color='light'
-          onClick={() => navigate('/tag')}
+          onClick={() => navigate('/collection')}
           size='sm'
-          title='Create a new tag'
+          title='Create a new collection'
         >
           <Plus strokeWidth={2} size={16} />
         </Button>
