@@ -35,6 +35,7 @@ export default function Vault() {
           onDeleteSelected={() => {
             setSelectedBookmarkIds(new Set())
           }}
+          onSelectedBookmarkIdsChange={setSelectedBookmarkIds}
         />
 
         <BookmarkList
