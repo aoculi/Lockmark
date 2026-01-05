@@ -22,6 +22,7 @@ import styles from './styles.module.css'
 const defaultCollection = {
   name: '',
   icon: undefined as string | undefined,
+  parentId: undefined as string | undefined,
   tagFilter: {
     mode: 'any' as 'any' | 'all',
     tagIds: [] as string[]
@@ -51,6 +52,7 @@ export default function Collection() {
       setForm({
         name: collection.name,
         icon: collection.icon,
+        parentId: collection.parentId,
         tagFilter: {
           mode: collection.tagFilter.mode,
           tagIds: [...collection.tagFilter.tagIds]
@@ -58,6 +60,28 @@ export default function Collection() {
       })
     }
   }, [collection])
+
+  // Helper function to check for circular references
+  const wouldCreateCircularReference = (
+    collectionId: string | null,
+    parentId: string | undefined
+  ): boolean => {
+    if (!parentId || !manifest?.collections) return false
+
+    // Check if the selected parent would create a circular reference
+    const checkParent = (id: string, visited: Set<string>): boolean => {
+      if (visited.has(id)) return true // Circular reference detected
+      if (id === collectionId) return true // Would create a cycle
+
+      const parent = manifest.collections?.find((c) => c.id === id)
+      if (!parent?.parentId) return false
+
+      visited.add(id)
+      return checkParent(parent.parentId, visited)
+    }
+
+    return checkParent(parentId, new Set())
+  }
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -71,6 +95,12 @@ export default function Collection() {
     // Tag validation - at least one tag required
     if (form.tagFilter.tagIds.length === 0) {
       newErrors.tags = 'Select at least one tag'
+    }
+
+    // Circular reference validation
+    if (wouldCreateCircularReference(collection?.id || null, form.parentId)) {
+      newErrors.parentId =
+        'Cannot select this parent as it would create a circular reference'
     }
 
     setErrors(newErrors)
@@ -97,6 +127,7 @@ export default function Collection() {
                 ...c,
                 name: form.name.trim(),
                 icon: form.icon,
+                parentId: form.parentId || undefined,
                 tagFilter: form.tagFilter,
                 updated_at: now
               }
@@ -113,6 +144,7 @@ export default function Collection() {
           id: generateId(),
           name: form.name.trim(),
           icon: form.icon,
+          parentId: form.parentId || undefined,
           tagFilter: form.tagFilter,
           created_at: now,
           updated_at: now
@@ -146,7 +178,7 @@ export default function Collection() {
       return true
     }
 
-    // For existing collections, check if name, icon, or tagFilter changed
+    // For existing collections, check if name, icon, parentId, or tagFilter changed
     const tagIdsChanged =
       form.tagFilter.tagIds.length !== collection.tagFilter.tagIds.length ||
       form.tagFilter.tagIds.some(
@@ -156,6 +188,7 @@ export default function Collection() {
     return (
       form.name.trim() !== collection.name ||
       form.icon !== collection.icon ||
+      form.parentId !== collection.parentId ||
       form.tagFilter.mode !== collection.tagFilter.mode ||
       tagIdsChanged
     )
@@ -191,6 +224,42 @@ export default function Collection() {
               value={form.icon}
               onChange={(icon) => setForm((prev) => ({ ...prev, icon }))}
             />
+          </div>
+
+          <div className={styles.section}>
+            <Text as='label' size='2' className={styles.sectionLabel}>
+              Parent collection
+            </Text>
+            <Select
+              size='lg'
+              error={errors.parentId}
+              value={form.parentId || ''}
+              onChange={(e) => {
+                const newParentId = e.target.value || undefined
+                setForm((prev) => ({
+                  ...prev,
+                  parentId: newParentId
+                }))
+                if (errors.parentId) setErrors({ ...errors, parentId: '' })
+              }}
+            >
+              <option value=''>None (root level)</option>
+              {(manifest?.collections || [])
+                .filter((c) => c.id !== collection?.id)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </Select>
+            {errors.parentId && (
+              <Text size='1' className={styles.error}>
+                {errors.parentId}
+              </Text>
+            )}
+            <Text size='2' color='light' className={styles.hint}>
+              Select a parent collection to nest this collection inside it.
+            </Text>
           </div>
 
           <div className={styles.section}>

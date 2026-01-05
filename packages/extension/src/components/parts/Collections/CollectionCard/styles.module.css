@@ -23,7 +23,9 @@
 .content {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
   overflow: hidden;
   min-width: 0;
   gap: 2px;
@@ -38,7 +40,6 @@
 
 .icon {
   flex-shrink: 0;
-  color: var(--primary);
 }
 
 .name {
@@ -49,6 +50,7 @@
 
 .tagInfo {
   padding-left: 24px;
+  flex-shrink: 0;
 }
 
 .badge {

@@ -76,40 +76,83 @@ export default function CollectionList({ sortMode }: Props) {
     }
   }
 
-  // Sort collections
-  const sortedCollections = useMemo(() => {
-    const sorted = [...collections]
-
-    if (sortMode === 'alphabetical') {
-      sorted.sort((a, b) => a.name.localeCompare(b.name))
-    } else {
-      sorted.sort((a, b) => {
-        const countA = collectionBookmarkCounts.get(a.id) || 0
-        const countB = collectionBookmarkCounts.get(b.id) || 0
-        if (countA !== countB) {
-          return countB - countA // Descending order
-        }
-        return a.name.localeCompare(b.name) // Secondary sort by name
-      })
+  // Build tree structure and flatten with depth information
+  const collectionsWithDepth = useMemo(() => {
+    type CollectionWithDepth = {
+      collection: Collection
+      depth: number
     }
 
-    return sorted
+    // Build parent-child relationships
+    const childrenMap = new Map<string, Collection[]>()
+    const rootCollections: Collection[] = []
+
+    collections.forEach((collection) => {
+      if (!collection.parentId) {
+        rootCollections.push(collection)
+      } else {
+        if (!childrenMap.has(collection.parentId)) {
+          childrenMap.set(collection.parentId, [])
+        }
+        childrenMap.get(collection.parentId)!.push(collection)
+      }
+    })
+
+    // Sort function for collections
+    const sortCollections = (items: Collection[]): Collection[] => {
+      const sorted = [...items]
+      if (sortMode === 'alphabetical') {
+        sorted.sort((a, b) => a.name.localeCompare(b.name))
+      } else {
+        sorted.sort((a, b) => {
+          const countA = collectionBookmarkCounts.get(a.id) || 0
+          const countB = collectionBookmarkCounts.get(b.id) || 0
+          if (countA !== countB) {
+            return countB - countA // Descending order
+          }
+          return a.name.localeCompare(b.name) // Secondary sort by name
+        })
+      }
+      return sorted
+    }
+
+    // Recursively build flattened list with depth
+    const flattenWithDepth = (
+      items: Collection[],
+      depth: number
+    ): CollectionWithDepth[] => {
+      const sorted = sortCollections(items)
+      const result: CollectionWithDepth[] = []
+
+      sorted.forEach((collection) => {
+        result.push({ collection, depth })
+        const children = childrenMap.get(collection.id) || []
+        if (children.length > 0) {
+          result.push(...flattenWithDepth(children, depth + 1))
+        }
+      })
+
+      return result
+    }
+
+    return flattenWithDepth(rootCollections, 0)
   }, [collections, sortMode, collectionBookmarkCounts])
 
   return (
     <div className={styles.container}>
-      {sortedCollections.length === 0 ? (
+      {collectionsWithDepth.length === 0 ? (
         <Text size='2' color='light' style={{ padding: '20px 20px 0' }}>
           No collections yet. Click the + button to create one.
         </Text>
       ) : (
         <div className={styles.list}>
-          {sortedCollections.map((collection: Collection) => (
+          {collectionsWithDepth.map(({ collection, depth }) => (
             <CollectionCard
               key={collection.id}
               collection={collection}
               bookmarkCount={collectionBookmarkCounts.get(collection.id) || 0}
               onDelete={onDelete}
+              depth={depth}
             />
           ))}
         </div>

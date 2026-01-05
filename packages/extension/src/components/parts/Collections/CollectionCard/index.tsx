@@ -13,19 +13,24 @@ type CollectionCardProps = {
   collection: Collection
   bookmarkCount: number
   onDelete?: (id: string) => void
+  depth?: number
 }
 
 export function CollectionCard({
   collection,
   bookmarkCount,
-  onDelete
+  onDelete,
+  depth = 0
 }: CollectionCardProps) {
   const { navigate } = useNavigation()
 
   const Icon = collection.icon ? getIconByName(collection.icon) : Folder
 
   return (
-    <div className={styles.component}>
+    <div
+      className={styles.component}
+      style={{ paddingLeft: `${depth * 20}px` }}
+    >
       <div className={styles.card}>
         <div className={styles.content}>
           <div className={styles.collectionInfo}>
