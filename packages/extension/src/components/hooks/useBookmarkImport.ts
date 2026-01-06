@@ -9,12 +9,13 @@ import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { useTags } from '@/components/hooks/useTags'
 
 import {
+  generateCollectionsFromTree,
   prepareBookmarksForImport,
   processBookmarkImport
 } from '@/lib/bookmarkImport'
 
 export interface UseBookmarkImportOptions {
-  createFolderTags: boolean
+  preserveFolderStructure: boolean
   importDuplicates: boolean
 }
 
@@ -28,12 +29,12 @@ export interface UseBookmarkImportReturn {
 export function useBookmarkImport(
   options: UseBookmarkImportOptions
 ): UseBookmarkImportReturn {
-  const { createFolderTags, importDuplicates } = options
+  const { preserveFolderStructure, importDuplicates } = options
 
   const { setFlash } = useNavigation()
   const { addBookmarks } = useBookmarks()
   const { tags, createTag } = useTags()
-  const { manifest, reload: reloadManifest } = useManifest()
+  const { manifest, reload: reloadManifest, save } = useManifest()
 
   const [importFile, setImportFile] = useState<File | null>(null)
   const [isImporting, setIsImporting] = useState(false)
@@ -51,7 +52,7 @@ export function useBookmarkImport(
       // Step 1: Process the bookmark file
       const processResult = await processBookmarkImport({
         file: importFile,
-        createFolderTags,
+        preserveFolderStructure,
         existingTags: tags
       })
 
@@ -84,17 +85,58 @@ export function useBookmarkImport(
         latestManifestData?.manifest.tags || manifest?.tags || []
       const updatedBookmarks =
         latestManifestData?.manifest.items || manifest?.items || []
+      const latestManifest = latestManifestData?.manifest || manifest
 
-      // Step 4: Prepare bookmarks (map tags and filter duplicates)
+      // Step 4: Create collections from folder structure if enabled
+      if (preserveFolderStructure && latestManifest) {
+        const tagNameToId = new Map<string, string>()
+        updatedTags.forEach((tag) => {
+          tagNameToId.set(tag.name.toLowerCase(), tag.id)
+        })
+
+        const existingCollections = latestManifest.collections || []
+        const existingCollectionNames = new Set(
+          existingCollections.map((c) => c.name.toLowerCase())
+        )
+
+        // Generate collections from folder tree
+        const newCollections = generateCollectionsFromTree(
+          processResult.folderTree,
+          tagNameToId,
+          undefined,
+          existingCollections.length
+        )
+
+        // Filter out collections that already exist (by name)
+        const collectionsToAdd = newCollections.filter(
+          (c) => !existingCollectionNames.has(c.name.toLowerCase())
+        )
+
+        if (collectionsToAdd.length > 0) {
+          await save({
+            ...latestManifest,
+            collections: [...existingCollections, ...collectionsToAdd]
+          })
+          await reloadManifest()
+        }
+      }
+
+      // Step 5: Get fresh manifest data after collections are created
+      const finalManifestData = await loadManifestData()
+      const finalTags = finalManifestData?.manifest.tags || manifest?.tags || []
+      const finalBookmarks =
+        finalManifestData?.manifest.items || manifest?.items || []
+
+      // Step 6: Prepare bookmarks (map tags and filter duplicates)
       const prepareResult = prepareBookmarksForImport({
         bookmarksWithPaths: processResult.bookmarksWithPaths,
-        createFolderTags,
+        preserveFolderStructure,
         importDuplicates,
-        tags: updatedTags,
-        existingBookmarks: updatedBookmarks
+        tags: finalTags,
+        existingBookmarks: finalBookmarks
       })
 
-      // Step 5: Add all bookmarks in a single batch operation
+      // Step 7: Add all bookmarks in a single batch operation
       if (prepareResult.bookmarksToImport.length === 0) {
         const message =
           prepareResult.duplicatesCount > 0

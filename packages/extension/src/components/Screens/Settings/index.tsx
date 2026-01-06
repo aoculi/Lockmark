@@ -52,21 +52,20 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('api')
 
-  const [createFolderTags, setCreateFolderTags] = useState(true)
+  const [preserveFolderStructure, setPreserveFolderStructure] = useState(true)
   const [importDuplicates, setImportDuplicates] = useState(false)
 
   const { importFile, setImportFile, isImporting, handleImport } =
     useBookmarkImport({
-      createFolderTags,
+      preserveFolderStructure,
       importDuplicates
     })
 
   const {
     isExporting,
-    exportWithTags,
-    setExportWithTags,
-    duplicateToAllTags,
-    setDuplicateToAllTags,
+    exportWithCollections,
+    setExportWithCollections,
+    hasCollections,
     handleExport
   } = useBookmarkExport()
 
@@ -272,13 +271,16 @@ export default function Settings() {
                 <div className={styles.field}>
                   <Text as='label' size='2'>
                     <Checkbox
-                      checked={createFolderTags}
-                      onChange={(e) => setCreateFolderTags(e.target.checked)}
-                      label='Create tags from folder structure'
+                      checked={preserveFolderStructure}
+                      onChange={(e) =>
+                        setPreserveFolderStructure(e.target.checked)
+                      }
+                      label='Preserve folder structure as Collections'
                     />
                   </Text>
                   <Text size='2' color='light'>
-                    Each folder in the bookmark file will be created as a tag
+                    Each folder will be created as a tag and a Collection with
+                    the same name, preserving the original hierarchy
                   </Text>
                 </div>
 
@@ -341,34 +343,20 @@ export default function Settings() {
                 <div className={styles.field}>
                   <Text as='label' size='2'>
                     <Checkbox
-                      checked={exportWithTags}
-                      onChange={(e) => setExportWithTags(e.target.checked)}
-                      label='Include tags as folders'
+                      checked={exportWithCollections}
+                      onChange={(e) =>
+                        setExportWithCollections(e.target.checked)
+                      }
+                      disabled={!hasCollections}
+                      label='Export with Collections as folders'
                     />
                   </Text>
                   <Text size='2' color='light'>
-                    Organize bookmarks into folders based on their tags
+                    {hasCollections
+                      ? 'Organize bookmarks into folders based on your Collections hierarchy'
+                      : 'No Collections available. Create Collections to enable folder export.'}
                   </Text>
                 </div>
-
-                {exportWithTags && (
-                  <div className={styles.field}>
-                    <Text as='label' size='2'>
-                      <Checkbox
-                        checked={duplicateToAllTags}
-                        onChange={(e) =>
-                          setDuplicateToAllTags(e.target.checked)
-                        }
-                        label='Duplicate bookmarks to all tag folders'
-                      />
-                    </Text>
-                    <Text size='2' color='light'>
-                      When enabled, bookmarks with multiple tags will appear in
-                      each tag's folder. When disabled, bookmarks will only
-                      appear in their first tag's folder.
-                    </Text>
-                  </div>
-                )}
 
                 <div className={styles.actionsContainer}>
                   <div className={styles.actions}>
