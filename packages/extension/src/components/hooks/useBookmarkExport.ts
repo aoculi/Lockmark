@@ -28,6 +28,26 @@ interface CollectionNode {
   children: CollectionNode[]
 }
 
+/**
+ * Get all descendant collection IDs for a given collection (recursive)
+ */
+function getDescendantCollectionIds(
+  collectionId: string,
+  childrenMap: Map<string | undefined, Collection[]>
+): Set<string> {
+  const descendants = new Set<string>()
+  const children = childrenMap.get(collectionId) || []
+
+  for (const child of children) {
+    descendants.add(child.id)
+    // Recursively get descendants of this child
+    const childDescendants = getDescendantCollectionIds(child.id, childrenMap)
+    childDescendants.forEach((id) => descendants.add(id))
+  }
+
+  return descendants
+}
+
 function buildCollectionTree(
   collections: Collection[],
   bookmarks: Bookmark[],
@@ -52,11 +72,39 @@ function buildCollectionTree(
     })
   }
 
+  // Build a map of all bookmarks by collection (before filtering)
+  const allBookmarksByCollection = new Map(
+    collections.map((c) => [c.id, getBookmarksForCollection(c)])
+  )
+
+  // For each collection, exclude bookmarks that are in any of its descendant collections
+  // This ensures bookmarks appear in the most specific (deepest) collection that matches them
+  const bookmarksByCollection = new Map<string, Bookmark[]>()
+  for (const collection of collections) {
+    const matchingBookmarks = allBookmarksByCollection.get(collection.id) || []
+    const descendantIds = getDescendantCollectionIds(collection.id, childrenMap)
+
+    // Get all bookmark IDs that are in descendant collections
+    const bookmarkIdsInDescendants = new Set<string>()
+    for (const descendantId of descendantIds) {
+      const descendantBookmarks =
+        allBookmarksByCollection.get(descendantId) || []
+      descendantBookmarks.forEach((b) => bookmarkIdsInDescendants.add(b.id))
+    }
+
+    // Filter out bookmarks that are in any descendant collection
+    const filteredBookmarks = matchingBookmarks.filter(
+      (b) => !bookmarkIdsInDescendants.has(b.id)
+    )
+
+    bookmarksByCollection.set(collection.id, filteredBookmarks)
+  }
+
   function buildNode(collection: Collection): CollectionNode {
     const children = childrenMap.get(collection.id) || []
     return {
       collection,
-      bookmarks: getBookmarksForCollection(collection),
+      bookmarks: bookmarksByCollection.get(collection.id) || [],
       children: children.map(buildNode)
     }
   }
@@ -72,10 +120,11 @@ function generateCollectionHtml(
 ): void {
   const addDate = Math.floor((node.collection.created_at || Date.now()) / 1000)
 
-  // Open folder
+  // Open folder - DT and H3 tags
   htmlParts.push(
     `<DT><H3 ADD_DATE="${addDate}">${escapeHtml(node.collection.name)}</H3>`
   )
+  // Open DL list for folder contents
   htmlParts.push('<DL><p>')
 
   // Add bookmarks in this collection (only if not already exported)
@@ -86,12 +135,12 @@ function generateCollectionHtml(
     }
   }
 
-  // Recursively add child collections
+  // Recursively add child collections (these will be nested inside this folder's DL)
   for (const child of node.children) {
     generateCollectionHtml(child, htmlParts, exportedBookmarkIds)
   }
 
-  // Close folder
+  // Close folder - close DL first, then DT
   htmlParts.push('</DL><p>')
   htmlParts.push('</DT>')
 }
