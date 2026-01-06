@@ -79,10 +79,6 @@ export default function Collection() {
     const nameError = validateCollectionName(form.name)
     if (nameError) newErrors.name = nameError
 
-    if (form.tagFilter.tagIds.length === 0) {
-      newErrors.tags = 'Select at least one tag'
-    }
-
     if (
       wouldCreateCircularReference(
         collections,
@@ -151,7 +147,7 @@ export default function Collection() {
   }
 
   const hasChanges = useMemo(() => {
-    if (!form.name.trim() || form.tagFilter.tagIds.length === 0) return false
+    if (!form.name.trim()) return false
     if (!existingCollection) return true
 
     const tagIdsChanged =
@@ -265,9 +261,11 @@ export default function Collection() {
               <option value='all'>Match ALL tags (AND)</option>
             </Select>
             <Text size='2' color='light' className={styles.hint}>
-              {form.tagFilter.mode === 'any'
-                ? 'Bookmarks with at least one selected tag will appear.'
-                : 'Only bookmarks with ALL selected tags will appear.'}
+              {form.tagFilter.tagIds.length === 0
+                ? 'No tags selected. This collection will be empty until tags are added.'
+                : form.tagFilter.mode === 'any'
+                  ? 'Bookmarks with at least one selected tag will appear.'
+                  : 'Only bookmarks with ALL selected tags will appear.'}
             </Text>
           </div>
         </div>

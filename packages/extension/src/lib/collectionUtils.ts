@@ -123,7 +123,28 @@ export function flattenCollectionsWithDepth(
 }
 
 /**
+ * Get all descendant collection IDs for a given collection (recursive)
+ */
+function getDescendantCollectionIds(
+  collectionId: string,
+  childrenMap: Map<string, Collection[]>
+): Set<string> {
+  const descendants = new Set<string>()
+  const children = childrenMap.get(collectionId) || []
+
+  for (const child of children) {
+    descendants.add(child.id)
+    // Recursively get descendants of this child
+    const childDescendants = getDescendantCollectionIds(child.id, childrenMap)
+    childDescendants.forEach((id) => descendants.add(id))
+  }
+
+  return descendants
+}
+
+/**
  * Flatten collections with their bookmarks for bookmark list view
+ * Bookmarks in a parent collection are excluded if they also match a sub-collection
  */
 export function flattenCollectionsWithBookmarks(
   collections: Collection[],
@@ -132,12 +153,36 @@ export function flattenCollectionsWithBookmarks(
 ): CollectionWithBookmarks[] {
   const { childrenMap, roots } = buildHierarchy(collections)
 
-  const bookmarksByCollection = new Map(
+  // First, get all bookmarks that match each collection's filter
+  const allBookmarksByCollection = new Map(
     collections.map((c) => [
       c.id,
       getBookmarksForCollection(c, bookmarks, sortMode)
     ])
   )
+
+  // For each collection, exclude bookmarks that are in any of its descendant collections
+  const bookmarksByCollection = new Map<string, Bookmark[]>()
+
+  for (const collection of collections) {
+    const matchingBookmarks = allBookmarksByCollection.get(collection.id) || []
+    const descendantIds = getDescendantCollectionIds(collection.id, childrenMap)
+
+    // Get all bookmark IDs that are in descendant collections
+    const bookmarkIdsInDescendants = new Set<string>()
+    for (const descendantId of descendantIds) {
+      const descendantBookmarks =
+        allBookmarksByCollection.get(descendantId) || []
+      descendantBookmarks.forEach((b) => bookmarkIdsInDescendants.add(b.id))
+    }
+
+    // Filter out bookmarks that are in any descendant collection
+    const filteredBookmarks = matchingBookmarks.filter(
+      (b) => !bookmarkIdsInDescendants.has(b.id)
+    )
+
+    bookmarksByCollection.set(collection.id, filteredBookmarks)
+  }
 
   const flatten = (
     items: Collection[],
