@@ -88,9 +88,6 @@ export function CollectionCard({
             <Text size='2' weight='medium' className={styles.name}>
               {collection.name}
             </Text>
-            {bookmarkCount > 0 && (
-              <span className={styles.badge}>{bookmarkCount}</span>
-            )}
           </div>
           <div className={styles.tagInfo}>
             <Text size='1' color='light'>
@@ -100,6 +97,8 @@ export function CollectionCard({
             </Text>
           </div>
         </div>
+
+        <span className={styles.badge}>{bookmarkCount}</span>
 
         <div className={styles.actions}>
           <Button

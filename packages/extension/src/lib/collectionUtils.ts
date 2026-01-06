@@ -67,17 +67,42 @@ export function getBookmarksForCollection(
 }
 
 /**
- * Count bookmarks per collection
+ * Count bookmarks per collection (including all subcollections recursively)
  */
 export function countBookmarksPerCollection(
   collections: Collection[],
   bookmarks: Bookmark[]
 ): Map<string, number> {
-  const counts = new Map<string, number>()
+  // First, get direct bookmark counts for each collection
+  const directCounts = new Map<string, number>()
   for (const c of collections) {
-    counts.set(c.id, getBookmarksForCollection(c, bookmarks).length)
+    directCounts.set(c.id, getBookmarksForCollection(c, bookmarks).length)
   }
-  return counts
+
+  // Build parent-child hierarchy
+  const { childrenMap, roots } = buildHierarchy(collections)
+
+  // Recursively sum counts (direct + all descendants)
+  const totalCounts = new Map<string, number>()
+
+  const sumCounts = (collectionId: string): number => {
+    const directCount = directCounts.get(collectionId) || 0
+    const children = childrenMap.get(collectionId) || []
+    const childrenTotal = children.reduce(
+      (sum, child) => sum + sumCounts(child.id),
+      0
+    )
+    const total = directCount + childrenTotal
+    totalCounts.set(collectionId, total)
+    return total
+  }
+
+  // Process from roots to ensure all collections are counted
+  for (const root of roots) {
+    sumCounts(root.id)
+  }
+
+  return totalCounts
 }
 
 /**

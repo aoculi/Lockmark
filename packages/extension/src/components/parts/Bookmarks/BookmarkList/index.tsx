@@ -195,12 +195,10 @@ export default function BookmarkList({
                     <Icon size={16} className={styles.collectionIcon} />
                     <Text size='2' weight='medium' color='light'>
                       {collection.name}
-                      {collectionBookmarks.length > 0 && (
-                        <span style={{ marginLeft: '8px', opacity: 0.7 }}>
-                          ({collectionBookmarks.length})
-                        </span>
-                      )}
                     </Text>
+                    <span className={styles.badge}>
+                      {collectionBookmarks.length}
+                    </span>
                   </button>
                   {isExpanded &&
                     collectionBookmarks.length > 0 &&
@@ -235,10 +233,10 @@ export default function BookmarkList({
                 <Inbox size={16} className={styles.collectionIcon} />
                 <Text size='2' weight='medium' color='light'>
                   Uncategorized
-                  <span style={{ marginLeft: '8px', opacity: 0.7 }}>
-                    ({uncategorizedBookmarks.length})
-                  </span>
                 </Text>
+                <span className={styles.badge}>
+                  {uncategorizedBookmarks.length}
+                </span>
               </button>
               {expandedCollections.has(UNCATEGORIZED_ID) &&
                 uncategorizedBookmarks.map((bookmark: Bookmark) => (
