@@ -106,15 +106,20 @@ export default function BookmarkList({
     })
   }
 
+  // Check if tag filtering is active
+  const isTagFilteringActive =
+    selectedTags.length > 0 || (currentTagId !== null && currentTagId !== 'all')
+
   // Group bookmarks by collection and build tree structure
   const collectionsWithBookmarks = useMemo(
     () =>
       flattenCollectionsWithBookmarks(
         collections,
         nonPinnedBookmarks,
-        sortMode
+        sortMode,
+        isTagFilteringActive
       ),
-    [collections, nonPinnedBookmarks, sortMode]
+    [collections, nonPinnedBookmarks, sortMode, isTagFilteringActive]
   )
 
   // Get IDs of bookmarks that belong to any collection
