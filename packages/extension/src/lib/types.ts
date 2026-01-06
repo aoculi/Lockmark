@@ -9,7 +9,7 @@ export interface ManifestV1 {
   version: number // mirrors server version
   items: Bookmark[] // editable list
   tags?: Tag[] // optional centralized tag list
-  collections?: Collection[] // smart collections (tag-based folders)
+  collections?: Collection[] // collections (direct bookmark associations)
   chain_head?: string // reserved (ignore for now)
 }
 
@@ -23,6 +23,7 @@ export interface Bookmark {
   note: string
   picture: string
   tags: string[] // tag ids
+  collectionId?: string // optional collection id
   pinned?: boolean
   created_at: number // epoch ms
   updated_at: number // epoch ms
@@ -39,7 +40,7 @@ export interface Tag {
 }
 
 /**
- * Collection - Smart folder that groups bookmarks by tag filters
+ * Collection - Folder that groups bookmarks by direct association
  */
 export interface Collection {
   id: string // nanoid
@@ -47,11 +48,6 @@ export interface Collection {
   icon?: string // lucide icon name (e.g., 'Folder', 'Star', 'Briefcase')
   parentId?: string // for nesting (null = root level)
   order?: number // manual sort order (lower = first)
-  tagFilter: {
-    mode: 'any' | 'all' // any = OR, all = AND
-    tagIds: string[] // tag IDs to filter by
-  }
-  sortMode?: 'updated_at' | 'title' // how to sort bookmarks in this collection
   created_at: number // epoch ms
   updated_at: number // epoch ms
 }

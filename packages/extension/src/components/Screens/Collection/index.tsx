@@ -1,24 +1,16 @@
 import { Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { useManifest } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
+import { useCollections } from '@/components/hooks/useCollections'
 import usePopupSize from '@/components/hooks/usePopupSize'
-import { useTags } from '@/components/hooks/useTags'
-import {
-  getNextCollectionOrder,
-  wouldCreateCircularReference
-} from '@/lib/collectionUtils'
-import type { Collection as CollectionType } from '@/lib/types'
-import { generateId } from '@/lib/utils'
-import { validateCollectionName } from '@/lib/validation'
+import { wouldCreateCircularReference } from '@/lib/collectionUtils'
 
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
 import IconPicker from '@/components/ui/IconPicker'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
-import { TagSelectorField } from '@/components/ui/TagSelectorField'
 import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
@@ -27,23 +19,18 @@ type FormState = {
   name: string
   icon?: string
   parentId?: string
-  tagFilter: { mode: 'any' | 'all'; tagIds: string[] }
 }
 
 const defaultForm: FormState = {
   name: '',
   icon: undefined,
-  parentId: undefined,
-  tagFilter: { mode: 'any', tagIds: [] }
+  parentId: undefined
 }
 
 export default function Collection() {
   usePopupSize('compact')
-  const { tags } = useTags()
-  const { manifest, save } = useManifest()
+  const { collections, createCollection, updateCollection } = useCollections()
   const { navigate, selectedCollection, setFlash } = useNavigation()
-
-  const collections = manifest?.collections || []
 
   const existingCollection = useMemo(
     () => collections.find((c) => c.id === selectedCollection) || null,
@@ -59,8 +46,7 @@ export default function Collection() {
       setForm({
         name: existingCollection.name,
         icon: existingCollection.icon,
-        parentId: existingCollection.parentId,
-        tagFilter: { ...existingCollection.tagFilter }
+        parentId: existingCollection.parentId
       })
     }
   }, [existingCollection])
@@ -75,9 +61,6 @@ export default function Collection() {
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
-
-    const nameError = validateCollectionName(form.name)
-    if (nameError) newErrors.name = nameError
 
     if (
       wouldCreateCircularReference(
@@ -95,46 +78,24 @@ export default function Collection() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validate() || isLoading || !manifest) return
+    if (!validate() || isLoading) return
 
     setIsLoading(true)
 
     try {
-      const now = Date.now()
-      const trimmedName = form.name.trim()
-
       if (existingCollection) {
         // Update existing
-        await save({
-          ...manifest,
-          collections: collections.map((c) =>
-            c.id === existingCollection.id
-              ? {
-                  ...c,
-                  name: trimmedName,
-                  icon: form.icon,
-                  parentId: form.parentId,
-                  tagFilter: form.tagFilter,
-                  updated_at: now
-                }
-              : c
-          )
+        await updateCollection(existingCollection.id, {
+          name: form.name,
+          icon: form.icon,
+          parentId: form.parentId
         })
       } else {
         // Create new
-        const newCollection: CollectionType = {
-          id: generateId(),
-          name: trimmedName,
+        await createCollection({
+          name: form.name,
           icon: form.icon,
-          parentId: form.parentId,
-          order: getNextCollectionOrder(collections, form.parentId),
-          tagFilter: form.tagFilter,
-          created_at: now,
-          updated_at: now
-        }
-        await save({
-          ...manifest,
-          collections: [...collections, newCollection]
+          parentId: form.parentId
         })
       }
 
@@ -150,19 +111,10 @@ export default function Collection() {
     if (!form.name.trim()) return false
     if (!existingCollection) return true
 
-    const tagIdsChanged =
-      form.tagFilter.tagIds.length !==
-        existingCollection.tagFilter.tagIds.length ||
-      form.tagFilter.tagIds.some(
-        (id) => !existingCollection.tagFilter.tagIds.includes(id)
-      )
-
     return (
       form.name.trim() !== existingCollection.name ||
       form.icon !== existingCollection.icon ||
-      form.parentId !== existingCollection.parentId ||
-      form.tagFilter.mode !== existingCollection.tagFilter.mode ||
-      tagIdsChanged
+      form.parentId !== existingCollection.parentId
     )
   }, [form, existingCollection])
 
@@ -222,50 +174,6 @@ export default function Collection() {
             )}
             <Text size='2' color='light' className={styles.hint}>
               Nest this collection inside another.
-            </Text>
-          </div>
-
-          <div className={styles.section}>
-            <Text as='label' size='2' className={styles.sectionLabel}>
-              Tags
-            </Text>
-            <TagSelectorField
-              tags={tags}
-              selectedTags={form.tagFilter.tagIds}
-              onChange={(tagIds) =>
-                updateForm('tagFilter', { ...form.tagFilter, tagIds })
-              }
-            />
-            {errors.tags && (
-              <Text size='1' className={styles.error}>
-                {errors.tags}
-              </Text>
-            )}
-          </div>
-
-          <div className={styles.section}>
-            <Text as='label' size='2' className={styles.sectionLabel}>
-              Filter mode
-            </Text>
-            <Select
-              size='lg'
-              value={form.tagFilter.mode}
-              onChange={(e) =>
-                updateForm('tagFilter', {
-                  ...form.tagFilter,
-                  mode: e.target.value as 'any' | 'all'
-                })
-              }
-            >
-              <option value='any'>Match ANY tag (OR)</option>
-              <option value='all'>Match ALL tags (AND)</option>
-            </Select>
-            <Text size='2' color='light' className={styles.hint}>
-              {form.tagFilter.tagIds.length === 0
-                ? 'No tags selected. This collection will be empty until tags are added.'
-                : form.tagFilter.mode === 'any'
-                  ? 'Bookmarks with at least one selected tag will appear.'
-                  : 'Only bookmarks with ALL selected tags will appear.'}
             </Text>
           </div>
         </div>

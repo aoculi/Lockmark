@@ -10,6 +10,7 @@ import { useMemo, useState } from 'react'
 import { useManifest } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
+import { useCollections } from '@/components/hooks/useCollections'
 import { useTags } from '@/components/hooks/useTags'
 import { getIconByName } from '@/components/ui/IconPicker'
 import { processBookmarks } from '@/lib/bookmarkUtils'
@@ -42,6 +43,7 @@ export default function BookmarkList({
   onSelectedBookmarkIdsChange
 }: Props) {
   const { bookmarks, deleteBookmark } = useBookmarks()
+  const { collections } = useCollections()
   const { tags, showHiddenTags } = useTags()
   const { setFlash } = useNavigation()
   const { manifest } = useManifest()
@@ -92,9 +94,6 @@ export default function BookmarkList({
     ]
   )
 
-  // Get collections
-  const collections = manifest?.collections || []
-
   // Track which collections are expanded (all collapsed by default)
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(
     new Set()
@@ -122,20 +121,15 @@ export default function BookmarkList({
     }
   }
 
-  // Check if tag filtering is active
-  const isTagFilteringActive =
-    selectedTags.length > 0 || (currentTagId !== null && currentTagId !== 'all')
-
   // Group bookmarks by collection and build tree structure
   const collectionsWithBookmarks = useMemo(
     () =>
       flattenCollectionsWithBookmarks(
         collections,
         nonPinnedBookmarks,
-        sortMode,
-        isTagFilteringActive
+        sortMode
       ),
-    [collections, nonPinnedBookmarks, sortMode, isTagFilteringActive]
+    [collections, nonPinnedBookmarks, sortMode]
   )
 
   // Get IDs of bookmarks that belong to any collection
@@ -144,13 +138,10 @@ export default function BookmarkList({
     [collectionsWithBookmarks]
   )
 
-  // Bookmarks not in any collection
+  // Bookmarks not in any collection (bookmarks without collectionId)
   const uncategorizedBookmarks = useMemo(
-    () =>
-      nonPinnedBookmarks.filter(
-        (bookmark) => !bookmarkIdsInCollections.has(bookmark.id)
-      ),
-    [nonPinnedBookmarks, bookmarkIdsInCollections]
+    () => nonPinnedBookmarks.filter((bookmark) => !bookmark.collectionId),
+    [nonPinnedBookmarks]
   )
 
   // Virtual collection ID for uncategorized bookmarks

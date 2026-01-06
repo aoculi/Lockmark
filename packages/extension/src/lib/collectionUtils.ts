@@ -43,21 +43,14 @@ function buildHierarchy(collections: Collection[]) {
 }
 
 /**
- * Filter bookmarks that match a collection's tag filter
+ * Get bookmarks that belong to a collection (by direct association)
  */
 export function getBookmarksForCollection(
   collection: Collection,
   bookmarks: Bookmark[],
   sortMode: 'updated_at' | 'title' = 'updated_at'
 ): Bookmark[] {
-  if (collection.tagFilter.tagIds.length === 0) return []
-
-  const { mode, tagIds } = collection.tagFilter
-  const matching = bookmarks.filter((b) =>
-    mode === 'any'
-      ? tagIds.some((id) => b.tags.includes(id))
-      : tagIds.every((id) => b.tags.includes(id))
-  )
+  const matching = bookmarks.filter((b) => b.collectionId === collection.id)
 
   return matching.sort((a, b) =>
     sortMode === 'title'
@@ -144,94 +137,35 @@ function getDescendantCollectionIds(
 
 /**
  * Flatten collections with their bookmarks for bookmark list view
- * Bookmarks in a parent collection are excluded if they also match a sub-collection
- * When tagFilteringActive is true, collections with 0 bookmarks are hidden unless they have sub-collections with bookmarks
+ * Bookmarks are directly associated with collections via collectionId
  */
 export function flattenCollectionsWithBookmarks(
   collections: Collection[],
   bookmarks: Bookmark[],
-  sortMode: 'updated_at' | 'title' = 'updated_at',
-  tagFilteringActive: boolean = false
+  sortMode: 'updated_at' | 'title' = 'updated_at'
 ): CollectionWithBookmarks[] {
   const { childrenMap, roots } = buildHierarchy(collections)
 
-  // First, get all bookmarks that match each collection's filter
-  const allBookmarksByCollection = new Map(
+  // Get all bookmarks that belong to each collection
+  const bookmarksByCollection = new Map(
     collections.map((c) => [
       c.id,
       getBookmarksForCollection(c, bookmarks, sortMode)
     ])
   )
 
-  // For each collection, exclude bookmarks that are in any of its descendant collections
-  const bookmarksByCollection = new Map<string, Bookmark[]>()
-
-  for (const collection of collections) {
-    const matchingBookmarks = allBookmarksByCollection.get(collection.id) || []
-    const descendantIds = getDescendantCollectionIds(collection.id, childrenMap)
-
-    // Get all bookmark IDs that are in descendant collections
-    const bookmarkIdsInDescendants = new Set<string>()
-    for (const descendantId of descendantIds) {
-      const descendantBookmarks =
-        allBookmarksByCollection.get(descendantId) || []
-      descendantBookmarks.forEach((b) => bookmarkIdsInDescendants.add(b.id))
-    }
-
-    // Filter out bookmarks that are in any descendant collection
-    const filteredBookmarks = matchingBookmarks.filter(
-      (b) => !bookmarkIdsInDescendants.has(b.id)
-    )
-
-    bookmarksByCollection.set(collection.id, filteredBookmarks)
-  }
-
-  // Only filter visibility when tag filtering is active
-  let visibleCollections: Set<string> | null = null
-  if (tagFilteringActive) {
-    // Determine which collections should be visible
-    // A collection is visible if it has bookmarks OR has at least one visible descendant
-    visibleCollections = new Set<string>()
-
-    const determineVisibility = (collectionId: string): boolean => {
-      const directBookmarks = bookmarksByCollection.get(collectionId) || []
-      const hasDirectBookmarks = directBookmarks.length > 0
-
-      const children = childrenMap.get(collectionId) || []
-      const hasVisibleDescendants = children.some((child) =>
-        determineVisibility(child.id)
-      )
-
-      const isVisible = hasDirectBookmarks || hasVisibleDescendants
-      if (isVisible) {
-        visibleCollections!.add(collectionId)
-      }
-      return isVisible
-    }
-
-    // Determine visibility for all collections (starting from roots)
-    for (const root of roots) {
-      determineVisibility(root.id)
-    }
-  }
-
   const flatten = (
     items: Collection[],
     depth: number
   ): CollectionWithBookmarks[] =>
-    sortByOrder(items)
-      .filter(
-        (collection) =>
-          !tagFilteringActive || visibleCollections!.has(collection.id)
-      )
-      .flatMap((collection) => [
-        {
-          collection,
-          bookmarks: bookmarksByCollection.get(collection.id) || [],
-          depth
-        },
-        ...flatten(childrenMap.get(collection.id) || [], depth + 1)
-      ])
+    sortByOrder(items).flatMap((collection) => [
+      {
+        collection,
+        bookmarks: bookmarksByCollection.get(collection.id) || [],
+        depth
+      },
+      ...flatten(childrenMap.get(collection.id) || [], depth + 1)
+    ])
 
   return flatten(roots, 0)
 }

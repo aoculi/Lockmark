@@ -445,45 +445,57 @@ function buildFolderTree(parsedBookmarks: ParsedBookmark[]): FolderNode {
 
 function generateCollectionsFromTree(
   node: FolderNode,
-  tagNameToId: Map<string, string>,
   parentCollectionId: string | undefined,
-  order: number
-): Collection[] {
+  startOrder: number,
+  existingCollections: Collection[],
+  pathToIdMap: Map<string, string>
+): { collections: Collection[]; pathToIdMap: Map<string, string> } {
   const collections: Collection[] = []
-  let childOrder = 0
+  let childOrder = startOrder
 
   for (const child of node.children.values()) {
-    const tagId = tagNameToId.get(child.name.toLowerCase())
-    if (!tagId) continue
+    // Check if collection already exists (by name and parent)
+    const existing = existingCollections.find(
+      (c) =>
+        c.name.toLowerCase() === child.name.toLowerCase() &&
+        c.parentId === parentCollectionId
+    )
 
-    const now = Date.now()
-    const collectionId = generateId()
-
-    const collection: Collection = {
-      id: collectionId,
-      name: child.name,
-      parentId: parentCollectionId,
-      order: childOrder++,
-      tagFilter: {
-        mode: 'any',
-        tagIds: [tagId]
-      },
-      created_at: now,
-      updated_at: now
+    let collectionId: string
+    if (existing) {
+      // Reuse existing collection
+      collectionId = existing.id
+    } else {
+      // Create new collection
+      collectionId = generateId()
+      const now = Date.now()
+      collections.push({
+        id: collectionId,
+        name: child.name,
+        parentId: parentCollectionId,
+        order: childOrder,
+        created_at: now,
+        updated_at: now
+      })
     }
-    collections.push(collection)
+    childOrder++
+
+    // Map the full path to this collection's ID
+    const pathKey = child.fullPath.join('/')
+    pathToIdMap.set(pathKey, collectionId)
 
     // Recursively process children
-    const childCollections = generateCollectionsFromTree(
+    const result = generateCollectionsFromTree(
       child,
-      tagNameToId,
       collectionId,
-      0
+      0,
+      existingCollections,
+      pathToIdMap
     )
-    collections.push(...childCollections)
+    collections.push(...result.collections)
   }
 
-  return collections
+  return { collections, pathToIdMap }
 }
 
 function convertToBookmarks(
@@ -498,53 +510,19 @@ function convertToBookmarks(
   tagsToCreate: Omit<Tag, 'id'>[]
   folderTree: FolderNode
 } {
-  const tagNameToId = new Map<string, string>()
-  existingTags.forEach((tag) => {
-    tagNameToId.set(tag.name.toLowerCase(), tag.id)
-  })
-
-  const tagsToCreate: Omit<Tag, 'id'>[] = []
   const folderTree = buildFolderTree(parsedBookmarks)
 
-  if (preserveFolderStructure) {
-    const folderSet = new Set<string>()
-    parsedBookmarks.forEach((bookmark) => {
-      bookmark.folderPath.forEach((folder) => folderSet.add(folder))
-    })
-
-    folderSet.forEach((folderName) => {
-      const lowerName = folderName.toLowerCase()
-      if (
-        !tagNameToId.has(lowerName) &&
-        !tagsToCreate.some((t) => t.name.toLowerCase() === lowerName)
-      ) {
-        tagsToCreate.push({
-          name: folderName,
-          hidden: false
-        })
-      }
-    })
-  }
+  // Don't auto-create tags - return empty array
+  const tagsToCreate: Omit<Tag, 'id'>[] = []
 
   const bookmarks = parsedBookmarks.map((parsed) => {
-    const tagIds: string[] = []
-
-    if (preserveFolderStructure) {
-      parsed.folderPath.forEach((folder) => {
-        const tagId = tagNameToId.get(folder.toLowerCase())
-        if (tagId) {
-          tagIds.push(tagId)
-        }
-      })
-    }
-
     return {
       bookmark: {
         url: parsed.url,
         title: parsed.title,
         note: '',
         picture: '',
-        tags: tagIds
+        tags: [] // Don't assign tags from folder structure
       },
       folderPath: parsed.folderPath
     }
@@ -553,7 +531,22 @@ function convertToBookmarks(
   return { bookmarks, tagsToCreate, folderTree }
 }
 
-export { generateCollectionsFromTree, type FolderNode }
+export function createCollectionsFromTree(
+  folderTree: FolderNode,
+  existingCollections: Collection[]
+): { collections: Collection[]; pathToIdMap: Map<string, string> } {
+  const pathToIdMap = new Map<string, string>()
+  const result = generateCollectionsFromTree(
+    folderTree,
+    undefined,
+    existingCollections.length,
+    existingCollections,
+    pathToIdMap
+  )
+  return result
+}
+
+export { type FolderNode }
 
 export interface ProcessBookmarkImportOptions {
   file: File

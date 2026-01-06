@@ -89,13 +89,6 @@ export function CollectionCard({
               {collection.name}
             </Text>
           </div>
-          <div className={styles.tagInfo}>
-            <Text size='1' color='light'>
-              {collection.tagFilter.tagIds.length === 0
-                ? 'No tags'
-                : `${collection.tagFilter.tagIds.length} tag${collection.tagFilter.tagIds.length !== 1 ? 's' : ''} • ${collection.tagFilter.mode === 'any' ? 'Match any' : 'Match all'}`}
-            </Text>
-          </div>
         </div>
 
         <span className={styles.badge}>{bookmarkCount}</span>

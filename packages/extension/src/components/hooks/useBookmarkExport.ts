@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useManifest } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
+import { useCollections } from '@/components/hooks/useCollections'
 import type { Bookmark, Collection } from '@/lib/types'
 
 function escapeHtml(text: string): string {
@@ -148,12 +149,11 @@ function generateCollectionHtml(
 export function useBookmarkExport() {
   const { setFlash } = useNavigation()
   const { bookmarks } = useBookmarks()
+  const { collections } = useCollections()
   const { manifest } = useManifest()
 
   const [isExporting, setIsExporting] = useState(false)
   const [exportWithCollections, setExportWithCollections] = useState(true)
-
-  const collections = manifest?.collections || []
 
   const handleExport = async () => {
     if (bookmarks.length === 0) {
@@ -181,13 +181,7 @@ export function useBookmarkExport() {
         const getBookmarksForCollection = (
           collection: Collection
         ): Bookmark[] => {
-          if (collection.tagFilter.tagIds.length === 0) return []
-          const { mode, tagIds } = collection.tagFilter
-          return bookmarks.filter((b) =>
-            mode === 'any'
-              ? tagIds.some((id) => b.tags.includes(id))
-              : tagIds.every((id) => b.tags.includes(id))
-          )
+          return bookmarks.filter((b) => b.collectionId === collection.id)
         }
 
         // Build collection tree and generate HTML

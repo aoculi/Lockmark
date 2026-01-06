@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useManifest } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
+import { useCollections } from '@/components/hooks/useCollections'
 import {
   countBookmarksPerCollection,
   flattenCollectionsWithDepth,
@@ -19,6 +20,7 @@ import styles from './styles.module.css'
 
 export default function CollectionList() {
   const { manifest, save } = useManifest()
+  const { collections, deleteCollection } = useCollections()
   const { bookmarks } = useBookmarks()
   const { setFlash } = useNavigation()
 
@@ -27,8 +29,6 @@ export default function CollectionList() {
     id: string
     zone: DropZone
   } | null>(null)
-
-  const collections = manifest?.collections || []
 
   const bookmarkCounts = useMemo(
     () => countBookmarksPerCollection(collections, bookmarks),
@@ -42,15 +42,12 @@ export default function CollectionList() {
 
   const handleDelete = async (id: string) => {
     const collection = collections.find((c) => c.id === id)
-    if (!collection || !manifest) return
+    if (!collection) return
 
     if (!confirm(`Delete the collection "${collection.name}"?`)) return
 
     try {
-      await save({
-        ...manifest,
-        collections: collections.filter((c) => c.id !== id)
-      })
+      await deleteCollection(id)
     } catch (error) {
       setFlash(`Failed to delete: ${(error as Error).message}`)
       setTimeout(() => setFlash(null), 5000)
