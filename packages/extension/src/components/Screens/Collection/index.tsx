@@ -5,6 +5,7 @@ import { useManifest } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import usePopupSize from '@/components/hooks/usePopupSize'
 import { useTags } from '@/components/hooks/useTags'
+import { wouldCreateCircularReference } from '@/lib/collectionUtils'
 import type { Collection as CollectionType } from '@/lib/types'
 import { generateId } from '@/lib/utils'
 import { validateCollectionName } from '@/lib/validation'
@@ -47,6 +48,8 @@ export default function Collection() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
 
+  const collections = manifest?.collections || []
+
   useEffect(() => {
     if (collection) {
       setForm({
@@ -60,28 +63,6 @@ export default function Collection() {
       })
     }
   }, [collection])
-
-  // Helper function to check for circular references
-  const wouldCreateCircularReference = (
-    collectionId: string | null,
-    parentId: string | undefined
-  ): boolean => {
-    if (!parentId || !manifest?.collections) return false
-
-    // Check if the selected parent would create a circular reference
-    const checkParent = (id: string, visited: Set<string>): boolean => {
-      if (visited.has(id)) return true // Circular reference detected
-      if (id === collectionId) return true // Would create a cycle
-
-      const parent = manifest.collections?.find((c) => c.id === id)
-      if (!parent?.parentId) return false
-
-      visited.add(id)
-      return checkParent(parent.parentId, visited)
-    }
-
-    return checkParent(parentId, new Set())
-  }
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -98,7 +79,13 @@ export default function Collection() {
     }
 
     // Circular reference validation
-    if (wouldCreateCircularReference(collection?.id || null, form.parentId)) {
+    if (
+      wouldCreateCircularReference(
+        collections,
+        collection?.id || null,
+        form.parentId
+      )
+    ) {
       newErrors.parentId =
         'Cannot select this parent as it would create a circular reference'
     }
@@ -244,7 +231,7 @@ export default function Collection() {
               }}
             >
               <option value=''>None (root level)</option>
-              {(manifest?.collections || [])
+              {collections
                 .filter((c) => c.id !== collection?.id)
                 .map((c) => (
                   <option key={c.id} value={c.id}>

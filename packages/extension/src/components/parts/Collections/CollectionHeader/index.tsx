@@ -2,20 +2,19 @@ import { ArrowUpDown, ChevronDown, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
+import { type CollectionSortMode } from '@/lib/collectionUtils'
 
 import Button from '@/components/ui/Button'
 import { DropdownMenu } from '@/components/ui/DropdownMenu'
 
 import styles from './styles.module.css'
 
-type SortMode = 'alphabetical' | 'bookmarkCount'
-
 export default function CollectionHeader({
   sortMode,
   onSortModeChange
 }: {
-  sortMode: SortMode
-  onSortModeChange: (mode: SortMode) => void
+  sortMode: CollectionSortMode
+  onSortModeChange: (mode: CollectionSortMode) => void
 }) {
   const { navigate } = useNavigation()
   const [sortOpen, setSortOpen] = useState(false)

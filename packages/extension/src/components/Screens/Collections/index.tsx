@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import usePopupSize from '@/components/hooks/usePopupSize'
+import { type CollectionSortMode } from '@/lib/collectionUtils'
 
 import CollectionHeader from '@/components/parts/Collections/CollectionHeader'
 import CollectionList from '@/components/parts/Collections/CollectionList'
@@ -8,11 +9,9 @@ import Header from '@/components/parts/Header'
 
 import styles from './styles.module.css'
 
-type SortMode = 'alphabetical' | 'bookmarkCount'
-
 export default function Collections() {
   usePopupSize('compact')
-  const [sortMode, setSortMode] = useState<SortMode>('alphabetical')
+  const [sortMode, setSortMode] = useState<CollectionSortMode>('alphabetical')
 
   return (
     <div className={styles.component}>
