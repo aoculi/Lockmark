@@ -90,6 +90,9 @@ export const useQueryAuth = () => {
 
       setPhase('idle')
       return loginData
+    },
+    onError: () => {
+      setPhase('idle')
     }
   })
 
@@ -141,6 +144,9 @@ export const useQueryAuth = () => {
 
       setPhase('idle')
       return registerData
+    },
+    onError: () => {
+      setPhase('idle')
     }
   })
 
