@@ -104,7 +104,9 @@ export const STORAGE_KEYS = {
   SETTINGS: 'settings',
   SESSION: 'session',
   KEYSTORE: 'keystore',
-  MANIFEST: 'manifest'
+  MANIFEST: 'manifest',
+  PIN_STORE: 'pin_store',
+  LOCK_STATE: 'lock_state'
 } as const
 
 // Auto-lock timer constants

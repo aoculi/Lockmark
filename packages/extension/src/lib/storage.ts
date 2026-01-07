@@ -11,6 +11,42 @@ export interface Settings {
   showHiddenTags: boolean
   apiUrl: string
   autoLockTimeout: string
+  unlockMethod: 'password' | 'pin'
+  pinEnabled: boolean
+}
+
+/**
+ * AAD context for authenticated encryption (used in PIN store)
+ */
+export type AadContext = {
+  userId: string
+  vaultId: string
+  wmkLabel: string
+  manifestLabel: string
+}
+
+/**
+ * PIN store data - contains PIN-encrypted MAK for quick unlock
+ */
+export interface PinStoreData {
+  pinHash: string // Argon2id hash for verification
+  pinHashSalt: string // Salt for PIN hash (base64)
+  pinKeySalt: string // Salt for PIN encryption key (base64)
+  encryptedMak: string // MAK encrypted with PIN (base64: nonce || ciphertext)
+  aadContext: AadContext // For manifest decryption
+  userId: string
+  vaultId: string
+  version: number // For migrations
+}
+
+/**
+ * Lock state tracking for PIN attempts
+ */
+export interface LockState {
+  failedPinAttempts: number
+  lastFailedAttempt: number | null
+  isHardLocked: boolean // Requires password
+  hardLockedAt: number | null
 }
 
 /**
@@ -154,7 +190,9 @@ export function getDefaultSettings(): Settings {
   return {
     showHiddenTags: false,
     apiUrl: 'http://127.0.0.1:3500',
-    autoLockTimeout: DEFAULT_AUTO_LOCK_TIMEOUT
+    autoLockTimeout: DEFAULT_AUTO_LOCK_TIMEOUT,
+    unlockMethod: 'password',
+    pinEnabled: false
   }
 }
 

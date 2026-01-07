@@ -20,7 +20,7 @@ import {
   uint8ArrayToBase64
 } from '@/lib/crypto'
 import { whenCryptoReady } from '@/lib/cryptoEnv'
-import { setStorageItem } from '@/lib/storage'
+import { setStorageItem, type PinStoreData } from '@/lib/storage'
 
 /**
  * AAD context for authenticated encryption
@@ -173,6 +173,69 @@ export async function unlock(input: UnlockInput): Promise<UnlockResult> {
     }
   } catch (error) {
     cryptoZeroize(uek)
+    throw error
+  }
+}
+
+/**
+ * Unlock vault using PIN
+ * Restores keystore from PIN-encrypted MAK
+ *
+ * @param pin - 6-digit PIN code
+ * @returns UnlockResult with success status
+ * @throws Error if PIN is invalid or too many attempts
+ */
+export async function unlockWithPin(pin: string): Promise<UnlockResult> {
+  await whenCryptoReady()
+
+  // Import PIN utilities
+  const { decryptMakWithPin, verifyPin } = await import('@/lib/pin')
+  const {
+    getLockState,
+    incrementFailedPinAttempts,
+    resetLockState
+  } = await import('@/lib/lockState')
+  const { getStorageItem } = await import('@/lib/storage')
+
+  // Get PIN store
+  const pinStore = await getStorageItem<PinStoreData>(STORAGE_KEYS.PIN_STORE)
+  if (!pinStore) {
+    throw new Error('PIN not configured')
+  }
+
+  // Check lock state
+  const lockState = await getLockState()
+  if (lockState.isHardLocked) {
+    throw new Error('Too many failed attempts. Please login with password.')
+  }
+
+  try {
+    // Verify PIN and decrypt MAK
+    const isValid = await verifyPin(pin, pinStore)
+    if (!isValid) {
+      await incrementFailedPinAttempts()
+      throw new Error('Invalid PIN')
+    }
+
+    const mak = await decryptMakWithPin(pin, pinStore)
+
+    // Restore keystore
+    const keystoreData: KeystoreData = {
+      mak: uint8ArrayToBase64(mak),
+      aadContext: pinStore.aadContext
+    }
+    await setStorageItem(STORAGE_KEYS.KEYSTORE, keystoreData)
+
+    // Reset lock state on successful unlock
+    await resetLockState()
+
+    cryptoZeroize(mak)
+
+    return {
+      success: true,
+      isFirstUnlock: false
+    }
+  } catch (error) {
     throw error
   }
 }

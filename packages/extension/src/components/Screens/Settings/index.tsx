@@ -7,7 +7,8 @@ import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
 import { useBookmarkExport } from '@/components/hooks/useBookmarkExport'
 import { useBookmarkImport } from '@/components/hooks/useBookmarkImport'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
-
+import { PinEntryModal } from '@/components/parts/PinEntryModal'
+import { PinSetupModal } from '@/components/parts/PinSetupModal'
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
@@ -16,6 +17,14 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import Text from '@/components/ui/Text'
+import { STORAGE_KEYS } from '@/lib/constants'
+import { setupPin } from '@/lib/pin'
+import type { KeystoreData } from '@/lib/unlock'
+import {
+  getStorageItem,
+  setStorageItem,
+  type PinStoreData
+} from '@/lib/storage'
 
 import styles from './styles.module.css'
 
@@ -33,18 +42,22 @@ interface SettingsFields {
   showHiddenTags: boolean
   apiUrl: string
   autoLockTimeout: AutoLockTimeout
+  unlockMethod: 'password' | 'pin'
+  pinEnabled: boolean
 }
 
 const DEFAULT_FIELDS: SettingsFields = {
   showHiddenTags: false,
   apiUrl: '',
-  autoLockTimeout: '20min'
+  autoLockTimeout: '20min',
+  unlockMethod: 'password',
+  pinEnabled: false
 }
 
 export default function Settings() {
   const { settings, isLoading, updateSettings } = useSettings()
   const { flash, setFlash } = useNavigation()
-  const { isAuthenticated } = useAuthSession()
+  const { isAuthenticated, session } = useAuthSession()
 
   const [fields, setFields] = useState<SettingsFields>(DEFAULT_FIELDS)
   const [originalFields, setOriginalFields] =
@@ -54,6 +67,9 @@ export default function Settings() {
 
   const [preserveFolderStructure, setPreserveFolderStructure] = useState(true)
   const [importDuplicates, setImportDuplicates] = useState(false)
+
+  const [showPinSetupModal, setShowPinSetupModal] = useState(false)
+  const [showChangePinModal, setShowChangePinModal] = useState(false)
 
   const { importFile, setImportFile, isImporting, handleImport } =
     useBookmarkImport({
@@ -77,7 +93,9 @@ export default function Settings() {
         showHiddenTags: settings.showHiddenTags,
         apiUrl: settings.apiUrl,
         autoLockTimeout:
-          (settings.autoLockTimeout as AutoLockTimeout) || '20min'
+          (settings.autoLockTimeout as AutoLockTimeout) || '20min',
+        unlockMethod: settings.unlockMethod || 'password',
+        pinEnabled: settings.pinEnabled || false
       }
       setFields(loadedFields)
       setOriginalFields(loadedFields)
@@ -102,7 +120,9 @@ export default function Settings() {
       await updateSettings({
         showHiddenTags: fields.showHiddenTags,
         apiUrl: fields.apiUrl,
-        autoLockTimeout: fields.autoLockTimeout
+        autoLockTimeout: fields.autoLockTimeout,
+        unlockMethod: fields.unlockMethod,
+        pinEnabled: fields.pinEnabled
       })
       setOriginalFields({ ...fields })
     } catch (error) {
@@ -110,6 +130,45 @@ export default function Settings() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handlePinSetup = async (pin: string, password: string) => {
+    try {
+      // Verify user is unlocked
+      const keystoreData =
+        await getStorageItem<KeystoreData>(STORAGE_KEYS.KEYSTORE)
+      if (!keystoreData) {
+        throw new Error('Vault not unlocked')
+      }
+
+      // Create PIN store
+      const pinStore = await setupPin(
+        pin,
+        keystoreData,
+        session.userId!,
+        session.userId!
+      )
+      await setStorageItem(STORAGE_KEYS.PIN_STORE, pinStore)
+
+      // Update settings
+      await updateSettings({
+        ...fields,
+        unlockMethod: 'pin',
+        pinEnabled: true
+      })
+
+      updateField('unlockMethod', 'pin')
+      updateField('pinEnabled', true)
+
+      setShowPinSetupModal(false)
+    } catch (error) {
+      throw new Error('Failed to setup PIN')
+    }
+  }
+
+  const handlePinChange = async (pin: string, password: string) => {
+    await handlePinSetup(pin, password)
+    setShowChangePinModal(false)
   }
 
   const handleCancel = () => {
@@ -197,30 +256,90 @@ export default function Settings() {
               <form onSubmit={handleSaveSettings} className={styles.form}>
                 <div className={styles.field}>
                   <Text as='label' size='3' weight='medium'>
-                    Auto-lock Timeout
+                    Unlock Method
                   </Text>
-                  <Select
-                    value={fields.autoLockTimeout}
-                    onChange={(e) =>
-                      updateField(
-                        'autoLockTimeout',
-                        e.target.value as AutoLockTimeout
-                      )
-                    }
-                  >
-                    <option value='1min'>1 minute</option>
-                    <option value='2min'>2 minutes</option>
-                    <option value='5min'>5 minutes</option>
-                    <option value='10min'>10 minutes</option>
-                    <option value='20min'>20 minutes</option>
-                    <option value='30min'>30 minutes</option>
-                    <option value='1h'>1 hour</option>
-                    <option value='never'>Never</option>
-                  </Select>
+
+                  <div className={styles.radioGroup}>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type='radio'
+                        name='unlockMethod'
+                        value='password'
+                        checked={fields.unlockMethod === 'password'}
+                        onChange={() => {
+                          updateField('unlockMethod', 'password')
+                          updateField('autoLockTimeout', 'never')
+                        }}
+                      />
+                      <Text size='2'>Always unlock</Text>
+                    </label>
+
+                    <label className={styles.radioLabel}>
+                      <input
+                        type='radio'
+                        name='unlockMethod'
+                        value='pin'
+                        checked={fields.unlockMethod === 'pin'}
+                        onChange={() => {
+                          if (!fields.pinEnabled) {
+                            setShowPinSetupModal(true)
+                          }
+                          updateField('unlockMethod', 'pin')
+                          if (fields.autoLockTimeout === 'never') {
+                            updateField('autoLockTimeout', '20min')
+                          }
+                        }}
+                      />
+                      <Text size='2'>PIN code (6 digits)</Text>
+                    </label>
+                  </div>
+
                   <Text size='2' color='light'>
-                    Automatically lock the vault after inactivity
+                    {fields.unlockMethod === 'password'
+                      ? 'Vault will never auto-lock. Close and reopen without re-entering password.'
+                      : 'Use a 6-digit PIN to quickly unlock after auto-lock timeout.'}
                   </Text>
                 </div>
+
+                {fields.unlockMethod === 'pin' && (
+                  <div className={styles.field}>
+                    <Text as='label' size='3' weight='medium'>
+                      Auto-lock Timeout
+                    </Text>
+                    <Select
+                      value={fields.autoLockTimeout}
+                      onChange={(e) =>
+                        updateField(
+                          'autoLockTimeout',
+                          e.target.value as AutoLockTimeout
+                        )
+                      }
+                    >
+                      <option value='1min'>1 minute</option>
+                      <option value='2min'>2 minutes</option>
+                      <option value='5min'>5 minutes</option>
+                      <option value='10min'>10 minutes</option>
+                      <option value='20min'>20 minutes</option>
+                      <option value='30min'>30 minutes</option>
+                      <option value='1h'>1 hour</option>
+                    </Select>
+                    <Text size='2' color='light'>
+                      Automatically lock the vault after inactivity
+                    </Text>
+                  </div>
+                )}
+
+                {fields.pinEnabled && fields.unlockMethod === 'pin' && (
+                  <div className={styles.field}>
+                    <Button
+                      variant='ghost'
+                      onClick={() => setShowChangePinModal(true)}
+                      type='button'
+                    >
+                      Change PIN
+                    </Button>
+                  </div>
+                )}
 
                 <div className={styles.field}>
                   <Text as='label' size='2'>
@@ -382,6 +501,18 @@ export default function Settings() {
           </Tabs.Root>
         </div>
       </div>
+
+      <PinSetupModal
+        open={showPinSetupModal}
+        onClose={() => setShowPinSetupModal(false)}
+        onSuccess={handlePinSetup}
+      />
+
+      <PinSetupModal
+        open={showChangePinModal}
+        onClose={() => setShowChangePinModal(false)}
+        onSuccess={handlePinChange}
+      />
     </div>
   )
 }

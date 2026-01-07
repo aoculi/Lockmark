@@ -13,6 +13,7 @@ import { MIN_REFRESH_INTERVAL, STORAGE_KEYS } from '@/lib/constants'
 import {
   clearStorageItem,
   getAutoLockTimeout,
+  getSettings,
   getStorageItem,
   setStorageItem
 } from '@/lib/storage'
@@ -31,7 +32,7 @@ type AuthSessionContextType = {
   session: AuthSession
   isAuthenticated: boolean
   setSession: (response: LoginResponse) => Promise<void>
-  clearSession: () => Promise<void>
+  clearSession: (lockMode?: 'soft' | 'hard') => Promise<void>
 }
 
 const defaultSession: AuthSession = {
@@ -68,16 +69,33 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  const clearSession = useCallback(async () => {
-    setSessionState(defaultSession)
-    setIsAuthenticated(false)
+  const clearSession = useCallback(
+    async (lockMode: 'soft' | 'hard' = 'hard') => {
+      const settings = await getSettings()
+      const unlockMethod = settings?.unlockMethod || 'password'
 
-    await Promise.allSettled([
-      clearStorageItem(STORAGE_KEYS.SESSION).catch(() => {}),
-      clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
-      clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
-    ])
-  }, [])
+      if (lockMode === 'soft' && unlockMethod === 'pin') {
+        // Soft lock: Keep SESSION, clear only KEYSTORE + MANIFEST
+        await Promise.allSettled([
+          clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
+          clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
+        ])
+      } else {
+        // Hard lock: Full logout
+        setSessionState(defaultSession)
+        setIsAuthenticated(false)
+
+        await Promise.allSettled([
+          clearStorageItem(STORAGE_KEYS.SESSION).catch(() => {}),
+          clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
+          clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {}),
+          clearStorageItem(STORAGE_KEYS.PIN_STORE).catch(() => {}),
+          clearStorageItem(STORAGE_KEYS.LOCK_STATE).catch(() => {})
+        ])
+      }
+    },
+    []
+  )
 
   useEffect(() => {
     const loadAndRefreshSession = async () => {
@@ -104,17 +122,33 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         return
       }
 
-      // Get auto-lock timeout (defaults to 20 minutes if settings not configured)
+      // Get auto-lock timeout and settings
+      const settings = await getSettings()
+      const unlockMethod = settings?.unlockMethod || 'password'
       const autoLockTimeoutMs = await getAutoLockTimeout()
+
+      // Check if "never" lock mode (always unlock)
+      if (unlockMethod === 'password' && autoLockTimeoutMs === Infinity) {
+        // Never lock
+        setSessionState(session)
+        setIsAuthenticated(true)
+        setIsLoading(false)
+        return
+      }
 
       // Calculate time since session was created/refreshed
       const sessionCreatedAt = session.createdAt
       const timeSinceCreation = now - sessionCreatedAt
 
-      // If session was created/refreshed longer ago than autoLockTimeout, clear it
-      // (even if token is still technically valid)
+      // If session was created/refreshed longer ago than autoLockTimeout, lock it
       if (timeSinceCreation > autoLockTimeoutMs) {
-        await clearSession()
+        if (unlockMethod === 'pin') {
+          // Soft lock: clear keystore but keep session
+          await clearSession('soft')
+        } else {
+          // Hard lock: full logout
+          await clearSession('hard')
+        }
         setIsLoading(false)
         return
       }

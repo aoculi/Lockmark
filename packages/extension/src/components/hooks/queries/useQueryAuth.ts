@@ -198,7 +198,7 @@ export const useQueryAuth = () => {
       }
     },
     onSettled: async () => {
-      await clearSession()
+      await clearSession('hard')
       clearManifest()
       queryClient.clear()
     }
