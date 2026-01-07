@@ -21,25 +21,41 @@
   height: auto;
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  z-index: 2;
-  position: relative;
-}
-
-.form button {
-  margin-top: 20px;
-  cursor: pointer;
-}
-
-.pinInput {
+.header {
   text-align: center;
+  margin-bottom: 10px;
+}
+
+.pinContainer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.pinDigit {
+  width: 48px;
+  height: 56px;
   font-size: 24px;
-  letter-spacing: 8px;
+  font-weight: 600;
+  text-align: center;
+  border: 2px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  background: var(--background-2, #fff);
+  color: var(--text-color, #000);
+  transition: all 0.2s ease;
+  outline: none;
   font-family: monospace;
+}
+
+.pinDigit:focus {
+  border-color: var(--primary-color, #007aff);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.pinDigit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .error {
@@ -49,6 +65,15 @@
   border-radius: 6px;
   color: #ff3b30;
   text-align: center;
+  width: 100%;
+}
+
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
 }
 
 .lockedMessage {
@@ -64,7 +89,7 @@
 }
 
 .passwordLink {
-  margin-top: 20px;
+  margin-top: 10px;
   text-align: center;
 }
 
@@ -74,7 +99,6 @@
 
 .spinner {
   animation: spin 1s linear infinite;
-  margin-right: 8px;
 }
 
 @keyframes spin {
