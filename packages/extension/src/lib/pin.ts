@@ -15,7 +15,7 @@ import {
   uint8ArrayToBase64,
   zeroize
 } from '@/lib/crypto'
-import { getCryptoEnv } from '@/lib/cryptoEnv'
+import { getCryptoEnv, whenCryptoReady } from '@/lib/cryptoEnv'
 import type { AadContext, PinStoreData } from '@/lib/storage'
 import type { KeystoreData } from '@/lib/unlock'
 import { argon2id } from 'hash-wasm'
@@ -66,6 +66,8 @@ export async function verifyPin(
   pin: string,
   pinStoreData: PinStoreData
 ): Promise<boolean> {
+  await whenCryptoReady()
+
   const salt = base64ToUint8Array(pinStoreData.pinHashSalt)
   const computedHash = await hashPin(pin, salt)
   const storedHash = base64ToUint8Array(pinStoreData.pinHash)
@@ -87,6 +89,8 @@ export async function encryptMakWithPin(
   userId: string,
   vaultId: string
 ): Promise<{ encryptedMak: string; pinKeySalt: string }> {
+  await whenCryptoReady()
+
   const sodium = getCryptoEnv()
 
   // Generate salt for PIN key derivation
@@ -151,38 +155,45 @@ export async function setupPin(
   userId: string,
   vaultId: string
 ): Promise<PinStoreData> {
-  const sodium = getCryptoEnv()
+  try {
+    await whenCryptoReady()
 
-  // Generate salts
-  const pinHashSalt = sodium.randombytes_buf(32)
+    const sodium = getCryptoEnv()
 
-  // Hash PIN for verification
-  const pinHash = await hashPin(pin, pinHashSalt)
+    // Generate salts
+    const pinHashSalt = sodium.randombytes_buf(32)
 
-  // Decrypt MAK from keystore
-  const mak = base64ToUint8Array(keystoreData.mak)
+    // Hash PIN for verification
+    const pinHash = await hashPin(pin, pinHashSalt)
 
-  // Encrypt MAK with PIN
-  const { encryptedMak, pinKeySalt } = await encryptMakWithPin(
-    mak,
-    pin,
-    userId,
-    vaultId
-  )
+    // Get MAK from keystore (it's already base64 encoded)
+    const mak = base64ToUint8Array(keystoreData.mak)
 
-  // Create PIN store
-  const pinStoreData: PinStoreData = {
-    pinHash: uint8ArrayToBase64(pinHash),
-    pinHashSalt: uint8ArrayToBase64(pinHashSalt),
-    pinKeySalt,
-    encryptedMak,
-    aadContext: keystoreData.aadContext,
-    userId,
-    vaultId,
-    version: 1
+    // Encrypt MAK with PIN
+    const { encryptedMak, pinKeySalt } = await encryptMakWithPin(
+      mak,
+      pin,
+      userId,
+      vaultId
+    )
+
+    // Create PIN store
+    const pinStoreData: PinStoreData = {
+      pinHash: uint8ArrayToBase64(pinHash),
+      pinHashSalt: uint8ArrayToBase64(pinHashSalt),
+      pinKeySalt,
+      encryptedMak,
+      aadContext: keystoreData.aadContext,
+      userId,
+      vaultId,
+      version: 1
+    }
+
+    zeroize(pinHash, pinHashSalt, mak)
+
+    return pinStoreData
+  } catch (error) {
+    console.error('Error in setupPin:', error)
+    throw error
   }
-
-  zeroize(pinHash, pinHashSalt, mak)
-
-  return pinStoreData
 }

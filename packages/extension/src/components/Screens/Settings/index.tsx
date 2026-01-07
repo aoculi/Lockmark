@@ -138,15 +138,22 @@ export default function Settings() {
       const keystoreData =
         await getStorageItem<KeystoreData>(STORAGE_KEYS.KEYSTORE)
       if (!keystoreData) {
-        throw new Error('Vault not unlocked')
+        throw new Error('Vault not unlocked. Please ensure you are logged in.')
       }
+
+      if (!session.userId) {
+        throw new Error('No user session found')
+      }
+
+      // Get vaultId from keystore AAD context
+      const vaultId = keystoreData.aadContext.vaultId
 
       // Create PIN store
       const pinStore = await setupPin(
         pin,
         keystoreData,
-        session.userId!,
-        session.userId!
+        session.userId,
+        vaultId
       )
       await setStorageItem(STORAGE_KEYS.PIN_STORE, pinStore)
 
@@ -162,7 +169,10 @@ export default function Settings() {
 
       setShowPinSetupModal(false)
     } catch (error) {
-      throw new Error('Failed to setup PIN')
+      console.error('PIN setup error:', error)
+      throw error instanceof Error
+        ? error
+        : new Error('Failed to setup PIN')
     }
   }
 
