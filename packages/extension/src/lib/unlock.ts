@@ -21,7 +21,11 @@ import {
   uint8ArrayToBase64
 } from '@/lib/crypto'
 import { whenCryptoReady } from '@/lib/cryptoEnv'
-import { setStorageItem, type PinStoreData } from '@/lib/storage'
+import {
+  clearStorageItem,
+  setStorageItem,
+  type PinStoreData
+} from '@/lib/storage'
 
 /**
  * AAD context for authenticated encryption
@@ -165,6 +169,9 @@ export async function unlock(input: UnlockInput): Promise<UnlockResult> {
     }
     await setStorageItem(STORAGE_KEYS.KEYSTORE, keystoreData)
 
+    // Clear the explicit locked flag (in case user was locked and unlocking with password)
+    await clearStorageItem(STORAGE_KEYS.IS_LOCKED).catch(() => {})
+
     // Zeroize local temporaries (MK, KEK, MAK)
     cryptoZeroize(mk, kek, mak)
 
@@ -236,6 +243,9 @@ export async function unlockWithPin(pin: string): Promise<UnlockResult> {
       }
       await setStorageItem(STORAGE_KEYS.SESSION, updatedSession)
     }
+
+    // Clear the explicit locked flag
+    await clearStorageItem(STORAGE_KEYS.IS_LOCKED)
 
     // Reset lock state on successful unlock
     await resetLockState()

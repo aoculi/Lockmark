@@ -106,7 +106,8 @@ export const STORAGE_KEYS = {
   KEYSTORE: 'keystore',
   MANIFEST: 'manifest',
   PIN_STORE: 'pin_store',
-  LOCK_STATE: 'lock_state'
+  LOCK_STATE: 'lock_state',
+  IS_LOCKED: 'is_locked' // Explicit lock flag for auto-lock timeout
 } as const
 
 // Auto-lock timer constants

@@ -90,7 +90,8 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
           clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
           clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {}),
           clearStorageItem(STORAGE_KEYS.PIN_STORE).catch(() => {}),
-          clearStorageItem(STORAGE_KEYS.LOCK_STATE).catch(() => {})
+          clearStorageItem(STORAGE_KEYS.LOCK_STATE).catch(() => {}),
+          clearStorageItem(STORAGE_KEYS.IS_LOCKED).catch(() => {})
         ])
       }
     },
@@ -143,11 +144,19 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       // If session was created/refreshed longer ago than autoLockTimeout, lock it
       if (timeSinceCreation > autoLockTimeoutMs) {
         if (unlockMethod === 'pin') {
-          // Soft lock: clear keystore but keep session
-          await clearSession('soft')
-          // Keep session state and authentication active for PIN unlock
-          setSessionState(session)
-          setIsAuthenticated(true)
+          // Check if PIN is actually configured before soft-locking
+          const pinStore = await getStorageItem(STORAGE_KEYS.PIN_STORE)
+          if (pinStore) {
+            // Soft lock: Set locked flag FIRST, then clear keystore but keep session
+            await setStorageItem(STORAGE_KEYS.IS_LOCKED, true)
+            await clearSession('soft')
+            // Keep session state and authentication active for PIN unlock
+            setSessionState(session)
+            setIsAuthenticated(true)
+          } else {
+            // PIN not configured, fall back to hard lock
+            await clearSession('hard')
+          }
         } else {
           // Hard lock: full logout
           await clearSession('hard')
@@ -162,8 +171,8 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
           const updatedSession: AuthSession = {
             ...session,
             token: refreshResponse.token,
-            expiresAt: refreshResponse.expires_at,
-            createdAt: refreshResponse.created_at
+            expiresAt: refreshResponse.expires_at
+            // Keep original createdAt - don't reset auto-lock timer on token refresh
           }
           setSessionState(updatedSession)
           setIsAuthenticated(true)
@@ -186,6 +195,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         }
       }
 
+      // Session is still valid and within timeout
       setSessionState(session)
       setIsAuthenticated(true)
       setIsLoading(false)

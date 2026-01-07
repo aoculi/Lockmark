@@ -5,7 +5,10 @@ import {
   AuthSessionProvider,
   useAuthSession
 } from '@/components/hooks/providers/useAuthSessionProvider'
-import { ManifestProvider } from '@/components/hooks/providers/useManifestProvider'
+import {
+  ManifestProvider,
+  useManifest
+} from '@/components/hooks/providers/useManifestProvider'
 import {
   NavigationProvider,
   Route,
@@ -24,7 +27,7 @@ import Tags from '@/components/Screens/Tags'
 import Vault from '@/components/Screens/Vault'
 import Text from '@/components/ui/Text'
 import { STORAGE_KEYS } from '@/lib/constants'
-import { getSettings, getStorageItem } from '@/lib/storage'
+import { clearStorageItem, getSettings, getStorageItem } from '@/lib/storage'
 
 import styles from './styles.module.css'
 
@@ -32,27 +35,59 @@ function RootContent() {
   useRouteGuard()
   const { route, flash, navigate } = useNavigation()
   const { session } = useAuthSession()
+  const { manifest, isLoading: isManifestLoading, clear: clearManifest } = useManifest()
 
   useEffect(() => {
     const checkLockState = async () => {
       // Don't redirect during authentication flows
-      if (route === '/login' || route === '/register' || route === '/pin-unlock') {
+      if (
+        route === '/login' ||
+        route === '/register' ||
+        route === '/pin-unlock'
+      ) {
         return
       }
 
-      // Check if session exists but keystore is missing (soft lock)
-      if (session.userId && session.token) {
-        const keystore = await getStorageItem(STORAGE_KEYS.KEYSTORE)
-        const settings = await getSettings()
+      // Don't check if manifest is still loading
+      if (isManifestLoading) {
+        return
+      }
 
-        if (!keystore && settings?.unlockMethod === 'pin') {
-          navigate('/pin-unlock')
+      // Check explicit locked flag (only trust the explicit flag, not missing keystore)
+      if (session.userId && session.token) {
+        const isLocked = await getStorageItem<boolean>(STORAGE_KEYS.IS_LOCKED)
+
+        // Only redirect to PIN unlock if explicitly locked
+        if (isLocked) {
+          const settings = await getSettings()
+          const pinStore = await getStorageItem(STORAGE_KEYS.PIN_STORE)
+
+          // Only redirect if PIN is actually configured
+          if (settings?.unlockMethod === 'pin' && pinStore) {
+            // Clear manifest from memory if locked (it was already cleared from storage)
+            if (manifest) {
+              clearManifest()
+            }
+            navigate('/pin-unlock')
+          } else {
+            // IS_LOCKED is true but PIN not configured - clear the flag and force logout
+            await clearStorageItem(STORAGE_KEYS.IS_LOCKED).catch(() => {})
+            navigate('/login')
+          }
         }
       }
     }
 
     checkLockState()
-  }, [session.userId, session.token, route, navigate])
+  }, [
+    session.userId,
+    session.token,
+    route,
+    manifest,
+    isManifestLoading,
+    navigate,
+    clearManifest
+  ])
 
   const renderRoute = () => {
     switch (route as Route) {
