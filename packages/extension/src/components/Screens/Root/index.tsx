@@ -1,11 +1,14 @@
 import { TriangleAlert } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import {
   AuthSessionProvider,
   useAuthSession
 } from '@/components/hooks/providers/useAuthSessionProvider'
-import { ManifestProvider } from '@/components/hooks/providers/useManifestProvider'
+import {
+  ManifestProvider,
+  useManifest
+} from '@/components/hooks/providers/useManifestProvider'
 import {
   NavigationProvider,
   Route,
@@ -32,11 +35,17 @@ function RootContent() {
   useRouteGuard()
   const { route, flash, navigate } = useNavigation()
   const { session } = useAuthSession()
+  const { isLoading: isManifestLoading } = useManifest()
 
   useEffect(() => {
     const checkLockState = async () => {
       // Only check lock state if not already on pin-unlock route
       if (route === '/pin-unlock') {
+        return
+      }
+
+      // Don't redirect to PIN unlock if manifest is loading (during login/register)
+      if (isManifestLoading) {
         return
       }
 
@@ -52,7 +61,7 @@ function RootContent() {
     }
 
     checkLockState()
-  }, [session.userId, session.token, route, navigate])
+  }, [session.userId, session.token, route, navigate, isManifestLoading])
 
   const renderRoute = () => {
     switch (route as Route) {

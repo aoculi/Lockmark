@@ -122,9 +122,7 @@ export default function PinUnlock() {
     <div className={styles.container}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <Text size='6' weight='bold'>
-            Unlock Lockmark
-          </Text>
+          <Text size='4'>Unlock Lockmark</Text>
         </div>
 
         {isLocked ? (
