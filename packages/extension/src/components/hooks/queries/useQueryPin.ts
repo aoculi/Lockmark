@@ -5,15 +5,15 @@
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 
+import { fetchVaultManifest } from '@/api/vault-api'
 import {
   useManifest,
-  type StoredManifestData
+  saveManifestData
 } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { STORAGE_KEYS } from '@/lib/constants'
 import { getLockState } from '@/lib/lockState'
+import { decryptManifest } from '@/lib/manifest'
 import type { LockState } from '@/lib/storage'
-import { getStorageItem } from '@/lib/storage'
 import { unlockWithPin } from '@/lib/unlock'
 
 export const QUERY_KEYS = {
@@ -37,17 +37,23 @@ export const useQueryPin = () => {
       setLockState(state)
     },
     mutationFn: async (pin: string) => {
-      // Phase 1: Verify PIN and decrypt MAK
+      // Phase 1: Verify PIN and decrypt MAK (restores keystore)
       setPhase('verifying')
       const result = await unlockWithPin(pin)
 
-      // Phase 2: Load manifest from storage
+      // Phase 2: Fetch and decrypt manifest from server
       setPhase('loading')
-      const manifestData =
-        await getStorageItem<StoredManifestData>(STORAGE_KEYS.MANIFEST)
-      if (manifestData) {
-        setManifestFromLogin(manifestData)
+      const vaultManifestResponse = await fetchVaultManifest()
+      const decryptedManifest = await decryptManifest(vaultManifestResponse)
+
+      // Save to storage and set in provider
+      const manifestData = {
+        manifest: decryptedManifest,
+        etag: vaultManifestResponse.etag,
+        serverVersion: vaultManifestResponse.version
       }
+      await saveManifestData(manifestData)
+      setManifestFromLogin(manifestData)
 
       setPhase('idle')
       return result

@@ -32,40 +32,36 @@ function RootContent() {
   useRouteGuard()
   const { route, flash, navigate } = useNavigation()
   const { session } = useAuthSession()
-  const [showPinUnlock, setShowPinUnlock] = useState(false)
 
   useEffect(() => {
     const checkLockState = async () => {
+      // Only check lock state if not already on pin-unlock route
+      if (route === '/pin-unlock') {
+        return
+      }
+
       // Check if session exists but keystore is missing (soft lock)
       if (session.userId && session.token) {
         const keystore = await getStorageItem(STORAGE_KEYS.KEYSTORE)
         const settings = await getSettings()
 
         if (!keystore && settings?.unlockMethod === 'pin') {
-          setShowPinUnlock(true)
           navigate('/pin-unlock')
-        } else {
-          setShowPinUnlock(false)
         }
-      } else {
-        setShowPinUnlock(false)
       }
     }
 
     checkLockState()
-  }, [session.userId, session.token, navigate])
+  }, [session.userId, session.token, route, navigate])
 
   const renderRoute = () => {
-    // Show PIN unlock screen if soft-locked
-    if (showPinUnlock) {
-      return <PinUnlock />
-    }
-
     switch (route as Route) {
       case '/login':
         return <Login />
       case '/register':
         return <Register />
+      case '/pin-unlock':
+        return <PinUnlock />
       case '/vault':
         return <Vault />
       case '/bookmark':
