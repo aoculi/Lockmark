@@ -138,6 +138,8 @@ function getDescendantCollectionIds(
 /**
  * Flatten collections with their bookmarks for bookmark list view
  * Bookmarks are directly associated with collections via collectionId
+ * When filtering by tags, only includes collections that have matching bookmarks
+ * or have descendant collections with matching bookmarks (to preserve hierarchy)
  */
 export function flattenCollectionsWithBookmarks(
   collections: Collection[],
@@ -154,18 +156,39 @@ export function flattenCollectionsWithBookmarks(
     ])
   )
 
+  // Helper function to check if a collection or any of its descendants have matching bookmarks
+  const hasMatchingBookmarks = (collectionId: string): boolean => {
+    // Check if this collection has matching bookmarks
+    const collectionBookmarks = bookmarksByCollection.get(collectionId) || []
+    if (collectionBookmarks.length > 0) {
+      return true
+    }
+
+    // Check if any descendant has matching bookmarks
+    const children = childrenMap.get(collectionId) || []
+    for (const child of children) {
+      if (hasMatchingBookmarks(child.id)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   const flatten = (
     items: Collection[],
     depth: number
   ): CollectionWithBookmarks[] =>
-    sortByOrder(items).flatMap((collection) => [
-      {
-        collection,
-        bookmarks: bookmarksByCollection.get(collection.id) || [],
-        depth
-      },
-      ...flatten(childrenMap.get(collection.id) || [], depth + 1)
-    ])
+    sortByOrder(items)
+      .filter((collection) => hasMatchingBookmarks(collection.id))
+      .flatMap((collection) => [
+        {
+          collection,
+          bookmarks: bookmarksByCollection.get(collection.id) || [],
+          depth
+        },
+        ...flatten(childrenMap.get(collection.id) || [], depth + 1)
+      ])
 
   return flatten(roots, 0)
 }

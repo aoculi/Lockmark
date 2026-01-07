@@ -116,9 +116,10 @@ export default function BookmarkList({
     bookmarks: Bookmark[]
   ) => {
     e.stopPropagation() // Prevent collapsing/expanding the collection
-    for (const bookmark of bookmarks) {
-      await chrome.tabs.create({ url: bookmark.url })
-    }
+    // Create all tabs in parallel to avoid blocking and ensure all open
+    await Promise.allSettled(
+      bookmarks.map((bookmark) => chrome.tabs.create({ url: bookmark.url }))
+    )
   }
 
   // Group bookmarks by collection and build tree structure
