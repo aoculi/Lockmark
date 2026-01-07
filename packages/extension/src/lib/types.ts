@@ -9,6 +9,7 @@ export interface ManifestV1 {
   version: number // mirrors server version
   items: Bookmark[] // editable list
   tags?: Tag[] // optional centralized tag list
+  collections?: Collection[] // collections (direct bookmark associations)
   chain_head?: string // reserved (ignore for now)
 }
 
@@ -22,6 +23,7 @@ export interface Bookmark {
   note: string
   picture: string
   tags: string[] // tag ids
+  collectionId?: string // optional collection id
   pinned?: boolean
   created_at: number // epoch ms
   updated_at: number // epoch ms
@@ -35,6 +37,19 @@ export interface Tag {
   name: string // display name
   color?: string // optional UI hint
   hidden?: boolean // whether tag is hidden (default: false)
+}
+
+/**
+ * Collection - Folder that groups bookmarks by direct association
+ */
+export interface Collection {
+  id: string // nanoid
+  name: string // display name
+  icon?: string // lucide icon name (e.g., 'Folder', 'Star', 'Briefcase')
+  parentId?: string // for nesting (null = root level)
+  order?: number // manual sort order (lower = first)
+  created_at: number // epoch ms
+  updated_at: number // epoch ms
 }
 
 /**

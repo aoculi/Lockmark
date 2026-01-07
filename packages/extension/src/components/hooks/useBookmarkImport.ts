@@ -1,20 +1,20 @@
 import { useState } from 'react'
 
-import {
-  loadManifestData,
-  useManifest
-} from '@/components/hooks/providers/useManifestProvider'
+import { useManifest } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { useTags } from '@/components/hooks/useTags'
 
 import {
+  createCollectionsFromTree,
   prepareBookmarksForImport,
   processBookmarkImport
 } from '@/lib/bookmarkImport'
+import type { Bookmark, Collection } from '@/lib/types'
+import { generateId } from '@/lib/utils'
+import { validateBookmarkInput } from '@/lib/validation'
 
 export interface UseBookmarkImportOptions {
-  createFolderTags: boolean
+  preserveFolderStructure: boolean
   importDuplicates: boolean
 }
 
@@ -28,12 +28,11 @@ export interface UseBookmarkImportReturn {
 export function useBookmarkImport(
   options: UseBookmarkImportOptions
 ): UseBookmarkImportReturn {
-  const { createFolderTags, importDuplicates } = options
+  const { preserveFolderStructure, importDuplicates } = options
 
   const { setFlash } = useNavigation()
-  const { addBookmarks } = useBookmarks()
-  const { tags, createTag } = useTags()
-  const { manifest, reload: reloadManifest } = useManifest()
+  const { tags } = useTags()
+  const { manifest, reload: reloadManifest, save } = useManifest()
 
   const [importFile, setImportFile] = useState<File | null>(null)
   const [isImporting, setIsImporting] = useState(false)
@@ -44,6 +43,12 @@ export function useBookmarkImport(
       return
     }
 
+    // Check if manifest is loaded before proceeding
+    if (!manifest) {
+      setFlash('Cannot import: manifest not loaded. Please try again.')
+      return
+    }
+
     setIsImporting(true)
     setFlash(null)
 
@@ -51,7 +56,7 @@ export function useBookmarkImport(
       // Step 1: Process the bookmark file
       const processResult = await processBookmarkImport({
         file: importFile,
-        createFolderTags,
+        preserveFolderStructure,
         existingTags: tags
       })
 
@@ -65,36 +70,29 @@ export function useBookmarkImport(
         return
       }
 
-      // Step 2: Create tags if needed
-      if (processResult.tagsToCreate.length > 0) {
-        for (const tagToCreate of processResult.tagsToCreate) {
-          try {
-            await createTag(tagToCreate)
-          } catch (error) {
-            console.error(`Error creating tag "${tagToCreate.name}":`, error)
-          }
-        }
-        // Reload manifest to get the newly created tags with their IDs
-        await reloadManifest()
+      // Step 2: Create collections and map paths to IDs
+      const existingCollections = manifest.collections || []
+      let newCollections: Collection[] = []
+      let pathToCollectionId = new Map<string, string>()
+
+      if (preserveFolderStructure) {
+        const result = createCollectionsFromTree(
+          processResult.folderTree,
+          existingCollections
+        )
+        newCollections = result.collections
+        pathToCollectionId = result.pathToIdMap
       }
 
-      // Step 3: Get updated tags and manifest
-      const latestManifestData = await loadManifestData()
-      const updatedTags =
-        latestManifestData?.manifest.tags || manifest?.tags || []
-      const updatedBookmarks =
-        latestManifestData?.manifest.items || manifest?.items || []
-
-      // Step 4: Prepare bookmarks (map tags and filter duplicates)
+      // Step 3: Prepare bookmarks
       const prepareResult = prepareBookmarksForImport({
         bookmarksWithPaths: processResult.bookmarksWithPaths,
-        createFolderTags,
+        preserveFolderStructure,
         importDuplicates,
-        tags: updatedTags,
-        existingBookmarks: updatedBookmarks
+        tags: manifest.tags || [],
+        existingBookmarks: manifest.items || []
       })
 
-      // Step 5: Add all bookmarks in a single batch operation
       if (prepareResult.bookmarksToImport.length === 0) {
         const message =
           prepareResult.duplicatesCount > 0
@@ -102,13 +100,67 @@ export function useBookmarkImport(
             : 'No bookmarks to import'
         setFlash(message)
         setImportFile(null)
+        setIsImporting(false)
         return
       }
 
-      await addBookmarks(prepareResult.bookmarksToImport)
-      let successMessage = `Successfully imported ${prepareResult.bookmarksToImport.length} bookmark${prepareResult.bookmarksToImport.length !== 1 ? 's' : ''}`
+      // Step 4: Create bookmarks with collection IDs
+      const now = Date.now()
+      const urlToPath = new Map<string, string[]>()
+      processResult.bookmarksWithPaths.forEach(({ bookmark, folderPath }) => {
+        const key = bookmark.url.trim().toLowerCase()
+        if (!urlToPath.has(key)) {
+          urlToPath.set(key, folderPath)
+        }
+      })
+
+      const newBookmarks: Bookmark[] = []
+      for (const bookmark of prepareResult.bookmarksToImport) {
+        const validationError = validateBookmarkInput({
+          url: bookmark.url,
+          title: bookmark.title,
+          note: bookmark.note,
+          picture: bookmark.picture,
+          tags: bookmark.tags
+        })
+        if (validationError) {
+          throw new Error(
+            `Validation error for "${bookmark.title}": ${validationError}`
+          )
+        }
+
+        const path = urlToPath.get(bookmark.url.trim().toLowerCase()) || []
+        const pathKey = path.join('/')
+        const collectionId = preserveFolderStructure
+          ? pathToCollectionId.get(pathKey)
+          : undefined
+
+        newBookmarks.push({
+          ...bookmark,
+          id: generateId(),
+          collectionId,
+          created_at: now,
+          updated_at: now
+        })
+      }
+
+      // Step 5: Save everything
+      const updatedManifest = {
+        ...manifest,
+        items: [...(manifest.items || []), ...newBookmarks],
+        collections: [...existingCollections, ...newCollections]
+      }
+
+      await save(updatedManifest)
+      await reloadManifest()
+
+      // Step 6: Success message
+      let successMessage = `Successfully imported ${newBookmarks.length} bookmark${newBookmarks.length !== 1 ? 's' : ''}`
       if (prepareResult.duplicatesCount > 0) {
         successMessage += ` (${prepareResult.duplicatesCount} duplicate${prepareResult.duplicatesCount !== 1 ? 's' : ''} skipped)`
+      }
+      if (newCollections.length > 0) {
+        successMessage += `, ${newCollections.length} collection${newCollections.length !== 1 ? 's' : ''}`
       }
       setFlash(successMessage)
       setImportFile(null)

@@ -11,6 +11,8 @@ import { SettingsProvider } from '@/components/hooks/providers/useSettingsProvid
 import { useRouteGuard } from '@/components/hooks/useRouteGuard'
 
 import Bookmark from '@/components/Screens/Bookmark'
+import Collection from '@/components/Screens/Collection'
+import Collections from '@/components/Screens/Collections'
 import Login from '@/components/Screens/Login'
 import Register from '@/components/Screens/Register'
 import Tag from '@/components/Screens/Tag'
@@ -38,6 +40,10 @@ function RootContent() {
         return <Tag />
       case '/tags':
         return <Tags />
+      case '/collection':
+        return <Collection />
+      case '/collections':
+        return <Collections />
       default:
         return <Bookmark />
     }

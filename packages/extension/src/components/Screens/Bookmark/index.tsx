@@ -5,15 +5,19 @@ import { useManifest } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
+import { useCollections } from '@/components/hooks/useCollections'
 import usePopupSize from '@/components/hooks/usePopupSize'
 import { useTags } from '@/components/hooks/useTags'
+import { flattenCollectionsWithDepth } from '@/lib/collectionUtils'
 import { captureCurrentPage, refreshBookmarkMetadata } from '@/lib/pageCapture'
 import { MAX_TAGS_PER_ITEM } from '@/lib/validation'
 
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import { TagSelectorField } from '@/components/ui/TagSelectorField'
+import Text from '@/components/ui/Text'
 import Textarea from '@/components/ui/Textarea'
 
 import styles from './styles.module.css'
@@ -26,7 +30,8 @@ const emptyBookmark = {
   title: '',
   note: '',
   picture: '',
-  tags: [] as string[]
+  tags: [] as string[],
+  collectionId: undefined as string | undefined
 }
 
 export default function Bookmark() {
@@ -34,6 +39,7 @@ export default function Bookmark() {
   const { navigate, selectedBookmark, setFlash } = useNavigation()
   const { isSaving } = useManifest()
   const { addBookmark, updateBookmark, bookmarks } = useBookmarks()
+  const { collections } = useCollections()
   const { tags } = useTags()
   const { settings } = useSettings()
   let bookmark = bookmarks.find((item) => item.id === selectedBookmark) || null
@@ -57,7 +63,8 @@ export default function Bookmark() {
         title: bookmark.title,
         note: bookmark.note,
         picture: bookmark.picture,
-        tags: bookmark.tags
+        tags: bookmark.tags,
+        collectionId: bookmark.collectionId
       })
     }
   }, [bookmark])
@@ -95,7 +102,8 @@ export default function Bookmark() {
           title: result.bookmark.title,
           note: result.bookmark.note,
           picture: result.bookmark.picture,
-          tags: result.bookmark.tags
+          tags: result.bookmark.tags,
+          collectionId: result.bookmark.collectionId
         })
       } else {
         setFlash(result.error)
@@ -196,7 +204,8 @@ export default function Bookmark() {
           title: form.title?.trim(),
           note: form.note?.trim(),
           picture: form.picture?.trim(),
-          tags: form.tags
+          tags: form.tags,
+          collectionId: form.collectionId
         })
       } else {
         await addBookmark({
@@ -204,7 +213,8 @@ export default function Bookmark() {
           title: form.title?.trim(),
           note: form.note?.trim(),
           picture: form.picture?.trim(),
-          tags: form.tags
+          tags: form.tags,
+          collectionId: form.collectionId
         })
       }
 
@@ -242,8 +252,16 @@ export default function Bookmark() {
       form.tags.some((tag) => !bookmark.tags.includes(tag)) ||
       bookmark.tags.some((tag) => !form.tags.includes(tag))
 
+    // Check if collectionId changed
+    const collectionIdChanged = form.collectionId !== bookmark.collectionId
+
     return (
-      urlChanged || titleChanged || noteChanged || pictureChanged || tagsChanged
+      urlChanged ||
+      titleChanged ||
+      noteChanged ||
+      pictureChanged ||
+      tagsChanged ||
+      collectionIdChanged
     )
   }, [form, bookmark])
 
@@ -272,6 +290,12 @@ export default function Bookmark() {
 
     return [...visibleTags, ...selectedHiddenTags]
   }, [tags, settings.showHiddenTags, form.tags])
+
+  // Get collections with depth for hierarchical display
+  const collectionsWithDepth = useMemo(
+    () => flattenCollectionsWithDepth(collections),
+    [collections]
+  )
 
   const buttonLabel = bookmark ? 'Save' : 'Create'
 
@@ -361,6 +385,30 @@ export default function Bookmark() {
             placeholder='Add a note...'
             rows={4}
           />
+
+          <div className={styles.section}>
+            <Text as='label' size='2' className={styles.sectionLabel}>
+              Collection
+            </Text>
+            <Select
+              size='lg'
+              value={form.collectionId || ''}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  collectionId: e.target.value || undefined
+                }))
+              }
+            >
+              <option value=''>None</option>
+              {collectionsWithDepth.map(({ collection, depth }) => (
+                <option key={collection.id} value={collection.id}>
+                  {'  '.repeat(depth)}
+                  {collection.name}
+                </option>
+              ))}
+            </Select>
+          </div>
 
           <TagSelectorField
             tags={selectableTags}

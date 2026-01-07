@@ -1,4 +1,5 @@
-import type { Bookmark, Tag } from './types'
+import type { Bookmark, Collection, Tag } from './types'
+import { generateId } from './utils'
 import { isValidUrl } from './validation'
 
 export type BrowserType = 'chrome' | 'firefox' | 'safari' | 'auto'
@@ -411,9 +412,95 @@ function detectJsonFormat(content: string): JsonFormat {
   return 'unknown'
 }
 
+interface FolderNode {
+  name: string
+  fullPath: string[]
+  children: Map<string, FolderNode>
+}
+
+function buildFolderTree(parsedBookmarks: ParsedBookmark[]): FolderNode {
+  const root: FolderNode = { name: '', fullPath: [], children: new Map() }
+
+  for (const bookmark of parsedBookmarks) {
+    let current = root
+    const pathSoFar: string[] = []
+
+    for (const folder of bookmark.folderPath) {
+      pathSoFar.push(folder)
+      const key = folder.toLowerCase()
+
+      if (!current.children.has(key)) {
+        current.children.set(key, {
+          name: folder,
+          fullPath: [...pathSoFar],
+          children: new Map()
+        })
+      }
+      current = current.children.get(key)!
+    }
+  }
+
+  return root
+}
+
+function generateCollectionsFromTree(
+  node: FolderNode,
+  parentCollectionId: string | undefined,
+  startOrder: number,
+  existingCollections: Collection[],
+  pathToIdMap: Map<string, string>
+): { collections: Collection[]; pathToIdMap: Map<string, string> } {
+  const collections: Collection[] = []
+  let childOrder = startOrder
+
+  for (const child of node.children.values()) {
+    // Check if collection already exists (by name and parent)
+    const existing = existingCollections.find(
+      (c) =>
+        c.name.toLowerCase() === child.name.toLowerCase() &&
+        c.parentId === parentCollectionId
+    )
+
+    let collectionId: string
+    if (existing) {
+      // Reuse existing collection
+      collectionId = existing.id
+    } else {
+      // Create new collection
+      collectionId = generateId()
+      const now = Date.now()
+      collections.push({
+        id: collectionId,
+        name: child.name,
+        parentId: parentCollectionId,
+        order: childOrder,
+        created_at: now,
+        updated_at: now
+      })
+    }
+    childOrder++
+
+    // Map the full path to this collection's ID
+    const pathKey = child.fullPath.join('/')
+    pathToIdMap.set(pathKey, collectionId)
+
+    // Recursively process children
+    const result = generateCollectionsFromTree(
+      child,
+      collectionId,
+      0,
+      existingCollections,
+      pathToIdMap
+    )
+    collections.push(...result.collections)
+  }
+
+  return { collections, pathToIdMap }
+}
+
 function convertToBookmarks(
   parsedBookmarks: ParsedBookmark[],
-  createFolderTags: boolean,
+  preserveFolderStructure: boolean,
   existingTags: Tag[]
 ): {
   bookmarks: Array<{
@@ -421,64 +508,49 @@ function convertToBookmarks(
     folderPath: string[]
   }>
   tagsToCreate: Omit<Tag, 'id'>[]
+  folderTree: FolderNode
 } {
-  const tagNameToId = new Map<string, string>()
-  existingTags.forEach((tag) => {
-    tagNameToId.set(tag.name.toLowerCase(), tag.id)
-  })
+  const folderTree = buildFolderTree(parsedBookmarks)
 
+  // Don't auto-create tags - return empty array
   const tagsToCreate: Omit<Tag, 'id'>[] = []
 
-  if (createFolderTags) {
-    const folderSet = new Set<string>()
-    parsedBookmarks.forEach((bookmark) => {
-      bookmark.folderPath.forEach((folder) => folderSet.add(folder))
-    })
-
-    folderSet.forEach((folderName) => {
-      const lowerName = folderName.toLowerCase()
-      if (
-        !tagNameToId.has(lowerName) &&
-        !tagsToCreate.some((t) => t.name.toLowerCase() === lowerName)
-      ) {
-        tagsToCreate.push({
-          name: folderName,
-          hidden: false
-        })
-      }
-    })
-  }
-
   const bookmarks = parsedBookmarks.map((parsed) => {
-    const tagIds: string[] = []
-
-    if (createFolderTags) {
-      parsed.folderPath.forEach((folder) => {
-        const tagId = tagNameToId.get(folder.toLowerCase())
-        if (tagId) {
-          tagIds.push(tagId)
-        }
-      })
-    }
-
     return {
       bookmark: {
         url: parsed.url,
         title: parsed.title,
         note: '',
         picture: '',
-        tags: tagIds
+        tags: [] // Don't assign tags from folder structure
       },
       folderPath: parsed.folderPath
     }
   })
 
-  return { bookmarks, tagsToCreate }
+  return { bookmarks, tagsToCreate, folderTree }
 }
+
+export function createCollectionsFromTree(
+  folderTree: FolderNode,
+  existingCollections: Collection[]
+): { collections: Collection[]; pathToIdMap: Map<string, string> } {
+  const pathToIdMap = new Map<string, string>()
+  const result = generateCollectionsFromTree(
+    folderTree,
+    undefined,
+    existingCollections.length,
+    existingCollections,
+    pathToIdMap
+  )
+  return result
+}
+
+export { type FolderNode }
 
 export interface ProcessBookmarkImportOptions {
   file: File
-  createFolderTags: boolean
+  preserveFolderStructure: boolean
   existingTags: Tag[]
 }
 
@@ -488,14 +560,21 @@ export interface ProcessBookmarkImportResult {
     folderPath: string[]
   }>
   tagsToCreate: Omit<Tag, 'id'>[]
+  folderTree: FolderNode
   errors: string[]
   browserType: BrowserType
+}
+
+const emptyFolderTree: FolderNode = {
+  name: '',
+  fullPath: [],
+  children: new Map()
 }
 
 export async function processBookmarkImport(
   options: ProcessBookmarkImportOptions
 ): Promise<ProcessBookmarkImportResult> {
-  const { file, createFolderTags, existingTags } = options
+  const { file, preserveFolderStructure, existingTags } = options
   const errors: string[] = []
 
   try {
@@ -507,6 +586,7 @@ export async function processBookmarkImport(
       return {
         bookmarksWithPaths: [],
         tagsToCreate: [],
+        folderTree: emptyFolderTree,
         errors,
         browserType: 'auto'
       }
@@ -528,6 +608,7 @@ export async function processBookmarkImport(
         return {
           bookmarksWithPaths: [],
           tagsToCreate: [],
+          folderTree: emptyFolderTree,
           errors,
           browserType: 'auto'
         }
@@ -548,15 +629,16 @@ export async function processBookmarkImport(
       errors.push('No bookmarks found in the file')
     }
 
-    const { bookmarks, tagsToCreate } = convertToBookmarks(
+    const { bookmarks, tagsToCreate, folderTree } = convertToBookmarks(
       parseResult.bookmarks,
-      createFolderTags,
+      preserveFolderStructure,
       existingTags
     )
 
     return {
       bookmarksWithPaths: bookmarks,
       tagsToCreate,
+      folderTree,
       errors,
       browserType
     }
@@ -567,6 +649,7 @@ export async function processBookmarkImport(
     return {
       bookmarksWithPaths: [],
       tagsToCreate: [],
+      folderTree: emptyFolderTree,
       errors,
       browserType: 'auto'
     }
@@ -578,7 +661,7 @@ export interface PrepareBookmarksForImportOptions {
     bookmark: Omit<Bookmark, 'id' | 'created_at' | 'updated_at'>
     folderPath: string[]
   }>
-  createFolderTags: boolean
+  preserveFolderStructure: boolean
   importDuplicates: boolean
   tags: Tag[]
   existingBookmarks: Bookmark[]
@@ -595,7 +678,7 @@ export function prepareBookmarksForImport(
 ): PrepareBookmarksForImportResult {
   const {
     bookmarksWithPaths,
-    createFolderTags,
+    preserveFolderStructure,
     importDuplicates,
     tags,
     existingBookmarks
@@ -608,7 +691,7 @@ export function prepareBookmarksForImport(
 
   const updatedBookmarks = bookmarksWithPaths.map(
     ({ bookmark, folderPath }) => {
-      if (!createFolderTags) {
+      if (!preserveFolderStructure) {
         return bookmark
       }
 

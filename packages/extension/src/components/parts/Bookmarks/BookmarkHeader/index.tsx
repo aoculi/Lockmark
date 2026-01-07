@@ -1,6 +1,7 @@
 import {
   ArrowUpDown,
   ChevronDown,
+  FolderOpen,
   HeartMinus,
   HeartPlus,
   Tags,
@@ -15,6 +16,7 @@ import { useTags } from '@/components/hooks/useTags'
 import { processBookmarks } from '@/lib/bookmarkUtils'
 
 import Button from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { DropdownMenu } from '@/components/ui/DropdownMenu'
 import { TagSelectorField } from '@/components/ui/TagSelectorField'
 import Text from '@/components/ui/Text'
@@ -28,7 +30,8 @@ export default function BookmarkHeader({
   selectedTags,
   onSelectedTagsChange,
   selectedBookmarkIds,
-  onDeleteSelected
+  onDeleteSelected,
+  onSelectedBookmarkIdsChange
 }: {
   searchQuery: string
   sortMode: 'updated_at' | 'title'
@@ -37,6 +40,7 @@ export default function BookmarkHeader({
   onSelectedTagsChange: (tags: string[]) => void
   selectedBookmarkIds: Set<string>
   onDeleteSelected: () => void
+  onSelectedBookmarkIdsChange: (ids: Set<string>) => void
 }) {
   const { tags, showHiddenTags } = useTags()
   const { bookmarks } = useBookmarks()
@@ -136,9 +140,40 @@ export default function BookmarkHeader({
     ).length
   }, [pinnedBookmarks, nonPinnedBookmarks, selectedBookmarkIds])
 
+  // Check if all filtered bookmarks are selected
+  const allFilteredSelected = useMemo(() => {
+    const allFilteredIds = new Set([
+      ...pinnedBookmarks.map((b) => b.id),
+      ...nonPinnedBookmarks.map((b) => b.id)
+    ])
+    return (
+      allFilteredIds.size > 0 &&
+      Array.from(allFilteredIds).every((id) => selectedBookmarkIds.has(id))
+    )
+  }, [pinnedBookmarks, nonPinnedBookmarks, selectedBookmarkIds])
+
+  const handleSelectAllToggle = (checked: boolean) => {
+    if (checked) {
+      // Select all filtered bookmarks
+      const allFilteredIds = new Set([
+        ...pinnedBookmarks.map((b) => b.id),
+        ...nonPinnedBookmarks.map((b) => b.id)
+      ])
+      onSelectedBookmarkIdsChange(allFilteredIds)
+    } else {
+      // Unselect all selected bookmarks
+      onSelectedBookmarkIdsChange(new Set())
+    }
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.actionsContainer}>
+        <Checkbox
+          checked={allFilteredSelected}
+          onChange={(e) => handleSelectAllToggle(e.target.checked)}
+          title='Select all bookmarks'
+        />
         {!hasSelection && (
           <>
             <DropdownMenu.Root open={sortOpen} onOpenChange={setSortOpen}>
@@ -217,7 +252,19 @@ export default function BookmarkHeader({
               title='Manage tags'
             >
               <Tags strokeWidth={2} size={16} />
-              <span className={styles.actionLabel}>Manage tags</span>
+              <span className={styles.actionLabel}>Tags</span>
+            </Button>
+
+            <Button
+              onClick={() => navigate('/collections')}
+              size='sm'
+              variant='ghost'
+              color='light'
+              className={styles.actionButton}
+              title='Manage collections'
+            >
+              <FolderOpen strokeWidth={2} size={16} />
+              <span className={styles.actionLabel}>Collections</span>
             </Button>
           </>
         )}

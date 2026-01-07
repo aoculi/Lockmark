@@ -1,4 +1,4 @@
-import { ArrowUpDown, ChevronDown, Tag } from 'lucide-react'
+import { ArrowUpDown, ChevronDown, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
@@ -58,13 +58,13 @@ export default function TagHeader({
         </DropdownMenu.Root>
 
         <Button
+          asIcon={true}
+          color='light'
           onClick={() => navigate('/tag')}
           size='sm'
-          color='primary'
-          asIcon={true}
           title='Create a new tag'
         >
-          <Tag strokeWidth={2} size={16} />
+          <Plus strokeWidth={2} size={16} />
         </Button>
       </div>
     </div>
