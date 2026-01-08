@@ -107,7 +107,8 @@ export const STORAGE_KEYS = {
   MANIFEST: 'manifest',
   PIN_STORE: 'pin_store',
   LOCK_STATE: 'lock_state',
-  IS_LOCKED: 'is_locked' // Explicit lock flag for auto-lock timeout
+  IS_LOCKED: 'is_locked', // Explicit lock flag for auto-lock timeout
+  API_URL: 'api_url' // Global API URL setting (not user-specific)
 } as const
 
 // Auto-lock timer constants

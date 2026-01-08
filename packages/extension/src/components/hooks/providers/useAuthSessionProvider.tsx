@@ -12,10 +12,9 @@ import { fetchRefreshToken } from '@/api/auth-api'
 import { MIN_REFRESH_INTERVAL, STORAGE_KEYS } from '@/lib/constants'
 import {
   clearStorageItem,
-  getAutoLockTimeout,
-  getSettings,
   getStorageItem,
-  setStorageItem
+  setStorageItem,
+  type PinStoreData
 } from '@/lib/storage'
 
 export type AuthSession = {
@@ -71,29 +70,33 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
 
   const clearSession = useCallback(
     async (lockMode: 'soft' | 'hard' = 'hard') => {
-      const settings = await getSettings()
-      const unlockMethod = settings?.unlockMethod || 'password'
-
-      if (lockMode === 'soft' && unlockMethod === 'pin') {
+      if (lockMode === 'soft') {
         // Soft lock: Keep SESSION, clear only KEYSTORE + MANIFEST
-        await Promise.allSettled([
-          clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
-          clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
-        ])
-      } else {
-        // Hard lock: Full logout
-        setSessionState(defaultSession)
-        setIsAuthenticated(false)
-
-        await Promise.allSettled([
-          clearStorageItem(STORAGE_KEYS.SESSION).catch(() => {}),
-          clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
-          clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {}),
-          clearStorageItem(STORAGE_KEYS.PIN_STORE).catch(() => {}),
-          clearStorageItem(STORAGE_KEYS.LOCK_STATE).catch(() => {}),
-          clearStorageItem(STORAGE_KEYS.IS_LOCKED).catch(() => {})
-        ])
+        // Check if PIN is configured to determine if soft lock is possible
+        const pinStore = await getStorageItem<PinStoreData>(
+          STORAGE_KEYS.PIN_STORE
+        )
+        if (pinStore) {
+          await Promise.allSettled([
+            clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
+            clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
+          ])
+          return
+        }
       }
+
+      // Hard lock: Full logout
+      setSessionState(defaultSession)
+      setIsAuthenticated(false)
+
+      await Promise.allSettled([
+        clearStorageItem(STORAGE_KEYS.SESSION).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.PIN_STORE).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.LOCK_STATE).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.IS_LOCKED).catch(() => {})
+      ])
     },
     []
   )
@@ -116,54 +119,13 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       const now = Date.now()
       const timeUntilExpiry = session.expiresAt - now
 
-      // Token has expired - clear session
       if (timeUntilExpiry <= 0) {
         await clearSession()
         setIsLoading(false)
         return
       }
 
-      // Get auto-lock timeout and settings
-      const settings = await getSettings()
-      const unlockMethod = settings?.unlockMethod || 'password'
-      const autoLockTimeoutMs = await getAutoLockTimeout()
-
-      // Check if "never" lock mode (always unlock)
-      if (unlockMethod === 'password' && autoLockTimeoutMs === Infinity) {
-        // Never lock
-        setSessionState(session)
-        setIsAuthenticated(true)
-        setIsLoading(false)
-        return
-      }
-
-      // Calculate time since session was created/refreshed
-      const sessionCreatedAt = session.createdAt
-      const timeSinceCreation = now - sessionCreatedAt
-
-      // If session was created/refreshed longer ago than autoLockTimeout, lock it
-      if (timeSinceCreation > autoLockTimeoutMs) {
-        if (unlockMethod === 'pin') {
-          // Check if PIN is actually configured before soft-locking
-          const pinStore = await getStorageItem(STORAGE_KEYS.PIN_STORE)
-          if (pinStore) {
-            // Soft lock: Set locked flag FIRST, then clear keystore but keep session
-            await setStorageItem(STORAGE_KEYS.IS_LOCKED, true)
-            await clearSession('soft')
-            // Keep session state and authentication active for PIN unlock
-            setSessionState(session)
-            setIsAuthenticated(true)
-          } else {
-            // PIN not configured, fall back to hard lock
-            await clearSession('hard')
-          }
-        } else {
-          // Hard lock: full logout
-          await clearSession('hard')
-        }
-        setIsLoading(false)
-        return
-      }
+      const timeSinceCreation = now - session.createdAt
 
       if (timeSinceCreation > MIN_REFRESH_INTERVAL) {
         try {

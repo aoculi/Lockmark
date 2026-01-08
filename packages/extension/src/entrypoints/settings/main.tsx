@@ -30,15 +30,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <SettingsProvider>
-          <AuthSessionProvider>
+        <AuthSessionProvider>
+          <SettingsProvider>
             <ManifestProvider>
               <NavigationProvider initialRoute='/settings'>
                 <Settings />
               </NavigationProvider>
             </ManifestProvider>
-          </AuthSessionProvider>
-        </SettingsProvider>
+          </SettingsProvider>
+        </AuthSessionProvider>
       </ErrorBoundary>
     </QueryClientProvider>
   </React.StrictMode>

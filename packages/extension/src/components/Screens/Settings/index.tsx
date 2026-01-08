@@ -1,5 +1,5 @@
-import { Loader2, TriangleAlert } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { KeyRound, Loader2, TriangleAlert } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
@@ -7,8 +7,19 @@ import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
 import { useBookmarkExport } from '@/components/hooks/useBookmarkExport'
 import { useBookmarkImport } from '@/components/hooks/useBookmarkImport'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
-import { PinSetupModal } from '@/components/parts/PinSetupModal'
+import { STORAGE_KEYS } from '@/lib/constants'
+import { setupPin, verifyPin } from '@/lib/pin'
+import {
+  getApiUrl,
+  getStorageItem,
+  setApiUrl,
+  setStorageItem,
+  type PinStoreData
+} from '@/lib/storage'
+import type { KeystoreData } from '@/lib/unlock'
+
 import Header from '@/components/parts/Header'
+import { PinSetupModal } from '@/components/parts/PinSetupModal'
 import Button from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Drawer } from '@/components/ui/Drawer'
@@ -17,15 +28,6 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import { Tabs } from '@/components/ui/Tabs'
 import Text from '@/components/ui/Text'
-import { KeyRound } from 'lucide-react'
-import { STORAGE_KEYS } from '@/lib/constants'
-import { setupPin, verifyPin } from '@/lib/pin'
-import type { KeystoreData } from '@/lib/unlock'
-import {
-  getStorageItem,
-  setStorageItem,
-  type PinStoreData
-} from '@/lib/storage'
 
 import styles from './styles.module.css'
 
@@ -65,6 +67,7 @@ export default function Settings() {
     useState<SettingsFields>(DEFAULT_FIELDS)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('api')
+  const isSavingRef = useRef(false)
 
   const [preserveFolderStructure, setPreserveFolderStructure] = useState(true)
   const [importDuplicates, setImportDuplicates] = useState(false)
@@ -93,19 +96,44 @@ export default function Settings() {
   const { bookmarks } = useBookmarks()
 
   useEffect(() => {
-    if (!isLoading) {
-      const loadedFields: SettingsFields = {
-        showHiddenTags: settings.showHiddenTags,
-        apiUrl: settings.apiUrl,
-        autoLockTimeout:
-          (settings.autoLockTimeout as AutoLockTimeout) || '20min',
-        unlockMethod: settings.unlockMethod || 'password',
-        pinEnabled: settings.pinEnabled || false
+    const loadSettings = async () => {
+      // Don't reload if we're currently saving (to prevent overwriting user changes)
+      if (isSavingRef.current) {
+        return
       }
-      setFields(loadedFields)
-      setOriginalFields(loadedFields)
+
+      if (!isLoading) {
+        // Load API URL separately (global setting - always available)
+        const apiUrl = await getApiUrl()
+
+        if (isAuthenticated) {
+          // Load user-specific settings when authenticated
+          const loadedFields: SettingsFields = {
+            showHiddenTags: settings.showHiddenTags,
+            apiUrl: apiUrl,
+            autoLockTimeout:
+              (settings.autoLockTimeout as AutoLockTimeout) || '20min',
+            unlockMethod: settings.unlockMethod || 'password',
+            pinEnabled: settings.pinEnabled || false
+          }
+          setFields(loadedFields)
+          setOriginalFields(loadedFields)
+        } else {
+          // When not authenticated, only load API URL with defaults for other fields
+          const loadedFields: SettingsFields = {
+            showHiddenTags: false,
+            apiUrl: apiUrl,
+            autoLockTimeout: '20min',
+            unlockMethod: 'password',
+            pinEnabled: false
+          }
+          setFields(loadedFields)
+          setOriginalFields(loadedFields)
+        }
+      }
     }
-  }, [isLoading, settings])
+    loadSettings()
+  }, [isLoading, settings, isAuthenticated])
 
   useEffect(() => {
     if (
@@ -122,9 +150,12 @@ export default function Settings() {
     e.preventDefault()
     setIsSaving(true)
     try {
+      // Save API URL separately (global setting)
+      await setApiUrl(fields.apiUrl)
+
+      // Save user-specific settings (without apiUrl)
       await updateSettings({
         showHiddenTags: fields.showHiddenTags,
-        apiUrl: fields.apiUrl,
         autoLockTimeout: fields.autoLockTimeout,
         unlockMethod: fields.unlockMethod,
         pinEnabled: fields.pinEnabled
@@ -140,8 +171,9 @@ export default function Settings() {
   const handlePinSetup = async (pin: string) => {
     try {
       // Verify user is unlocked
-      const keystoreData =
-        await getStorageItem<KeystoreData>(STORAGE_KEYS.KEYSTORE)
+      const keystoreData = await getStorageItem<KeystoreData>(
+        STORAGE_KEYS.KEYSTORE
+      )
       if (!keystoreData) {
         throw new Error('Vault not unlocked. Please ensure you are logged in.')
       }
@@ -162,30 +194,33 @@ export default function Settings() {
       )
       await setStorageItem(STORAGE_KEYS.PIN_STORE, pinStore)
 
-      // Update fields
-      updateField('unlockMethod', 'pin')
-      updateField('pinEnabled', true)
-
       // Adjust auto-lock timeout if needed
-      const newTimeout = fields.autoLockTimeout === 'never' ? '20min' : fields.autoLockTimeout
-      if (fields.autoLockTimeout === 'never') {
-        updateField('autoLockTimeout', newTimeout)
-      }
+      const newTimeout =
+        fields.autoLockTimeout === 'never' ? '20min' : fields.autoLockTimeout
 
-      // Auto-save settings
-      await updateSettings({
+      // Update fields state
+      const updatedFields = {
         ...fields,
-        unlockMethod: 'pin',
+        unlockMethod: 'pin' as const,
         pinEnabled: true,
         autoLockTimeout: newTimeout
-      })
+      }
+      setFields(updatedFields)
+
+      // Save settings using current settings from context, not fields state
+      const settingsToSave = {
+        showHiddenTags: settings.showHiddenTags,
+        autoLockTimeout: newTimeout,
+        unlockMethod: 'pin' as const,
+        pinEnabled: true
+      }
+
+      await updateSettings(settingsToSave)
 
       setShowPinSetupModal(false)
     } catch (error) {
-      console.error('PIN setup error:', error)
-      throw error instanceof Error
-        ? error
-        : new Error('Failed to setup PIN')
+      console.error('[Settings] PIN setup error:', error)
+      throw error instanceof Error ? error : new Error('Failed to setup PIN')
     }
   }
 
@@ -198,7 +233,9 @@ export default function Settings() {
 
     try {
       // Get PIN store
-      const pinStore = await getStorageItem<PinStoreData>(STORAGE_KEYS.PIN_STORE)
+      const pinStore = await getStorageItem<PinStoreData>(
+        STORAGE_KEYS.PIN_STORE
+      )
       if (!pinStore) {
         throw new Error('No PIN configured')
       }
@@ -217,8 +254,16 @@ export default function Settings() {
         unlockMethod: 'password' as const,
         autoLockTimeout: 'never' as AutoLockTimeout
       }
-      await updateSettings(newFields)
       setFields(newFields)
+
+      // Save settings - only pass Settings properties, not fields (which includes apiUrl)
+      await updateSettings({
+        showHiddenTags: settings.showHiddenTags,
+        autoLockTimeout: 'never',
+        unlockMethod: 'password',
+        pinEnabled: false
+      })
+
       setOriginalFields(newFields)
 
       // Close modal and reset
@@ -242,7 +287,11 @@ export default function Settings() {
   }
 
   const handleUnlockMethodChange = (method: 'password' | 'pin') => {
-    if (method === 'password' && fields.unlockMethod === 'pin' && fields.pinEnabled) {
+    if (
+      method === 'password' &&
+      fields.unlockMethod === 'pin' &&
+      fields.pinEnabled
+    ) {
       // Require PIN verification to disable PIN mode
       setShowPinVerifyModal(true)
     } else if (method === 'pin') {
@@ -251,26 +300,56 @@ export default function Settings() {
     }
   }
 
-  const saveSecuritySettings = async (unlockMethod?: string, autoLockTimeout?: string) => {
+  const saveSecuritySettings = async (
+    unlockMethod?: string,
+    autoLockTimeout?: string
+  ) => {
     setIsSavingSecurity(true)
+    isSavingRef.current = true
     try {
-      await updateSettings({
-        showHiddenTags: fields.showHiddenTags,
-        apiUrl: fields.apiUrl,
-        autoLockTimeout: autoLockTimeout || fields.autoLockTimeout,
-        unlockMethod: (unlockMethod as 'password' | 'pin') || fields.unlockMethod,
-        pinEnabled: fields.pinEnabled
-      })
-      setOriginalFields({ ...fields })
+      // Use current settings from context for all values to ensure consistency
+      const settingsToSave = {
+        showHiddenTags: settings.showHiddenTags,
+        autoLockTimeout: autoLockTimeout || settings.autoLockTimeout || '20min',
+        unlockMethod:
+          (unlockMethod as 'password' | 'pin') ||
+          settings.unlockMethod ||
+          'password',
+        pinEnabled: settings.pinEnabled || false
+      }
+
+      await updateSettings(settingsToSave)
+
+      // Update local fields to match what was saved
+      setFields((prev) => ({
+        ...prev,
+        autoLockTimeout: settingsToSave.autoLockTimeout as AutoLockTimeout,
+        unlockMethod: settingsToSave.unlockMethod,
+        pinEnabled: settingsToSave.pinEnabled
+      }))
+
+      // Update originalFields after successful save
+      setOriginalFields((prev) => ({
+        ...prev,
+        autoLockTimeout: settingsToSave.autoLockTimeout as AutoLockTimeout,
+        unlockMethod: settingsToSave.unlockMethod,
+        pinEnabled: settingsToSave.pinEnabled
+      }))
     } catch (error) {
-      console.error('Error saving settings:', error)
+      console.error('[Settings] Error saving settings:', error)
     } finally {
       setIsSavingSecurity(false)
+      // Allow useEffect to run again after a short delay
+      setTimeout(() => {
+        isSavingRef.current = false
+      }, 100)
     }
   }
 
   const handleAutoLockTimeoutChange = async (timeout: AutoLockTimeout) => {
+    // Update local state first
     updateField('autoLockTimeout', timeout)
+    // Save to storage using the new timeout value
     await saveSecuritySettings(undefined, timeout)
   }
 
@@ -660,7 +739,14 @@ export default function Settings() {
                 type='submit'
                 disabled={verifyPin_pin.length !== 6 || verifyPin_isVerifying}
               >
-                {verifyPin_isVerifying && <Loader2 style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }} />}
+                {verifyPin_isVerifying && (
+                  <Loader2
+                    style={{
+                      marginRight: '8px',
+                      animation: 'spin 1s linear infinite'
+                    }}
+                  />
+                )}
                 {verifyPin_isVerifying ? 'Verifying...' : 'Verify'}
               </Button>
             </div>

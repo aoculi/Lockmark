@@ -6,10 +6,10 @@ import {
 
 /**
  * Settings interface
+ * Note: apiUrl is stored separately in STORAGE_KEYS.API_URL (global, not per-user)
  */
 export interface Settings {
   showHiddenTags: boolean
-  apiUrl: string
   autoLockTimeout: string
   unlockMethod: 'password' | 'pin'
   pinEnabled: boolean
@@ -169,18 +169,35 @@ export function clearStorageItem(key: string): Promise<void> {
 }
 
 /**
- * Get settings from chrome.storage.local
+ * Get settings key for a specific user
  */
-export function getSettings(): Promise<Settings | null> {
-  return getStorageItem<Settings>(STORAGE_KEYS.SETTINGS)
+function getSettingsKey(userId: string | null): string {
+  if (!userId) {
+    return STORAGE_KEYS.SETTINGS // Fallback to global key if no userId
+  }
+  return `${STORAGE_KEYS.SETTINGS}:${userId}`
 }
 
 /**
- * Set settings in chrome.storage.local
+ * Get settings from chrome.storage.local for a specific user
+ */
+export function getSettings(
+  userId: string | null = null
+): Promise<Settings | null> {
+  const key = getSettingsKey(userId)
+  return getStorageItem<Settings>(key)
+}
+
+/**
+ * Set settings in chrome.storage.local for a specific user
  * @throws StorageError if storage operation fails
  */
-export function setSettings(settings: Settings): Promise<void> {
-  return setStorageItem(STORAGE_KEYS.SETTINGS, settings)
+export function setSettings(
+  settings: Settings,
+  userId: string | null = null
+): Promise<void> {
+  const key = getSettingsKey(userId)
+  return setStorageItem(key, settings)
 }
 
 /**
@@ -189,11 +206,36 @@ export function setSettings(settings: Settings): Promise<void> {
 export function getDefaultSettings(): Settings {
   return {
     showHiddenTags: false,
-    apiUrl: 'http://127.0.0.1:3500',
     autoLockTimeout: DEFAULT_AUTO_LOCK_TIMEOUT,
     unlockMethod: 'password',
     pinEnabled: false
   }
+}
+
+/**
+ * Default API URL
+ */
+export const DEFAULT_API_URL = 'http://127.0.0.1:3500'
+
+/**
+ * Get API URL from storage (global setting, not user-specific)
+ * @returns API URL string, defaults to DEFAULT_API_URL if not set
+ */
+export async function getApiUrl(): Promise<string> {
+  const storedUrl = await getStorageItem<string>(STORAGE_KEYS.API_URL)
+  if (storedUrl && storedUrl.trim() !== '') {
+    return storedUrl.trim()
+  }
+  // Return default if not set
+  return DEFAULT_API_URL
+}
+
+/**
+ * Set API URL in storage (global setting, not user-specific)
+ * @param url - API URL to store
+ */
+export async function setApiUrl(url: string): Promise<void> {
+  await setStorageItem(STORAGE_KEYS.API_URL, url.trim())
 }
 
 /**
@@ -222,8 +264,10 @@ export function parseAutoLockTimeout(timeout: string): number {
 /**
  * Get auto-lock timeout from settings
  */
-export async function getAutoLockTimeout(): Promise<number> {
-  const settings = (await getSettings()) || getDefaultSettings()
+export async function getAutoLockTimeout(
+  userId: string | null = null
+): Promise<number> {
+  const settings = (await getSettings(userId)) || getDefaultSettings()
   const timeout = parseAutoLockTimeout(
     settings.autoLockTimeout || DEFAULT_AUTO_LOCK_TIMEOUT
   )
