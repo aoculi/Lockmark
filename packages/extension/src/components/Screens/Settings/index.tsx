@@ -45,7 +45,7 @@ interface SettingsFields {
   showHiddenTags: boolean
   apiUrl: string
   autoLockTimeout: AutoLockTimeout
-  unlockMethod: 'password' | 'pin'
+  useCodePin: boolean
   pinEnabled: boolean
 }
 
@@ -53,7 +53,7 @@ const DEFAULT_FIELDS: SettingsFields = {
   showHiddenTags: false,
   apiUrl: '',
   autoLockTimeout: '20min',
-  unlockMethod: 'password',
+  useCodePin: false,
   pinEnabled: false
 }
 
@@ -110,7 +110,7 @@ export default function Settings() {
             apiUrl: apiUrl,
             autoLockTimeout:
               (settings.autoLockTimeout as AutoLockTimeout) || '20min',
-            unlockMethod: settings.unlockMethod || 'password',
+            useCodePin: settings.useCodePin || false,
             pinEnabled: settings.pinEnabled || false
           }
           setFields(loadedFields)
@@ -121,7 +121,7 @@ export default function Settings() {
             showHiddenTags: false,
             apiUrl: apiUrl,
             autoLockTimeout: '20min',
-            unlockMethod: 'password',
+            useCodePin: false,
             pinEnabled: false
           }
           setFields(loadedFields)
@@ -154,7 +154,7 @@ export default function Settings() {
       await updateSettings({
         showHiddenTags: fields.showHiddenTags,
         autoLockTimeout: fields.autoLockTimeout,
-        unlockMethod: fields.unlockMethod,
+        useCodePin: fields.useCodePin,
         pinEnabled: fields.pinEnabled
       })
       setOriginalFields({ ...fields })
@@ -198,7 +198,7 @@ export default function Settings() {
       // Update fields state
       const updatedFields = {
         ...fields,
-        unlockMethod: 'pin' as const,
+        useCodePin: true,
         pinEnabled: true,
         autoLockTimeout: newTimeout
       }
@@ -208,7 +208,7 @@ export default function Settings() {
       const settingsToSave = {
         showHiddenTags: settings.showHiddenTags,
         autoLockTimeout: newTimeout,
-        unlockMethod: 'pin' as const,
+        useCodePin: true,
         pinEnabled: true
       }
 
@@ -237,7 +237,7 @@ export default function Settings() {
     // PIN is valid, disable PIN mode
     const newFields = {
       ...fields,
-      unlockMethod: 'password' as const,
+      useCodePin: false,
       autoLockTimeout: 'never' as AutoLockTimeout
     }
     setFields(newFields)
@@ -246,7 +246,7 @@ export default function Settings() {
     await updateSettings({
       showHiddenTags: settings.showHiddenTags,
       autoLockTimeout: 'never',
-      unlockMethod: 'password',
+      useCodePin: false,
       pinEnabled: false
     })
 
@@ -258,24 +258,31 @@ export default function Settings() {
 
   const handlePinVerifyClose = () => {
     setShowPinVerifyModal(false)
+    // Checkbox should remain checked if verification was cancelled
   }
 
-  const handleUnlockMethodChange = (method: 'password' | 'pin') => {
-    if (
-      method === 'password' &&
-      fields.unlockMethod === 'pin' &&
-      fields.pinEnabled
-    ) {
+  const handlePinSetupClose = () => {
+    setShowPinSetupModal(false)
+    // If setup was cancelled, ensure checkbox remains unchecked
+    if (!fields.pinEnabled) {
+      setFields((prev) => ({ ...prev, useCodePin: false }))
+    }
+  }
+
+  const handleUseCodePinChange = (checked: boolean) => {
+    if (!checked && fields.useCodePin && fields.pinEnabled) {
       // Require PIN verification to disable PIN mode
+      // Don't update checkbox state yet - wait for verification
       setShowPinVerifyModal(true)
-    } else if (method === 'pin') {
-      // Always show PIN setup modal when selecting PIN mode
+    } else if (checked) {
+      // Always show PIN setup modal when enabling PIN mode
+      // Don't update checkbox state yet - wait for setup to complete
       setShowPinSetupModal(true)
     }
   }
 
   const saveSecuritySettings = async (
-    unlockMethod?: string,
+    useCodePin?: boolean,
     autoLockTimeout?: string
   ) => {
     setIsSavingSecurity(true)
@@ -285,10 +292,8 @@ export default function Settings() {
       const settingsToSave = {
         showHiddenTags: settings.showHiddenTags,
         autoLockTimeout: autoLockTimeout || settings.autoLockTimeout || '20min',
-        unlockMethod:
-          (unlockMethod as 'password' | 'pin') ||
-          settings.unlockMethod ||
-          'password',
+        useCodePin:
+          useCodePin !== undefined ? useCodePin : settings.useCodePin || false,
         pinEnabled: settings.pinEnabled || false
       }
 
@@ -298,7 +303,7 @@ export default function Settings() {
       setFields((prev) => ({
         ...prev,
         autoLockTimeout: settingsToSave.autoLockTimeout as AutoLockTimeout,
-        unlockMethod: settingsToSave.unlockMethod,
+        useCodePin: settingsToSave.useCodePin,
         pinEnabled: settingsToSave.pinEnabled
       }))
 
@@ -306,7 +311,7 @@ export default function Settings() {
       setOriginalFields((prev) => ({
         ...prev,
         autoLockTimeout: settingsToSave.autoLockTimeout as AutoLockTimeout,
-        unlockMethod: settingsToSave.unlockMethod,
+        useCodePin: settingsToSave.useCodePin,
         pinEnabled: settingsToSave.pinEnabled
       }))
     } catch (error) {
@@ -425,44 +430,22 @@ export default function Settings() {
                 )}
 
                 <div className={styles.field}>
-                  <Text as='label' size='3' weight='medium'>
-                    Unlock Method
+                  <Text as='label' size='2'>
+                    <Checkbox
+                      checked={fields.useCodePin}
+                      onChange={(e) => handleUseCodePinChange(e.target.checked)}
+                      disabled={isSavingSecurity}
+                      label='Use PIN code (6 digits)'
+                    />
                   </Text>
-
-                  <div className={styles.radioGroup}>
-                    <label className={styles.radioLabel}>
-                      <input
-                        type='radio'
-                        name='unlockMethod'
-                        value='password'
-                        checked={fields.unlockMethod === 'password'}
-                        onChange={() => handleUnlockMethodChange('password')}
-                        disabled={isSavingSecurity}
-                      />
-                      <Text size='2'>Always unlock</Text>
-                    </label>
-
-                    <label className={styles.radioLabel}>
-                      <input
-                        type='radio'
-                        name='unlockMethod'
-                        value='pin'
-                        checked={fields.unlockMethod === 'pin'}
-                        onChange={() => handleUnlockMethodChange('pin')}
-                        disabled={isSavingSecurity}
-                      />
-                      <Text size='2'>PIN code (6 digits)</Text>
-                    </label>
-                  </div>
-
                   <Text size='2' color='light'>
-                    {fields.unlockMethod === 'password'
-                      ? 'Vault will never auto-lock. Close and reopen without re-entering password.'
-                      : 'Use a 6-digit PIN to quickly unlock after auto-lock timeout.'}
+                    {fields.useCodePin
+                      ? 'Use a 6-digit PIN to quickly unlock after auto-lock timeout.'
+                      : 'Vault will never auto-lock. Close and reopen without re-entering password.'}
                   </Text>
                 </div>
 
-                {fields.unlockMethod === 'pin' && (
+                {fields.useCodePin && (
                   <div className={styles.field}>
                     <Text as='label' size='3' weight='medium'>
                       Auto-lock Timeout
@@ -648,7 +631,7 @@ export default function Settings() {
 
       <PinSetupModal
         open={showPinSetupModal}
-        onClose={() => setShowPinSetupModal(false)}
+        onClose={handlePinSetupClose}
         onSuccess={handlePinSetup}
       />
 

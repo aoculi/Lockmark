@@ -35,11 +35,15 @@ export function PinSetupModal({
   const handlePinComplete = (completedPin: string) => {
     if (completedPin.length === 6) {
       setStep('confirm')
+      setConfirmPin('') // Clear confirm PIN when transitioning
       setError(null)
     }
   }
 
   const handleConfirmComplete = async (completedPin: string) => {
+    // Prevent multiple submissions
+    if (isSubmitting) return
+
     if (pin !== completedPin) {
       setError('PINs do not match. Please try again.')
       setConfirmPin('')
@@ -89,17 +93,6 @@ export function PinSetupModal({
               onComplete={handlePinComplete}
               autoFocus
             />
-            <Button
-              onClick={() => {
-                if (pin.length === 6) {
-                  handlePinComplete(pin)
-                }
-              }}
-              disabled={pin.length !== 6}
-              className={styles.button}
-            >
-              Continue
-            </Button>
           </div>
         )
 
@@ -110,6 +103,7 @@ export function PinSetupModal({
               Confirm your PIN
             </Text>
             <PinInput
+              key='confirm-pin'
               value={confirmPin}
               onChange={(newPin) => {
                 setConfirmPin(newPin)
@@ -117,11 +111,20 @@ export function PinSetupModal({
                 if (error) setError(null)
               }}
               onComplete={handleConfirmComplete}
+              disabled={isSubmitting}
               autoFocus
             />
             {error && (
               <div className={styles.error}>
                 <Text size='2'>{error}</Text>
+              </div>
+            )}
+            {isSubmitting && (
+              <div className={styles.loading}>
+                <Loader2 className={styles.spinner} />
+                <Text size='2' color='light'>
+                  Setting up...
+                </Text>
               </div>
             )}
             <div className={styles.actions}>
@@ -131,17 +134,6 @@ export function PinSetupModal({
                 disabled={isSubmitting}
               >
                 Back
-              </Button>
-              <Button
-                onClick={() => {
-                  if (confirmPin.length === 6) {
-                    handleConfirmComplete(confirmPin)
-                  }
-                }}
-                disabled={confirmPin.length !== 6 || isSubmitting}
-              >
-                {isSubmitting && <Loader2 className={styles.spinner} />}
-                {isSubmitting ? 'Setting up...' : 'Setup PIN'}
               </Button>
             </div>
           </div>

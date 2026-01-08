@@ -11,7 +11,7 @@ import {
 export interface Settings {
   showHiddenTags: boolean
   autoLockTimeout: string
-  unlockMethod: 'password' | 'pin'
+  useCodePin: boolean
   pinEnabled: boolean
 }
 
@@ -207,7 +207,7 @@ export function getDefaultSettings(): Settings {
   return {
     showHiddenTags: false,
     autoLockTimeout: DEFAULT_AUTO_LOCK_TIMEOUT,
-    unlockMethod: 'password',
+    useCodePin: false,
     pinEnabled: false
   }
 }

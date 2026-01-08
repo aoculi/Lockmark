@@ -5,7 +5,6 @@
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 
-import Button from '@/components/ui/Button'
 import { Dialog } from '@/components/ui/Dialog'
 import PinInput from '@/components/ui/PinInput'
 import Text from '@/components/ui/Text'
@@ -79,27 +78,14 @@ export function PinVerifyModal({
           </div>
         )}
 
-        <div className={styles.actions}>
-          <Button
-            variant='ghost'
-            onClick={handleClose}
-            disabled={isVerifying}
-            type='button'
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (pin.length === 6) {
-                handleComplete(pin)
-              }
-            }}
-            disabled={pin.length !== 6 || isVerifying}
-          >
-            {isVerifying && <Loader2 className={styles.spinner} />}
-            {isVerifying ? 'Verifying...' : 'Verify'}
-          </Button>
-        </div>
+        {isVerifying && (
+          <div className={styles.loading}>
+            <Loader2 className={styles.spinner} />
+            <Text size='2' color='light'>
+              Verifying...
+            </Text>
+          </div>
+        )}
       </div>
     </Dialog>
   )

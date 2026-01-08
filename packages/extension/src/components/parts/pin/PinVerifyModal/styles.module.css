@@ -24,7 +24,6 @@
 
 .spinner {
   animation: spin 1s linear infinite;
-  margin-right: 8px;
 }
 
 @keyframes spin {
@@ -34,4 +33,12 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
 }
