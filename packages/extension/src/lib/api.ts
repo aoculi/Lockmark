@@ -2,9 +2,9 @@
  * API client for secure extension
  */
 
-import { LoginResponse } from '@/api/auth-api'
+import type { AuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { STORAGE_KEYS } from '@/lib/constants'
-import { clearStorageItem, getSettings, getStorageItem } from '@/lib/storage'
+import { clearStorageItem, getApiUrl, getStorageItem } from '@/lib/storage'
 
 /**
  * API client types
@@ -47,19 +47,19 @@ export function createApiError(
  */
 
 /**
- * Get API URL from settings
- * @throws ApiError if API URL is not configured
+ * Get API URL from storage (global setting)
+ * Uses the global API URL stored separately from user settings
  */
-async function getApiUrl(): Promise<string> {
-  const settings = await getSettings()
-  if (!settings?.apiUrl || settings.apiUrl.trim() === '') {
+async function getApiUrlFromStorage(): Promise<string> {
+  const apiUrl = await getApiUrl()
+  if (!apiUrl || apiUrl.trim() === '') {
     throw createApiError(
       -1,
       'API URL is not configured. Please set the API Base URL in Settings.',
       'The API URL must be defined in the extension settings before making API calls.'
     )
   }
-  return settings.apiUrl.trim()
+  return apiUrl
 }
 
 /**
@@ -69,7 +69,7 @@ async function getApiUrl(): Promise<string> {
  */
 async function buildUrl(path: string): Promise<string> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  const apiUrl = await getApiUrl()
+  const apiUrl = await getApiUrlFromStorage()
   return `${apiUrl}${normalizedPath}`
 }
 
@@ -78,7 +78,7 @@ async function buildUrl(path: string): Promise<string> {
  * @returns Bearer token header or undefined
  */
 async function getAuthHeader(): Promise<string | undefined> {
-  const session = await getStorageItem<LoginResponse>(STORAGE_KEYS.SESSION)
+  const session = await getStorageItem<AuthSession>(STORAGE_KEYS.SESSION)
   return session?.token ? `Bearer ${session.token}` : undefined
 }
 

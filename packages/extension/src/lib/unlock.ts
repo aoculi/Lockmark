@@ -8,6 +8,7 @@
  */
 
 import type { KdfParams } from '@/api/auth-api'
+import type { AuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { apiClient, createApiError, type ApiError } from '@/lib/api'
 import { AAD_LABELS, constructAadWmk, STORAGE_KEYS } from '@/lib/constants'
 import {
@@ -20,17 +21,19 @@ import {
   uint8ArrayToBase64
 } from '@/lib/crypto'
 import { whenCryptoReady } from '@/lib/cryptoEnv'
-import { setStorageItem } from '@/lib/storage'
-
-/**
- * AAD context for authenticated encryption
- */
-export type AadContext = {
-  userId: string
-  vaultId: string
-  wmkLabel: string
-  manifestLabel: string
-}
+import {
+  getLockState,
+  incrementFailedPinAttempts,
+  resetLockState
+} from '@/lib/lockState'
+import { decryptMakWithPin, verifyPin } from '@/lib/pin'
+import {
+  clearStorageItem,
+  getStorageItem,
+  setStorageItem,
+  type AadContext,
+  type PinStoreData
+} from '@/lib/storage'
 
 /**
  * Keystore data stored in chrome.storage
@@ -164,6 +167,12 @@ export async function unlock(input: UnlockInput): Promise<UnlockResult> {
     }
     await setStorageItem(STORAGE_KEYS.KEYSTORE, keystoreData)
 
+    // Clear the explicit locked flag (in case user was locked and unlocking with password)
+    await clearStorageItem(STORAGE_KEYS.IS_SOFT_LOCKED).catch(() => {})
+
+    // Reset lock state on successful unlock (clears failed PIN attempts)
+    await resetLockState()
+
     // Zeroize local temporaries (MK, KEK, MAK)
     cryptoZeroize(mk, kek, mak)
 
@@ -174,5 +183,68 @@ export async function unlock(input: UnlockInput): Promise<UnlockResult> {
   } catch (error) {
     cryptoZeroize(uek)
     throw error
+  }
+}
+
+/**
+ * Unlock vault using PIN
+ * Restores keystore from PIN-encrypted MAK
+ *
+ * @param pin - 6-digit PIN code
+ * @returns UnlockResult with success status
+ * @throws Error if PIN is invalid or too many attempts
+ */
+export async function unlockWithPin(pin: string): Promise<UnlockResult> {
+  await whenCryptoReady()
+
+  // Get PIN store
+  const pinStore = await getStorageItem<PinStoreData>(STORAGE_KEYS.PIN_STORE)
+  if (!pinStore) {
+    throw new Error('PIN not configured')
+  }
+
+  // Check lock state
+  const lockState = await getLockState()
+  if (lockState.isHardLocked) {
+    throw new Error('Too many failed attempts. Please login with password.')
+  }
+
+  // Verify PIN and decrypt MAK
+  const isValid = await verifyPin(pin, pinStore)
+  if (!isValid) {
+    await incrementFailedPinAttempts()
+    throw new Error('Invalid PIN')
+  }
+
+  const mak = await decryptMakWithPin(pin, pinStore)
+
+  // Restore keystore
+  const keystoreData: KeystoreData = {
+    mak: uint8ArrayToBase64(mak),
+    aadContext: pinStore.aadContext
+  }
+  await setStorageItem(STORAGE_KEYS.KEYSTORE, keystoreData)
+
+  // Update session's createdAt timestamp to reset auto-lock timer
+  const session = await getStorageItem<AuthSession>(STORAGE_KEYS.SESSION)
+  if (session) {
+    const updatedSession = {
+      ...session,
+      createdAt: Date.now()
+    }
+    await setStorageItem(STORAGE_KEYS.SESSION, updatedSession)
+  }
+
+  // Clear the explicit locked flag
+  await clearStorageItem(STORAGE_KEYS.IS_SOFT_LOCKED)
+
+  // Reset lock state on successful unlock
+  await resetLockState()
+
+  cryptoZeroize(mak)
+
+  return {
+    success: true,
+    isFirstUnlock: false
   }
 }

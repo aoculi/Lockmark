@@ -8,12 +8,14 @@ import {
   useNavigation
 } from '@/components/hooks/providers/useNavigationProvider'
 import { SettingsProvider } from '@/components/hooks/providers/useSettingsProvider'
+import { UnlockStateProvider } from '@/components/hooks/providers/useUnlockStateProvider'
 import { useRouteGuard } from '@/components/hooks/useRouteGuard'
 
 import Bookmark from '@/components/Screens/Bookmark'
 import Collection from '@/components/Screens/Collection'
 import Collections from '@/components/Screens/Collections'
 import Login from '@/components/Screens/Login'
+import PinUnlock from '@/components/Screens/PinUnlock'
 import Register from '@/components/Screens/Register'
 import Tag from '@/components/Screens/Tag'
 import Tags from '@/components/Screens/Tags'
@@ -32,6 +34,8 @@ function RootContent() {
         return <Login />
       case '/register':
         return <Register />
+      case '/pin-unlock':
+        return <PinUnlock />
       case '/vault':
         return <Vault />
       case '/bookmark':
@@ -64,19 +68,18 @@ function RootContent() {
   )
 }
 
-/**
- * Root component that sets up all providers
- */
 export default function Root() {
   return (
-    <SettingsProvider>
-      <AuthSessionProvider>
-        <ManifestProvider>
-          <NavigationProvider>
-            <RootContent />
-          </NavigationProvider>
-        </ManifestProvider>
-      </AuthSessionProvider>
-    </SettingsProvider>
+    <AuthSessionProvider>
+      <SettingsProvider>
+        <UnlockStateProvider>
+          <ManifestProvider>
+            <NavigationProvider>
+              <RootContent />
+            </NavigationProvider>
+          </ManifestProvider>
+        </UnlockStateProvider>
+      </SettingsProvider>
+    </AuthSessionProvider>
   )
 }

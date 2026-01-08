@@ -75,3 +75,26 @@
     transform: rotate(360deg);
   }
 }
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.savingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 122, 255, 0.1);
+  border-radius: 6px;
+  margin-bottom: 10px;
+}

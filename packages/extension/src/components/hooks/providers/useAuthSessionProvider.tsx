@@ -12,9 +12,9 @@ import { fetchRefreshToken } from '@/api/auth-api'
 import { MIN_REFRESH_INTERVAL, STORAGE_KEYS } from '@/lib/constants'
 import {
   clearStorageItem,
-  getAutoLockTimeout,
   getStorageItem,
-  setStorageItem
+  setStorageItem,
+  type PinStoreData
 } from '@/lib/storage'
 
 export type AuthSession = {
@@ -31,7 +31,7 @@ type AuthSessionContextType = {
   session: AuthSession
   isAuthenticated: boolean
   setSession: (response: LoginResponse) => Promise<void>
-  clearSession: () => Promise<void>
+  clearSession: (lockMode?: 'soft' | 'hard') => Promise<void>
 }
 
 const defaultSession: AuthSession = {
@@ -68,16 +68,38 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  const clearSession = useCallback(async () => {
-    setSessionState(defaultSession)
-    setIsAuthenticated(false)
+  const clearSession = useCallback(
+    async (lockMode: 'soft' | 'hard' = 'hard') => {
+      if (lockMode === 'soft') {
+        // Soft lock: Keep SESSION, clear only KEYSTORE + MANIFEST
+        // Check if PIN is configured to determine if soft lock is possible
+        const pinStore = await getStorageItem<PinStoreData>(
+          STORAGE_KEYS.PIN_STORE
+        )
+        if (pinStore) {
+          await Promise.allSettled([
+            clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
+            clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
+          ])
+          return
+        }
+      }
 
-    await Promise.allSettled([
-      clearStorageItem(STORAGE_KEYS.SESSION).catch(() => {}),
-      clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
-      clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {})
-    ])
-  }, [])
+      // Hard lock: Full logout
+      setSessionState(defaultSession)
+      setIsAuthenticated(false)
+
+      await Promise.allSettled([
+        clearStorageItem(STORAGE_KEYS.SESSION).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.KEYSTORE).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.MANIFEST).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.PIN_STORE).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.LOCK_STATE).catch(() => {}),
+        clearStorageItem(STORAGE_KEYS.IS_SOFT_LOCKED).catch(() => {})
+      ])
+    },
+    []
+  )
 
   useEffect(() => {
     const loadAndRefreshSession = async () => {
@@ -97,27 +119,13 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       const now = Date.now()
       const timeUntilExpiry = session.expiresAt - now
 
-      // Token has expired - clear session
       if (timeUntilExpiry <= 0) {
         await clearSession()
         setIsLoading(false)
         return
       }
 
-      // Get auto-lock timeout (defaults to 20 minutes if settings not configured)
-      const autoLockTimeoutMs = await getAutoLockTimeout()
-
-      // Calculate time since session was created/refreshed
-      const sessionCreatedAt = session.createdAt
-      const timeSinceCreation = now - sessionCreatedAt
-
-      // If session was created/refreshed longer ago than autoLockTimeout, clear it
-      // (even if token is still technically valid)
-      if (timeSinceCreation > autoLockTimeoutMs) {
-        await clearSession()
-        setIsLoading(false)
-        return
-      }
+      const timeSinceCreation = now - session.createdAt
 
       if (timeSinceCreation > MIN_REFRESH_INTERVAL) {
         try {
@@ -125,8 +133,8 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
           const updatedSession: AuthSession = {
             ...session,
             token: refreshResponse.token,
-            expiresAt: refreshResponse.expires_at,
-            createdAt: refreshResponse.created_at
+            expiresAt: refreshResponse.expires_at
+            // Keep original createdAt - don't reset auto-lock timer on token refresh
           }
           setSessionState(updatedSession)
           setIsAuthenticated(true)
@@ -149,6 +157,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         }
       }
 
+      // Session is still valid and within timeout
       setSessionState(session)
       setIsAuthenticated(true)
       setIsLoading(false)
