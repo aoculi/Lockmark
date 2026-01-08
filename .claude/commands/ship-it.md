@@ -18,9 +18,12 @@ Intelligently commit and push changes using conventional commit messages, automa
 6. Push all commits to the remote
 
 Follow these conventions:
+
 - Use format: `type(scope): description`
 - Types: feat, fix, refactor, docs, test, style, chore, perf
 - Keep descriptions under 50 characters
 - Use imperative mood (e.g., "add" not "added")
 
 If a message argument is provided, use it for a single commit message instead of grouping.
+
+**IMPORTANT**: Do NOT add any "Generated with Claude Code" or "Co-Authored-By" footers to commit messages. Keep them clean and follow only the Conventional Commits specification.
