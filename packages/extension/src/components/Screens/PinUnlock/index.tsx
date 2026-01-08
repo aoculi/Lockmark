@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
@@ -8,6 +8,7 @@ import usePopupSize from '@/components/hooks/usePopupSize'
 import { PIN_FAILED_ATTEMPTS_THRESHOLD } from '@/lib/pin'
 
 import Button from '@/components/ui/Button'
+import PinInput from '@/components/ui/PinInput'
 import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
@@ -30,8 +31,7 @@ export default function PinUnlock() {
   usePopupSize('compact')
   const { navigate } = useNavigation()
   const { clearSession } = useAuthSession()
-  const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '', '', ''])
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [pin, setPin] = useState('')
   const { unlockWithPin, phase, lockState } = useQueryPin()
 
   useEffect(() => {
@@ -40,71 +40,17 @@ export default function PinUnlock() {
     }
   }, [unlockWithPin.isSuccess, navigate])
 
-  useEffect(() => {
-    // Auto-submit when all 6 digits are filled
-    const pin = pinDigits.join('')
-    if (pin.length === 6 && !unlockWithPin.isPending) {
-      unlockWithPin.mutateAsync(pin).catch(() => {
+  const handlePinComplete = (completedPin: string) => {
+    if (!unlockWithPin.isPending) {
+      unlockWithPin.mutateAsync(completedPin).catch(() => {
         // Clear PIN on error
-        setPinDigits(['', '', '', '', '', ''])
-        inputRefs.current[0]?.focus()
+        setPin('')
       })
     }
-  }, [pinDigits, unlockWithPin])
-
-  const handleInputChange = (index: number, value: string) => {
-    // Only allow single digit
-    const digit = value.replace(/\D/g, '').slice(-1)
-
-    const newDigits = [...pinDigits]
-    newDigits[index] = digit
-    setPinDigits(newDigits)
-
-    // Auto-focus next input if digit was entered
-    if (digit && index < 5) {
-      inputRefs.current[index + 1]?.focus()
-    }
   }
 
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    // Handle backspace
-    if (e.key === 'Backspace') {
-      if (!pinDigits[index] && index > 0) {
-        // If current input is empty, focus previous and clear it
-        const newDigits = [...pinDigits]
-        newDigits[index - 1] = ''
-        setPinDigits(newDigits)
-        inputRefs.current[index - 1]?.focus()
-      } else if (pinDigits[index]) {
-        // Clear current digit
-        const newDigits = [...pinDigits]
-        newDigits[index] = ''
-        setPinDigits(newDigits)
-      }
-    }
-  }
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault()
-    const pastedData = e.clipboardData
-      .getData('text')
-      .replace(/\D/g, '')
-      .slice(0, 6)
-
-    if (pastedData) {
-      const newDigits = pastedData
-        .split('')
-        .concat(['', '', '', '', '', ''])
-        .slice(0, 6)
-      setPinDigits(newDigits)
-
-      // Focus last filled input or first empty
-      const nextIndex = Math.min(pastedData.length, 5)
-      inputRefs.current[nextIndex]?.focus()
-    }
+  const handlePinChange = (newPin: string) => {
+    setPin(newPin)
   }
 
   const handleLogout = async () => {
@@ -136,27 +82,13 @@ export default function PinUnlock() {
           </div>
         ) : (
           <>
-            <div className={styles.pinContainer}>
-              {pinDigits.map((digit, index) => (
-                <input
-                  key={index}
-                  ref={(el) => {
-                    inputRefs.current[index] = el
-                  }}
-                  type='password'
-                  inputMode='numeric'
-                  pattern='[0-9]'
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleInputChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  onPaste={handlePaste}
-                  disabled={unlockWithPin.isPending}
-                  autoFocus={index === 0}
-                  className={styles.pinDigit}
-                />
-              ))}
-            </div>
+            <PinInput
+              value={pin}
+              onChange={handlePinChange}
+              onComplete={handlePinComplete}
+              disabled={unlockWithPin.isPending}
+              autoFocus
+            />
 
             {unlockWithPin.isError && (
               <div className={styles.error}>

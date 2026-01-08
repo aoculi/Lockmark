@@ -1,4 +1,4 @@
-import { KeyRound, Loader2, TriangleAlert } from 'lucide-react'
+import { Loader2, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
@@ -19,10 +19,10 @@ import {
 import type { KeystoreData } from '@/lib/unlock'
 
 import Header from '@/components/parts/Header'
-import { PinSetupModal } from '@/components/parts/PinSetupModal'
+import { PinSetupModal } from '@/components/parts/pin/PinSetupModal'
+import { PinVerifyModal } from '@/components/parts/pin/PinVerifyModal'
 import Button from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
-import { Drawer } from '@/components/ui/Drawer'
 import FileInput from '@/components/ui/FileInput'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -74,9 +74,6 @@ export default function Settings() {
 
   const [showPinSetupModal, setShowPinSetupModal] = useState(false)
   const [showPinVerifyModal, setShowPinVerifyModal] = useState(false)
-  const [verifyPin_pin, setVerifyPin_pin] = useState('')
-  const [verifyPin_error, setVerifyPin_error] = useState<string | null>(null)
-  const [verifyPin_isVerifying, setVerifyPin_isVerifying] = useState(false)
   const [isSavingSecurity, setIsSavingSecurity] = useState(false)
 
   const { importFile, setImportFile, isImporting, handleImport } =
@@ -224,66 +221,43 @@ export default function Settings() {
     }
   }
 
-  const handlePinVerifySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (verifyPin_pin.length !== 6) return
-
-    setVerifyPin_isVerifying(true)
-    setVerifyPin_error(null)
-
-    try {
-      // Get PIN store
-      const pinStore = await getStorageItem<PinStoreData>(
-        STORAGE_KEYS.PIN_STORE
-      )
-      if (!pinStore) {
-        throw new Error('No PIN configured')
-      }
-
-      // Verify PIN
-      const isValid = await verifyPin(verifyPin_pin, pinStore)
-      if (!isValid) {
-        setVerifyPin_error('Invalid PIN')
-        setVerifyPin_isVerifying(false)
-        return
-      }
-
-      // PIN is valid, disable PIN mode
-      const newFields = {
-        ...fields,
-        unlockMethod: 'password' as const,
-        autoLockTimeout: 'never' as AutoLockTimeout
-      }
-      setFields(newFields)
-
-      // Save settings - only pass Settings properties, not fields (which includes apiUrl)
-      await updateSettings({
-        showHiddenTags: settings.showHiddenTags,
-        autoLockTimeout: 'never',
-        unlockMethod: 'password',
-        pinEnabled: false
-      })
-
-      setOriginalFields(newFields)
-
-      // Close modal and reset
-      setShowPinVerifyModal(false)
-      setVerifyPin_pin('')
-      setVerifyPin_error(null)
-    } catch (error) {
-      console.error('PIN verification error:', error)
-      setVerifyPin_error(
-        error instanceof Error ? error.message : 'Verification failed'
-      )
-    } finally {
-      setVerifyPin_isVerifying(false)
+  const handlePinVerifySuccess = async (pin: string) => {
+    // Get PIN store
+    const pinStore = await getStorageItem<PinStoreData>(STORAGE_KEYS.PIN_STORE)
+    if (!pinStore) {
+      throw new Error('No PIN configured')
     }
+
+    // Verify PIN
+    const isValid = await verifyPin(pin, pinStore)
+    if (!isValid) {
+      throw new Error('Invalid PIN')
+    }
+
+    // PIN is valid, disable PIN mode
+    const newFields = {
+      ...fields,
+      unlockMethod: 'password' as const,
+      autoLockTimeout: 'never' as AutoLockTimeout
+    }
+    setFields(newFields)
+
+    // Save settings - only pass Settings properties, not fields (which includes apiUrl)
+    await updateSettings({
+      showHiddenTags: settings.showHiddenTags,
+      autoLockTimeout: 'never',
+      unlockMethod: 'password',
+      pinEnabled: false
+    })
+
+    setOriginalFields(newFields)
+
+    // Close modal
+    setShowPinVerifyModal(false)
   }
 
   const handlePinVerifyClose = () => {
     setShowPinVerifyModal(false)
-    setVerifyPin_pin('')
-    setVerifyPin_error(null)
   }
 
   const handleUnlockMethodChange = (method: 'password' | 'pin') => {
@@ -678,81 +652,11 @@ export default function Settings() {
         onSuccess={handlePinSetup}
       />
 
-      <Drawer
+      <PinVerifyModal
         open={showPinVerifyModal}
-        title='Verify PIN'
-        description='Enter your PIN to disable PIN unlock'
-        width={400}
         onClose={handlePinVerifyClose}
-      >
-        <div style={{ padding: '20px' }}>
-          <form
-            onSubmit={handlePinVerifySubmit}
-            style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
-          >
-            <Input
-              type='text'
-              inputMode='numeric'
-              pattern='[0-9]*'
-              placeholder='000000'
-              value={verifyPin_pin}
-              onChange={(e) => {
-                setVerifyPin_pin(e.target.value.replace(/\D/g, '').slice(0, 6))
-                if (verifyPin_error) setVerifyPin_error(null)
-              }}
-              disabled={verifyPin_isVerifying}
-              autoFocus
-              style={{
-                textAlign: 'center',
-                fontSize: '24px',
-                letterSpacing: '8px',
-                fontFamily: 'monospace'
-              }}
-            >
-              <KeyRound size={16} />
-            </Input>
-
-            {verifyPin_error && (
-              <div
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'rgba(255, 59, 48, 0.1)',
-                  border: '1px solid rgba(255, 59, 48, 0.3)',
-                  borderRadius: '6px',
-                  color: '#ff3b30'
-                }}
-              >
-                <Text size='2'>{verifyPin_error}</Text>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <Button
-                variant='ghost'
-                onClick={handlePinVerifyClose}
-                disabled={verifyPin_isVerifying}
-                type='button'
-              >
-                Cancel
-              </Button>
-              <Button
-                type='submit'
-                disabled={verifyPin_pin.length !== 6 || verifyPin_isVerifying}
-              >
-                {verifyPin_isVerifying && (
-                  <Loader2
-                    style={{
-                      marginRight: '8px',
-                      animation: 'spin 1s linear infinite'
-                    }}
-                  />
-                )}
-                {verifyPin_isVerifying ? 'Verifying...' : 'Verify'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </Drawer>
+        onSuccess={handlePinVerifySuccess}
+      />
     </div>
   )
 }
