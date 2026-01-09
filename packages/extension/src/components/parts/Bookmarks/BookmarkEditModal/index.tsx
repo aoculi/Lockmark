@@ -1,6 +1,3 @@
-import { X } from 'lucide-react'
-import { useCallback, useEffect, useRef } from 'react'
-
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import type { Bookmark } from '@/lib/types'
@@ -8,7 +5,7 @@ import type { Bookmark } from '@/lib/types'
 import BookmarkForm, {
   type BookmarkFormData
 } from '@/components/parts/Bookmarks/BookmarkForm'
-import Text from '@/components/ui/Text'
+import { Dialog } from '@/components/ui/Dialog'
 
 import styles from './styles.module.css'
 
@@ -23,39 +20,6 @@ export default function BookmarkEditModal({
 }: BookmarkEditModalProps) {
   const { updateBookmark } = useBookmarks()
   const { setFlash } = useNavigation()
-  const modalRef = useRef<HTMLDivElement>(null)
-
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    },
-    [onClose]
-  )
-
-  const handleClickOutside = useCallback(
-    (event: MouseEvent) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(event.target as Node)
-      ) {
-        onClose()
-      }
-    },
-    [onClose]
-  )
-
-  useEffect(() => {
-    if (bookmark) {
-      document.addEventListener('keydown', handleKeyDown)
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [bookmark, handleKeyDown, handleClickOutside])
 
   const handleSubmit = async (data: BookmarkFormData) => {
     if (!bookmark) return
@@ -78,24 +42,15 @@ export default function BookmarkEditModal({
     }
   }
 
-  if (!bookmark) return null
-
   return (
-    <div className={styles.overlay}>
-      <div ref={modalRef} className={styles.modal}>
-        <div className={styles.header}>
-          <Text size='3' weight='medium'>
-            Edit Bookmark
-          </Text>
-          <button
-            type='button'
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label='Close'
-          >
-            <X size={18} />
-          </button>
-        </div>
+    <Dialog
+      title='Edit Bookmark'
+      open={bookmark !== null}
+      onClose={onClose}
+      width={420}
+      showCloseButton={false}
+    >
+      {bookmark && (
         <div className={styles.content}>
           <BookmarkForm
             initialData={{
@@ -110,7 +65,7 @@ export default function BookmarkEditModal({
             submitLabel='Save'
           />
         </div>
-      </div>
-    </div>
+      )}
+    </Dialog>
   )
 }
