@@ -1,0 +1,160 @@
+.component {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background-color 0.15s ease;
+}
+
+.component:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.component:hover .actions {
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  margin-left: 8px;
+}
+
+.component:hover .tags {
+  transform: translateX(-8px);
+}
+
+.favicon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.favicon img {
+  display: block;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.domain {
+  font-size: 12px;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tagMore {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  overflow: hidden;
+  transition:
+    opacity 0.15s ease,
+    visibility 0.15s ease,
+    width 0.15s ease,
+    margin 0.15s ease;
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-light);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.action:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.action span {
+  display: none;
+}
+
+.action:first-child span {
+  display: inline;
+}
+
+.actionActive {
+  color: var(--primary);
+}
+
+.actionActive:hover {
+  color: var(--primary);
+  background-color: rgba(var(--primary-rgb), 0.15);
+}
+
+.actionDanger:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}

@@ -1,0 +1,9 @@
+.component {
+  width: 100%;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding-top: 4px;
+}
