@@ -26,6 +26,7 @@ interface CollectionItemProps {
   onTogglePin: (bookmark: Bookmark) => void
   onDelete: (id: string) => void
   onEdit?: (bookmark: Bookmark) => void
+  onAddTags?: () => void
   onIconChange?: (id: string, icon: string | undefined) => void
   containerRef: (el: HTMLDivElement | null) => void
   inputRef: (el: HTMLInputElement | null) => void
@@ -45,6 +46,7 @@ export default function CollectionItem({
   onTogglePin,
   onDelete,
   onEdit,
+  onAddTags,
   onIconChange,
   containerRef,
   inputRef
@@ -137,6 +139,7 @@ export default function CollectionItem({
                 onTogglePin={() => onTogglePin(bookmark)}
                 onEdit={onEdit ? () => onEdit(bookmark) : undefined}
                 onDelete={() => onDelete(bookmark.id)}
+                onAddTags={onAddTags}
               />
             ))}
           </div>

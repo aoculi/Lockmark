@@ -22,12 +22,14 @@ interface CollectionsListProps {
   searchQuery: string
   selectedTags: string[]
   onEdit?: (bookmark: Bookmark) => void
+  onAddTags?: () => void
 }
 
 export default function CollectionsList({
   searchQuery,
   selectedTags,
-  onEdit
+  onEdit,
+  onAddTags
 }: CollectionsListProps) {
   const { bookmarks, updateBookmark, deleteBookmark } = useBookmarks()
   const { collections, updateCollection } = useCollections()
@@ -203,6 +205,7 @@ export default function CollectionsList({
             onTogglePin={handleTogglePin}
             onDelete={handleDelete}
             onEdit={onEdit}
+            onAddTags={onAddTags}
             onIconChange={handleIconChange}
             containerRef={(el) => {
               containerRefs.current[collection.id] = el
@@ -230,6 +233,7 @@ export default function CollectionsList({
                 onTogglePin={() => handleTogglePin(bookmark)}
                 onEdit={onEdit ? () => onEdit(bookmark) : undefined}
                 onDelete={() => handleDelete(bookmark.id)}
+                onAddTags={onAddTags}
               />
             ))}
           </div>

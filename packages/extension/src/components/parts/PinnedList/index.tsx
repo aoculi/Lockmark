@@ -16,12 +16,14 @@ interface PinnedListProps {
   searchQuery: string
   selectedTags: string[]
   onEdit?: (bookmark: Bookmark) => void
+  onAddTags?: () => void
 }
 
 export default function PinnedList({
   searchQuery,
   selectedTags,
-  onEdit
+  onEdit,
+  onAddTags
 }: PinnedListProps) {
   const { bookmarks, updateBookmark, deleteBookmark } = useBookmarks()
   const { tags } = useTags()
@@ -45,7 +47,9 @@ export default function PinnedList({
       }
     }
 
-    return filtered.sort((a: Bookmark, b: Bookmark) => b.updated_at - a.updated_at)
+    return filtered.sort(
+      (a: Bookmark, b: Bookmark) => b.updated_at - a.updated_at
+    )
   }, [bookmarks, tags, searchQuery, selectedTags])
 
   const handleTogglePin = async (bookmark: Bookmark) => {
@@ -89,6 +93,7 @@ export default function PinnedList({
               onTogglePin={() => handleTogglePin(bookmark)}
               onEdit={onEdit ? () => onEdit(bookmark) : undefined}
               onDelete={() => handleDelete(bookmark.id)}
+              onAddTags={onAddTags}
             />
           ))}
         </div>

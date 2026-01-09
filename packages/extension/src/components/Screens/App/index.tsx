@@ -19,6 +19,7 @@ import CreateCollection from '@/components/parts/CreateCollection'
 import PinnedList from '@/components/parts/PinnedList'
 import SmartHeader from '@/components/parts/SmartHeader'
 import SmartSearch from '@/components/parts/SmartSearch'
+import TagManageModal from '@/components/parts/Tags/TagManageModal'
 import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
@@ -33,6 +34,7 @@ function AppContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null)
+  const [showTagManageModal, setShowTagManageModal] = useState(false)
 
   if (isLoading || unlockLoading) {
     return (
@@ -86,18 +88,24 @@ function AppContent() {
             searchQuery={searchQuery}
             selectedTags={selectedTags}
             onEdit={setEditingBookmark}
+            onAddTags={() => setShowTagManageModal(true)}
           />
           <CreateCollection />
           <CollectionsList
             searchQuery={searchQuery}
             selectedTags={selectedTags}
             onEdit={setEditingBookmark}
+            onAddTags={() => setShowTagManageModal(true)}
           />
         </div>
       </div>
       <BookmarkEditModal
         bookmark={editingBookmark}
         onClose={() => setEditingBookmark(null)}
+      />
+      <TagManageModal
+        open={showTagManageModal}
+        onClose={() => setShowTagManageModal(false)}
       />
     </div>
   )
