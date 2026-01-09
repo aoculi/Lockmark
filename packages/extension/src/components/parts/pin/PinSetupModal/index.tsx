@@ -143,6 +143,7 @@ export function PinSetupModal({
       description='Create a 6-digit PIN to quickly unlock your vault'
       width={400}
       onClose={handleClose}
+      showCloseButton={false}
     >
       {renderStep()}
     </Dialog>

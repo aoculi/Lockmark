@@ -58,6 +58,7 @@ export default function IconPickerModal({
       title='Select Icon'
       description='Choose an icon for this collection'
       width={400}
+      showCloseButton={false}
     >
       <div className={styles.content}>
         <div className={styles.searchContainer}>

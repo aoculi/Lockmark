@@ -58,6 +58,7 @@ export function PinVerifyModal({
       description='Enter your PIN to disable PIN unlock'
       width={400}
       onClose={handleClose}
+      showCloseButton={false}
     >
       <div className={styles.form}>
         <PinInput
