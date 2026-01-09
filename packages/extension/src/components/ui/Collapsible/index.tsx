@@ -7,11 +7,12 @@ import styles from './styles.module.css'
 
 interface CollapsibleProps {
   icon: LucideIcon
-  label: string
+  label: string | React.ReactNode
   count: number
   defaultOpen?: boolean
   depth?: number
   children: React.ReactNode
+  editable?: boolean
 }
 
 export default function Collapsible({
@@ -20,18 +21,32 @@ export default function Collapsible({
   count,
   defaultOpen = true,
   depth = 0,
-  children
+  children,
+  editable = false
 }: CollapsibleProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
+  const handleHeaderClick = () => {
+    if (!editable) {
+      setIsOpen(!isOpen)
+    }
+  }
+
+  const HeaderElement = editable ? 'div' : 'button'
+  const headerProps = editable
+    ? {}
+    : {
+        type: 'button' as const,
+        onClick: handleHeaderClick,
+        'aria-expanded': isOpen
+      }
+
   return (
     <div className={styles.component}>
-      <button
-        type='button'
-        className={styles.header}
+      <HeaderElement
+        className={`${styles.header} ${!editable ? styles.headerClickable : ''}`}
         style={{ paddingLeft: `${depth * 20 + 12}px` }}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
+        {...headerProps}
       >
         <div className={styles.left}>
           <ChevronRight
@@ -40,16 +55,22 @@ export default function Collapsible({
             className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
           />
           <Icon size={16} strokeWidth={2} className={styles.icon} />
-          <Text as='span' size='2' weight='medium'>
-            {label}
-          </Text>
+          {typeof label === 'string' ? (
+            <Text as='span' size='2' weight='medium'>
+              {label}
+            </Text>
+          ) : (
+            label
+          )}
         </div>
-        <div className={styles.badge}>
-          <Text as='span' size='2' weight='medium'>
-            {count}
-          </Text>
+        <div className={styles.right}>
+          <div className={styles.badge}>
+            <Text as='span' size='2' weight='medium'>
+              {count}
+            </Text>
+          </div>
         </div>
-      </button>
+      </HeaderElement>
 
       <div
         className={`${styles.content} ${isOpen ? styles.contentOpen : ''}`}

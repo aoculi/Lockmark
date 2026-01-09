@@ -228,8 +228,7 @@ function hasBookmarks(
 /**
  * Flatten collections with their bookmarks for bookmark list view
  * Bookmarks are directly associated with collections via collectionId
- * When filtering by tags, only includes collections that have matching bookmarks
- * or have descendant collections with matching bookmarks (to preserve hierarchy)
+ * Shows all collections, including empty ones (collections without bookmarks)
  */
 export function flattenCollectionsWithBookmarks(
   collections: Collection[],
@@ -247,18 +246,14 @@ export function flattenCollectionsWithBookmarks(
     items: Collection[],
     depth: number
   ): CollectionWithBookmarks[] =>
-    sortByOrder(items)
-      .filter((collection) =>
-        hasBookmarks(collection.id, bookmarksByCollection, childrenMap)
-      )
-      .flatMap((collection) => [
-        {
-          collection,
-          bookmarks: bookmarksByCollection.get(collection.id) || [],
-          depth
-        },
-        ...flatten(childrenMap.get(collection.id) || [], depth + 1)
-      ])
+    sortByOrder(items).flatMap((collection) => [
+      {
+        collection,
+        bookmarks: bookmarksByCollection.get(collection.id) || [],
+        depth
+      },
+      ...flatten(childrenMap.get(collection.id) || [], depth + 1)
+    ])
 
   return flatten(roots, 0)
 }

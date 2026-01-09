@@ -6,6 +6,7 @@ import { SettingsProvider } from '@/components/hooks/providers/useSettingsProvid
 import { UnlockStateProvider } from '@/components/hooks/providers/useUnlockStateProvider'
 
 import CollectionsList from '@/components/parts/CollectionsList'
+import CreateCollection from '@/components/parts/CreateCollection'
 import PinnedList from '@/components/parts/PinnedList'
 import SmartHeader from '@/components/parts/SmartHeader'
 import SmartSearch from '@/components/parts/SmartSearch'
@@ -28,6 +29,7 @@ function AppContent() {
             onSelectedTagsChange={setSelectedTags}
           />
           <PinnedList />
+          <CreateCollection />
           <CollectionsList />
         </div>
       </div>
