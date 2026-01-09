@@ -9,7 +9,7 @@ import { flattenCollectionsWithBookmarks } from '@/lib/collectionUtils'
 import type { Bookmark } from '@/lib/types'
 
 import BookmarkRow from '@/components/parts/BookmarkRow'
-import Collapsible from '@/components/parts/Collapsible'
+import Collapsible from '@/components/ui/Collapsible'
 
 import styles from './styles.module.css'
 

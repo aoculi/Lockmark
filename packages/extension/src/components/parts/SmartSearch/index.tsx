@@ -1,9 +1,11 @@
-import { Search, X } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTags } from '@/components/hooks/useTags'
 import { getTagColor } from '@/lib/bookmarkUtils'
 import type { Tag } from '@/lib/types'
+
+import TagItem from '@/components/parts/TagItem'
 
 import styles from './styles.module.css'
 
@@ -111,38 +113,26 @@ export default function SmartSearch({
 
         {selectedTagObjects.length > 0 && (
           <div className={styles.selectedTags}>
-            {selectedTagObjects.map((tag: Tag) => {
-              const colorInfo = getTagColor(tag.id, tags)
-              return (
-                <span
-                  key={tag.id}
-                  className={styles.tagChip}
-                  style={{
-                    backgroundColor: colorInfo?.tagColor ?? 'var(--primary)',
-                    color: colorInfo?.textColor ?? 'white'
-                  }}
-                >
-                  <span className={styles.tagName}>{tag.name}</span>
-                  <button
-                    type="button"
-                    className={styles.tagRemove}
-                    onClick={() => handleRemoveTag(tag.id)}
-                    style={{ color: colorInfo?.textColor ?? 'white' }}
-                  >
-                    <X size={12} />
-                  </button>
-                </span>
-              )
-            })}
+            {selectedTagObjects.map((tag: Tag) => (
+              <TagItem
+                key={tag.id}
+                tagId={tag.id}
+                tagName={tag.name}
+                tags={tags}
+                onRemove={() => handleRemoveTag(tag.id)}
+              />
+            ))}
           </div>
         )}
 
         <input
           ref={inputRef}
-          type="text"
+          type='text'
           className={styles.input}
           placeholder={
-            selectedTags.length > 0 ? 'Add more...' : 'Search bookmarks or tags...'
+            selectedTags.length > 0
+              ? 'Add more...'
+              : 'Search bookmarks or tags...'
           }
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -160,7 +150,7 @@ export default function SmartSearch({
               return (
                 <button
                   key={tag.id}
-                  type="button"
+                  type='button'
                   className={`${styles.suggestionItem} ${
                     index === highlightedIndex ? styles.highlighted : ''
                   }`}

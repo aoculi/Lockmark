@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 5px 12px;
   border-radius: var(--border-radius);
   text-decoration: none;
   color: var(--text);
@@ -79,16 +79,6 @@
   transition: transform 0.15s ease;
 }
 
-.tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--border-radius);
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
 .tagMore {
   display: inline-flex;
   align-items: center;
@@ -113,50 +103,4 @@
     visibility 0.15s ease,
     width 0.15s ease,
     margin 0.15s ease;
-}
-
-.action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 28px;
-  padding: 0 10px;
-  background-color: var(--background-2);
-  border: 1px solid transparent;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: 12px;
-  font-family: inherit;
-  color: var(--text-light);
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.action:hover {
-  border-color: var(--border);
-  color: var(--text);
-}
-
-.actionIcon {
-  width: 28px;
-  padding: 0;
-}
-
-.actionActive {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
-
-.actionActive:hover {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
-
-.actionDanger:hover {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
 }

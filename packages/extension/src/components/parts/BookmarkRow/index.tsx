@@ -1,9 +1,12 @@
 import { Edit, Pin, PinOff, Plus, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 
-import { createTagMap, getTagColor, getTagNameFromMap } from '@/lib/bookmarkUtils'
+import { createTagMap, getTagNameFromMap } from '@/lib/bookmarkUtils'
 import type { Bookmark, Tag } from '@/lib/types'
 import { getHostname } from '@/lib/utils'
+
+import TagItem from '@/components/parts/TagItem'
+import ActionBtn from '@/components/ui/ActionBtn'
 
 import styles from './styles.module.css'
 
@@ -32,25 +35,24 @@ export default function BookmarkRow({
     return bookmark.tags
       .map((tagId) => {
         const tagName = getTagNameFromMap(tagId, tagMap)
-        const colorInfo = getTagColor(tagId, tags)
-        return { id: tagId, name: tagName, colorInfo }
+        return { id: tagId, name: tagName }
       })
       .slice(0, 3) // Limit displayed tags
-  }, [bookmark.tags, tagMap, tags])
+  }, [bookmark.tags, tagMap])
 
   const remainingTags = bookmark.tags.length - 3
 
   return (
     <a
       href={bookmark.url}
-      target="_blank"
-      rel="noopener noreferrer"
+      target='_blank'
+      rel='noopener noreferrer'
       className={styles.component}
     >
       <div className={styles.favicon}>
         <img
           src={faviconUrl}
-          alt=""
+          alt=''
           width={16}
           height={16}
           onError={(e) => {
@@ -67,16 +69,13 @@ export default function BookmarkRow({
       <div className={styles.rightSection}>
         <div className={styles.tags}>
           {bookmarkTags.map((tag) => (
-            <span
+            <TagItem
               key={tag.id}
-              className={styles.tag}
-              style={{
-                backgroundColor: tag.colorInfo?.tagColor ?? 'var(--primary)',
-                color: tag.colorInfo?.textColor ?? 'white'
-              }}
-            >
-              {tag.name}
-            </span>
+              tagId={tag.id}
+              tagName={tag.name}
+              tags={tags}
+              size='small'
+            />
           ))}
           {remainingTags > 0 && (
             <span className={styles.tagMore}>+{remainingTags}</span>
@@ -84,55 +83,20 @@ export default function BookmarkRow({
         </div>
 
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.action}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onAddTags?.()
-            }}
-            title="Add tags"
-          >
-            <Plus size={14} strokeWidth={2} />
-            <span>Tags</span>
-          </button>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionIcon} ${bookmark.pinned ? styles.actionActive : ''}`}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onTogglePin?.()
-            }}
+          <ActionBtn
+            icon={Plus}
+            label='Tags'
+            onClick={onAddTags}
+            title='Add tags'
+          />
+          <ActionBtn
+            icon={bookmark.pinned ? PinOff : Pin}
+            active={bookmark.pinned}
+            onClick={onTogglePin}
             title={bookmark.pinned ? 'Unpin' : 'Pin'}
-          >
-            {bookmark.pinned ? <PinOff size={14} strokeWidth={2} /> : <Pin size={14} strokeWidth={2} />}
-          </button>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionIcon}`}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onEdit?.()
-            }}
-            title="Edit"
-          >
-            <Edit size={14} strokeWidth={2} />
-          </button>
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionIcon} ${styles.actionDanger}`}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onDelete?.()
-            }}
-            title="Delete"
-          >
-            <Trash2 size={14} strokeWidth={2} />
-          </button>
+          />
+          <ActionBtn icon={Edit} onClick={onEdit} title='Edit' />
+          <ActionBtn icon={Trash2} danger onClick={onDelete} title='Delete' />
         </div>
       </div>
     </a>

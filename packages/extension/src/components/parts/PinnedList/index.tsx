@@ -6,7 +6,7 @@ import { useTags } from '@/components/hooks/useTags'
 import type { Bookmark } from '@/lib/types'
 
 import BookmarkRow from '@/components/parts/BookmarkRow'
-import Collapsible from '@/components/parts/Collapsible'
+import Collapsible from '@/components/ui/Collapsible'
 
 import styles from './styles.module.css'
 
@@ -28,17 +28,13 @@ export default function PinnedList() {
     <div className={styles.component}>
       <Collapsible
         icon={Pin}
-        label="Pinned"
+        label='Pinned'
         count={pinnedBookmarks.length}
         defaultOpen={true}
       >
         <div className={styles.list}>
           {pinnedBookmarks.map((bookmark: Bookmark) => (
-            <BookmarkRow
-              key={bookmark.id}
-              bookmark={bookmark}
-              tags={tags}
-            />
+            <BookmarkRow key={bookmark.id} bookmark={bookmark} tags={tags} />
           ))}
         </div>
       </Collapsible>

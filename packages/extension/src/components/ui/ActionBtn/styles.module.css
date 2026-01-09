@@ -1,0 +1,45 @@
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  background-color: var(--background-2);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-light);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.action:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.actionIcon {
+  width: 28px;
+  padding: 0;
+}
+
+.actionActive {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.actionActive:hover {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.actionDanger:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
