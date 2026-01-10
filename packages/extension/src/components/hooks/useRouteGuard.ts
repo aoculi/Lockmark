@@ -65,7 +65,7 @@ export function useRouteGuard() {
     if (unlockState === 'unlocked' && isAuthRoute(route)) {
       const wasAlreadyAuthenticated = initialUserId.current === session.userId
       if (wasAlreadyAuthenticated) {
-        const targetRoute = manifest ? '/bookmark' : '/vault'
+        const targetRoute = '/bookmark'
         navigate(targetRoute)
       }
     }

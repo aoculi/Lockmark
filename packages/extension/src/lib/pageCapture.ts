@@ -24,7 +24,7 @@ const BLOCKED_URL_PREFIXES = ['chrome://', 'chrome-extension://', 'about:']
 /**
  * Check if a URL is bookmarkable
  */
-export function isBookmarkableUrl(url: string): boolean {
+function isBookmarkableUrl(url: string): boolean {
   return !BLOCKED_URL_PREFIXES.some((prefix) => url.startsWith(prefix))
 }
 
@@ -178,7 +178,7 @@ export async function captureCurrentPage(): Promise<CaptureResult> {
 /**
  * Extract favicon URL from HTML or construct default
  */
-export function extractFavicon(html: string, baseUrl: string): string {
+function extractFavicon(html: string, baseUrl: string): string {
   try {
     const url = new URL(baseUrl)
     const baseOrigin = url.origin
@@ -216,7 +216,7 @@ export function extractFavicon(html: string, baseUrl: string): string {
 /**
  * Extract title from HTML
  */
-export function extractTitle(html: string, fallbackUrl: string): string {
+function extractTitle(html: string, fallbackUrl: string): string {
   // Try to find title tag
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
   if (titleMatch && titleMatch[1]) {

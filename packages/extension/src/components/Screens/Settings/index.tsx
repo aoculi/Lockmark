@@ -1,9 +1,20 @@
 import { Loader2, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
+import {
+  AuthSessionProvider,
+  useAuthSession
+} from '@/components/hooks/providers/useAuthSessionProvider'
+import { ManifestProvider } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
+import {
+  SettingsProvider,
+  useSettings
+} from '@/components/hooks/providers/useSettingsProvider'
+import {
+  UnlockStateProvider,
+  useUnlockState
+} from '@/components/hooks/providers/useUnlockStateProvider'
 import { useBookmarkExport } from '@/components/hooks/useBookmarkExport'
 import { useBookmarkImport } from '@/components/hooks/useBookmarkImport'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
@@ -19,9 +30,9 @@ import {
 } from '@/lib/storage'
 import type { KeystoreData } from '@/lib/unlock'
 
-import Header from '@/components/parts/Header'
 import { PinSetupModal } from '@/components/parts/pin/PinSetupModal'
 import { PinVerifyModal } from '@/components/parts/pin/PinVerifyModal'
+import SmartHeader from '@/components/parts/SmartHeader'
 import Button from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
 import FileInput from '@/components/ui/FileInput'
@@ -43,23 +54,26 @@ type AutoLockTimeout =
   | 'never'
 
 interface SettingsFields {
-  showHiddenTags: boolean
   apiUrl: string
   autoLockTimeout: AutoLockTimeout
   useCodePin: boolean
 }
 
 const DEFAULT_FIELDS: SettingsFields = {
-  showHiddenTags: false,
   apiUrl: '',
   autoLockTimeout: '20min',
   useCodePin: false
 }
 
-export default function Settings() {
+function SettingsContent() {
   const { settings, isLoading, updateSettings } = useSettings()
   const { flash } = useNavigation()
   const { isAuthenticated, session } = useAuthSession()
+  const {
+    isLocked,
+    isLoading: unlockLoading,
+    canUnlockWithPin
+  } = useUnlockState()
 
   const [fields, setFields] = useState<SettingsFields>(DEFAULT_FIELDS)
   const [originalFields, setOriginalFields] =
@@ -103,20 +117,38 @@ export default function Settings() {
         const apiUrl = await getApiUrl()
 
         if (isAuthenticated) {
+          // Check if PIN_STORE actually exists - this is the source of truth
+          const pinStore = await getStorageItem<PinStoreData>(
+            STORAGE_KEYS.PIN_STORE
+          )
+          const hasPinStore = !!pinStore
+
+          // If settings say useCodePin but PIN_STORE doesn't exist, sync them
+          // This prevents the checkbox from being checked when there's no actual PIN
+          const actualUseCodePin = settings.useCodePin && hasPinStore
+
+          // If settings are out of sync, update them
+          if (settings.useCodePin && !hasPinStore) {
+            await updateSettings({
+              ...settings,
+              useCodePin: false,
+              autoLockTimeout: 'never'
+            })
+          }
+
           // Load user-specific settings when authenticated
           const loadedFields: SettingsFields = {
-            showHiddenTags: settings.showHiddenTags,
             apiUrl: apiUrl,
-            autoLockTimeout:
-              (settings.autoLockTimeout as AutoLockTimeout) || '20min',
-            useCodePin: settings.useCodePin || false
+            autoLockTimeout: actualUseCodePin
+              ? ((settings.autoLockTimeout as AutoLockTimeout) || '20min')
+              : 'never',
+            useCodePin: actualUseCodePin
           }
           setFields(loadedFields)
           setOriginalFields(loadedFields)
         } else {
           // When not authenticated, only load API URL with defaults for other fields
           const loadedFields: SettingsFields = {
-            showHiddenTags: false,
             apiUrl: apiUrl,
             autoLockTimeout: '20min',
             useCodePin: false
@@ -149,7 +181,7 @@ export default function Settings() {
 
       // Save user-specific settings (without apiUrl)
       await updateSettings({
-        showHiddenTags: fields.showHiddenTags,
+        showHiddenTags: settings.showHiddenTags,
         autoLockTimeout: fields.autoLockTimeout,
         useCodePin: fields.useCodePin
       })
@@ -325,15 +357,6 @@ export default function Settings() {
     await saveSecuritySettings(undefined, timeout)
   }
 
-  const handleShowHiddenTagsChange = async (checked: boolean) => {
-    updateField('showHiddenTags', checked)
-    await saveSecuritySettings()
-  }
-
-  const handleCancel = () => {
-    window.close()
-  }
-
   const updateField = <K extends keyof SettingsFields>(
     key: K,
     value: SettingsFields[K]
@@ -342,21 +365,22 @@ export default function Settings() {
   }
 
   const hasChanged = JSON.stringify(fields) !== JSON.stringify(originalFields)
-  const version = chrome.runtime.getManifest().version
 
-  if (isLoading) {
+  if (isLoading || unlockLoading) {
     return (
-      <div className={styles.container}>
-        <Header title='Settings' canShowMenu={false} />
+      <div className={styles.component}>
         <div className={styles.content}>
-          <Text>Loading settings...</Text>
+          <div className={styles.container}>
+            <Text>Loading settings...</Text>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.component}>
+      <SmartHeader />
       {flash && (
         <div className={styles.flash}>
           <TriangleAlert size={16} color='white' />
@@ -365,22 +389,27 @@ export default function Settings() {
           </Text>
         </div>
       )}
-      <div className={styles.container}>
-        <Header title='Settings' canShowMenu={false} />
-        <div className={styles.version}>
-          Version: {import.meta.env.WXT_VERSION} : {version}
-        </div>
-        <div className={styles.content}>
+      <div className={styles.content}>
+        <div className={styles.container}>
           <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
             <Tabs.List>
               <Tabs.Trigger value='api'>API</Tabs.Trigger>
-              <Tabs.Trigger value='security' disabled={!isAuthenticated}>
+              <Tabs.Trigger
+                value='security'
+                disabled={!isAuthenticated || isLocked}
+              >
                 Security
               </Tabs.Trigger>
-              <Tabs.Trigger value='import' disabled={!isAuthenticated}>
+              <Tabs.Trigger
+                value='import'
+                disabled={!isAuthenticated || isLocked}
+              >
                 Import
               </Tabs.Trigger>
-              <Tabs.Trigger value='export' disabled={!isAuthenticated}>
+              <Tabs.Trigger
+                value='export'
+                disabled={!isAuthenticated || isLocked}
+              >
                 Export
               </Tabs.Trigger>
             </Tabs.List>
@@ -403,11 +432,14 @@ export default function Settings() {
                   </Text>
                 </div>
 
-                <SettingsActions
-                  hasChanged={hasChanged}
-                  isSaving={isSaving}
-                  onCancel={handleCancel}
-                />
+                <div className={styles.actionsContainer}>
+                  <div className={styles.actions}>
+                    <Button type='submit' disabled={!hasChanged || isSaving}>
+                      {isSaving && <Loader2 className={styles.spinner} />}
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                </div>
               </form>
             </Tabs.Content>
 
@@ -465,23 +497,6 @@ export default function Settings() {
                     </Text>
                   </div>
                 )}
-
-                <div className={styles.field}>
-                  <Text as='label' size='2'>
-                    <Checkbox
-                      checked={fields.showHiddenTags}
-                      onChange={(e) =>
-                        handleShowHiddenTagsChange(e.target.checked)
-                      }
-                      disabled={isSavingSecurity}
-                      label='Display hidden tags'
-                    />
-                  </Text>
-                  <Text size='2' color='light'>
-                    Show tags marked as hidden in tag lists and include
-                    bookmarks with hidden tags in results
-                  </Text>
-                </div>
               </div>
             </Tabs.Content>
 
@@ -540,14 +555,6 @@ export default function Settings() {
                 <div className={styles.actionsContainer}>
                   <div className={styles.actions}>
                     <Button
-                      onClick={handleCancel}
-                      color='black'
-                      disabled={isImporting}
-                    >
-                      Cancel
-                    </Button>
-
-                    <Button
                       onClick={handleImport}
                       disabled={!importFile || isImporting}
                     >
@@ -600,14 +607,6 @@ export default function Settings() {
                 <div className={styles.actionsContainer}>
                   <div className={styles.actions}>
                     <Button
-                      onClick={handleCancel}
-                      color='black'
-                      disabled={isExporting}
-                    >
-                      Cancel
-                    </Button>
-
-                    <Button
                       onClick={handleExport}
                       disabled={bookmarks.length === 0 || isExporting}
                     >
@@ -632,34 +631,22 @@ export default function Settings() {
         open={showPinVerifyModal}
         onClose={handlePinVerifyClose}
         onSuccess={handlePinVerifySuccess}
+        description='Enter your PIN to disable PIN unlock'
       />
     </div>
   )
 }
 
-interface SettingsActionsProps {
-  hasChanged: boolean
-  isSaving: boolean
-  onCancel: () => void
-}
-
-function SettingsActions({
-  hasChanged,
-  isSaving,
-  onCancel
-}: SettingsActionsProps) {
+export default function Settings() {
   return (
-    <div className={styles.actionsContainer}>
-      <div className={styles.actions}>
-        <Button onClick={onCancel} color='black'>
-          Cancel
-        </Button>
-
-        <Button type='submit' disabled={!hasChanged || isSaving}>
-          {isSaving && <Loader2 className={styles.spinner} />}
-          {isSaving ? 'Saving...' : 'Save'}
-        </Button>
-      </div>
-    </div>
+    <AuthSessionProvider>
+      <SettingsProvider>
+        <UnlockStateProvider>
+          <ManifestProvider>
+            <SettingsContent />
+          </ManifestProvider>
+        </UnlockStateProvider>
+      </SettingsProvider>
+    </AuthSessionProvider>
   )
 }

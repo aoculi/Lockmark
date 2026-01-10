@@ -38,7 +38,7 @@ export default function Login() {
 
   const onLoginSuccess = () => {
     setFlash(null)
-    navigate('/vault')
+    navigate('/bookmark')
   }
 
   const { formData, disabled, handleSubmit, handleChange } = useAuthForm({

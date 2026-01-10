@@ -158,25 +158,6 @@ export async function decryptManifest(
 }
 
 /**
- * Checks if the keystore has the required keys for manifest decryption
- * Useful to check before attempting decryption
- */
-export async function canDecryptManifest(): Promise<boolean> {
-  try {
-    const keystoreData = await getStorageItem<KeystoreData>(
-      STORAGE_KEYS.KEYSTORE
-    )
-    return Boolean(
-      keystoreData?.mak &&
-      keystoreData?.aadContext?.userId &&
-      keystoreData?.aadContext?.vaultId
-    )
-  } catch {
-    return false
-  }
-}
-
-/**
  * Encrypted manifest payload ready for API
  */
 export type EncryptedManifestPayload = {

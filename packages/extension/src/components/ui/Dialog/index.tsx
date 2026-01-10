@@ -13,6 +13,7 @@ interface DialogProps {
   open?: boolean
   onClose?: () => void
   width?: number
+  showCloseButton?: boolean
 }
 
 export function Dialog({
@@ -22,7 +23,8 @@ export function Dialog({
   trigger,
   open,
   onClose,
-  width = 400
+  width = 400,
+  showCloseButton = true
 }: DialogProps) {
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen && onClose) {
@@ -48,11 +50,13 @@ export function Dialog({
               </DialogPrimitive.Description>
             )}
           </div>
-          <DialogPrimitive.Close asChild>
-            <Button asIcon={true} color='light' variant='solid' size='sm'>
-              <X strokeWidth={1} size={18} />
-            </Button>
-          </DialogPrimitive.Close>
+          {showCloseButton && (
+            <DialogPrimitive.Close asChild>
+              <Button asIcon={true} color='light' variant='solid' size='sm'>
+                <X strokeWidth={1} size={18} />
+              </Button>
+            </DialogPrimitive.Close>
+          )}
         </div>
         {children}
       </DialogPrimitive.Content>

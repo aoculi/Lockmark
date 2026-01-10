@@ -161,7 +161,44 @@ export default function Header({
           {rightContent}
           {canSwitchToVault && isAuthenticated && (
             <Button
-              onClick={() => navigate('/vault')}
+              onClick={() => {
+                try {
+                  const runtime =
+                    (typeof chrome !== 'undefined' && chrome.runtime) ||
+                    (typeof browser !== 'undefined' && browser.runtime)
+
+                  if (!runtime) {
+                    setFlash(
+                      'Unable to open app page. Browser runtime not available.'
+                    )
+                    setTimeout(() => setFlash(null), 5000)
+                    return
+                  }
+
+                  const appUrl = runtime.getURL('/app.html' as any)
+                  if (appUrl) {
+                    const tabs =
+                      (typeof chrome !== 'undefined' && chrome.tabs) ||
+                      (typeof browser !== 'undefined' && browser.tabs)
+                    if (tabs && typeof tabs.create === 'function') {
+                      tabs.create({ url: appUrl })
+                    } else {
+                      window.open(appUrl, '_blank')
+                    }
+                  } else {
+                    setFlash('Unable to open app page. App page not found.')
+                    setTimeout(() => setFlash(null), 5000)
+                  }
+                } catch (error) {
+                  console.error('Error opening app page:', error)
+                  setFlash(
+                    `Unable to open app page: ${
+                      error instanceof Error ? error.message : 'Unknown error'
+                    }`
+                  )
+                  setTimeout(() => setFlash(null), 5000)
+                }
+              }}
               variant='ghost'
               title='Vault'
             >

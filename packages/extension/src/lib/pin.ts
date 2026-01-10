@@ -16,7 +16,7 @@ import {
   zeroize
 } from '@/lib/crypto'
 import { getCryptoEnv, whenCryptoReady } from '@/lib/cryptoEnv'
-import type { AadContext, PinStoreData } from '@/lib/storage'
+import type { PinStoreData } from '@/lib/storage'
 import type { KeystoreData } from '@/lib/unlock'
 import { argon2id } from 'hash-wasm'
 
@@ -33,10 +33,7 @@ export const PIN_FAILED_ATTEMPTS_THRESHOLD = 3
 /**
  * Hash PIN for verification using Argon2id
  */
-export async function hashPin(
-  pin: string,
-  salt: Uint8Array
-): Promise<Uint8Array> {
+async function hashPin(pin: string, salt: Uint8Array): Promise<Uint8Array> {
   const hash = await argon2id({
     password: pin,
     salt,
@@ -52,7 +49,7 @@ export async function hashPin(
 /**
  * Derive encryption key from PIN using Argon2id
  */
-export async function derivePinKey(
+async function derivePinKey(
   pin: string,
   salt: Uint8Array
 ): Promise<Uint8Array> {
@@ -83,7 +80,7 @@ export async function verifyPin(
 /**
  * Encrypt MAK with PIN-derived key
  */
-export async function encryptMakWithPin(
+async function encryptMakWithPin(
   mak: Uint8Array,
   pin: string,
   userId: string,
