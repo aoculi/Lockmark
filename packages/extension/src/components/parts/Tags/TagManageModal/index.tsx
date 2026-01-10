@@ -25,11 +25,32 @@ export default function TagManageModal({
   onClose,
   bookmark
 }: TagManageModalProps) {
-  const { tags, showHiddenTags, createTag } = useTags()
-  const { updateBookmark } = useBookmarks()
+  const { tags, showHiddenTags, createTag, deleteTag } = useTags()
+  const { updateBookmark, bookmarks } = useBookmarks()
   const { setFlash } = useNavigation()
   const [searchQuery, setSearchQuery] = useState('')
   const creatingTagNameRef = useRef<string | null>(null)
+
+  // Get the latest bookmark data from the bookmarks array to ensure it's up-to-date
+  const currentBookmark = useMemo(() => {
+    if (!bookmark) return null
+    return bookmarks.find((b: Bookmark) => b.id === bookmark.id) || bookmark
+  }, [bookmark, bookmarks])
+
+  // Calculate bookmark counts per tag reactively
+  const tagBookmarkCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    tags.forEach((tag: Tag) => {
+      counts.set(tag.id, 0)
+    })
+    bookmarks.forEach((bookmark: Bookmark) => {
+      bookmark.tags.forEach((tagId: string) => {
+        const current = counts.get(tagId) || 0
+        counts.set(tagId, current + 1)
+      })
+    })
+    return counts
+  }, [tags, bookmarks])
 
   const filteredTags = useMemo(() => {
     const visibleTags = showHiddenTags
@@ -47,19 +68,19 @@ export default function TagManageModal({
   }, [tags, searchQuery, showHiddenTags])
 
   const isTagSelected = (tagId: string): boolean => {
-    return bookmark ? bookmark.tags.includes(tagId) : false
+    return currentBookmark ? currentBookmark.tags.includes(tagId) : false
   }
 
   // Watch for newly created tags and add them to bookmark if needed
   useEffect(() => {
-    if (!creatingTagNameRef.current || !bookmark) return
+    if (!creatingTagNameRef.current || !currentBookmark) return
 
     const tagName = creatingTagNameRef.current.toLowerCase()
     const newTag = tags.find((tag: Tag) => tag.name.toLowerCase() === tagName)
 
-    if (newTag && !bookmark.tags.includes(newTag.id)) {
-      updateBookmark(bookmark.id, {
-        tags: [...bookmark.tags, newTag.id]
+    if (newTag && !currentBookmark.tags.includes(newTag.id)) {
+      updateBookmark(currentBookmark.id, {
+        tags: [...currentBookmark.tags, newTag.id]
       }).catch((error) => {
         setFlash(
           'Tag created but failed to add to bookmark: ' +
@@ -69,18 +90,19 @@ export default function TagManageModal({
       })
       creatingTagNameRef.current = null
     }
-  }, [tags, bookmark, setFlash, updateBookmark])
+  }, [tags, currentBookmark, setFlash, updateBookmark])
 
+  // Toggle tag on/off for the bookmark (add if not selected, remove if selected)
   const handleTagClick = async (tag: Tag) => {
-    if (!bookmark) return
+    if (!currentBookmark) return
 
     const isSelected = isTagSelected(tag.id)
     const newTags = isSelected
-      ? bookmark.tags.filter((id) => id !== tag.id)
-      : [...bookmark.tags, tag.id]
+      ? currentBookmark.tags.filter((id) => id !== tag.id) // Remove tag
+      : [...currentBookmark.tags, tag.id] // Add tag
 
     try {
-      await updateBookmark(bookmark.id, { tags: newTags })
+      await updateBookmark(currentBookmark.id, { tags: newTags })
     } catch (error) {
       setFlash(
         'Failed to update bookmark tags: ' +
@@ -95,9 +117,27 @@ export default function TagManageModal({
     console.log('Update tag:', tag)
   }
 
-  const handleDelete = (tag: Tag) => {
-    // TODO: Wire up delete action
-    console.log('Delete tag:', tag)
+  const handleDelete = async (tag: Tag) => {
+    // Get the count from the memoized map (always up-to-date)
+    const bookmarkCount = tagBookmarkCounts.get(tag.id) || 0
+
+    // Create confirmation message
+    const message =
+      bookmarkCount === 0
+        ? `Are you sure you want to delete the tag "${tag.name}"?`
+        : `Are you sure you want to delete the tag "${tag.name}"? This will remove it from ${bookmarkCount} bookmark${bookmarkCount === 1 ? '' : 's'}.`
+
+    if (confirm(message)) {
+      try {
+        await deleteTag(tag.id)
+      } catch (error) {
+        setFlash(
+          'Failed to delete tag: ' +
+            ((error as Error).message ?? 'Unknown error')
+        )
+        console.error('Failed to delete tag:', error)
+      }
+    }
   }
 
   const handleCreateTag = async () => {
@@ -111,10 +151,10 @@ export default function TagManageModal({
 
     if (existingTag) {
       // If tag exists and bookmark is provided, add it to bookmark
-      if (bookmark && !isTagSelected(existingTag.id)) {
+      if (currentBookmark && !isTagSelected(existingTag.id)) {
         try {
-          await updateBookmark(bookmark.id, {
-            tags: [...bookmark.tags, existingTag.id]
+          await updateBookmark(currentBookmark.id, {
+            tags: [...currentBookmark.tags, existingTag.id]
           })
         } catch (error) {
           setFlash(
@@ -135,7 +175,7 @@ export default function TagManageModal({
       })
 
       // If bookmark is provided, set ref so useEffect can add it to bookmark
-      if (bookmark) {
+      if (currentBookmark) {
         creatingTagNameRef.current = trimmedQuery
       }
     } catch (error) {
@@ -191,8 +231,10 @@ export default function TagManageModal({
               return (
                 <div
                   key={tag.id}
-                  className={`${styles.tagRow} ${selected ? styles.tagRowSelected : ''} ${bookmark ? styles.tagRowClickable : ''}`}
-                  onClick={bookmark ? () => handleTagClick(tag) : undefined}
+                  className={`${styles.tagRow} ${selected ? styles.tagRowSelected : ''} ${currentBookmark ? styles.tagRowClickable : ''}`}
+                  onClick={
+                    currentBookmark ? () => handleTagClick(tag) : undefined
+                  }
                 >
                   <div className={styles.tagContent}>
                     <TagItem
@@ -201,7 +243,7 @@ export default function TagManageModal({
                       tags={tags}
                       size='default'
                     />
-                    {selected && bookmark && (
+                    {selected && currentBookmark && (
                       <span className={styles.selectedIndicator}>✓</span>
                     )}
                   </div>
