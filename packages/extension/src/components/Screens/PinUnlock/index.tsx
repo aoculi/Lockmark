@@ -36,7 +36,7 @@ export default function PinUnlock() {
 
   useEffect(() => {
     if (unlockWithPin.isSuccess) {
-      navigate('/vault')
+      navigate('/bookmark')
     }
   }, [unlockWithPin.isSuccess, navigate])
 

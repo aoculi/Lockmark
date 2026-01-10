@@ -15,9 +15,6 @@ import Bookmark from '@/components/Screens/Bookmark'
 import Login from '@/components/Screens/Login'
 import PinUnlock from '@/components/Screens/PinUnlock'
 import Register from '@/components/Screens/Register'
-import Tag from '@/components/Screens/Tag'
-import Tags from '@/components/Screens/Tags'
-import Vault from '@/components/Screens/Vault'
 import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
@@ -34,14 +31,8 @@ function RootContent() {
         return <Register />
       case '/pin-unlock':
         return <PinUnlock />
-      case '/vault':
-        return <Vault />
       case '/bookmark':
         return <Bookmark />
-      case '/tag':
-        return <Tag />
-      case '/tags':
-        return <Tags />
       default:
         return <Bookmark />
     }

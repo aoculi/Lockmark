@@ -86,23 +86,3 @@ export function validateCollectionName(name: string): string | null {
   }
   return null
 }
-
-/**
- * Manifest size estimation and warning
- */
-export function estimateManifestSize(manifest: {
-  version: number
-  items: unknown[]
-  tags?: unknown[]
-  chain_head?: string
-}): number {
-  try {
-    return new TextEncoder().encode(JSON.stringify(manifest)).length
-  } catch {
-    return 0
-  }
-}
-
-export function isManifestSizeWarning(size: number): boolean {
-  return size >= MANIFEST_SIZE_WARNING_THRESHOLD
-}

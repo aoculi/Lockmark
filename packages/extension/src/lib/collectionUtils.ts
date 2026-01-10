@@ -77,65 +77,6 @@ export function getBookmarksForCollection(
 }
 
 /**
- * Count bookmarks per collection (including all subcollections recursively)
- * Optimized: O(n + m) instead of O(n*m) by using single-pass counting
- */
-export function countBookmarksPerCollection(
-  collections: Collection[],
-  bookmarks: Bookmark[]
-): Map<string, number> {
-  if (!collections || collections.length === 0) {
-    return new Map()
-  }
-
-  // Phase 1: Initialize direct counts to 0 for all collections - O(n)
-  const directCounts = new Map<string, number>()
-  for (const c of collections) {
-    directCounts.set(c.id, 0)
-  }
-
-  // Phase 2: Single pass over bookmarks to count direct associations - O(m)
-  for (const bookmark of bookmarks) {
-    if (bookmark.collectionId) {
-      const current = directCounts.get(bookmark.collectionId) || 0
-      directCounts.set(bookmark.collectionId, current + 1)
-    }
-  }
-
-  // Phase 3: Build hierarchy once - O(n)
-  const { childrenMap } = buildHierarchy(collections)
-
-  // Phase 4: Post-order traversal to sum counts with memoization - O(n)
-  const totalCounts = new Map<string, number>()
-
-  const sumCounts = (collectionId: string): number => {
-    // Check cache first
-    if (totalCounts.has(collectionId)) {
-      return totalCounts.get(collectionId)!
-    }
-
-    const directCount = directCounts.get(collectionId) || 0
-    const children = childrenMap.get(collectionId) || []
-    const childrenTotal = children.reduce(
-      (sum, child) => sum + sumCounts(child.id),
-      0
-    )
-    const total = directCount + childrenTotal
-    totalCounts.set(collectionId, total)
-    return total
-  }
-
-  // Trigger computation for all collections
-  for (const collection of collections) {
-    if (!totalCounts.has(collection.id)) {
-      sumCounts(collection.id)
-    }
-  }
-
-  return totalCounts
-}
-
-/**
  * Flatten collection tree with depth information
  */
 export function flattenCollectionsWithDepth(
@@ -219,19 +160,6 @@ export function flattenCollectionsWithBookmarks(
     ])
 
   return flatten(roots, 0)
-}
-
-/**
- * Get all bookmark IDs that belong to any collection
- */
-export function getBookmarkIdsInCollections(
-  collectionsWithBookmarks: CollectionWithBookmarks[]
-): Set<string> {
-  const ids = new Set<string>()
-  for (const { bookmarks } of collectionsWithBookmarks) {
-    for (const b of bookmarks) ids.add(b.id)
-  }
-  return ids
 }
 
 /**

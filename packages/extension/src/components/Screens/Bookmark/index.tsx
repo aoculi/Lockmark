@@ -153,8 +153,6 @@ export default function Bookmark() {
           pinned: false
         })
       }
-
-      navigate('/vault')
     } catch (error) {
       setFlash(
         'Failed to save bookmark: ' +

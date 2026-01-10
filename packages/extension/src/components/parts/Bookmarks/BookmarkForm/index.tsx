@@ -181,7 +181,7 @@ export default function BookmarkForm({
             {faviconUrl && !faviconError ? (
               <img
                 src={faviconUrl}
-                alt=""
+                alt=''
                 width={20}
                 height={20}
                 onError={() => setFaviconError(true)}
@@ -192,7 +192,7 @@ export default function BookmarkForm({
           </div>
           <div className={styles.headerInfo}>
             <input
-              type="text"
+              type='text'
               className={`${styles.titleInput} ${errors.title ? styles.inputError : ''}`}
               value={form.title}
               onChange={(e) => {
@@ -200,10 +200,10 @@ export default function BookmarkForm({
                 setForm((prev) => ({ ...prev, title: next }))
                 if (errors.title) setErrors({ ...errors, title: '' })
               }}
-              placeholder="Bookmark title"
+              placeholder='Bookmark title'
             />
             <input
-              type="url"
+              type='url'
               className={`${styles.urlInput} ${errors.url ? styles.inputError : ''}`}
               value={form.url}
               onChange={(e) => {
@@ -212,15 +212,19 @@ export default function BookmarkForm({
                 setFaviconError(false)
                 if (errors.url) setErrors({ ...errors, url: '' })
               }}
-              placeholder="https://example.com"
+              placeholder='https://example.com'
             />
           </div>
         </div>
 
         {(errors.title || errors.url) && (
           <div className={styles.headerErrors}>
-            {errors.title && <span className={styles.fieldError}>{errors.title}</span>}
-            {errors.url && <span className={styles.fieldError}>{errors.url}</span>}
+            {errors.title && (
+              <span className={styles.fieldError}>{errors.title}</span>
+            )}
+            {errors.url && (
+              <span className={styles.fieldError}>{errors.url}</span>
+            )}
           </div>
         )}
 
