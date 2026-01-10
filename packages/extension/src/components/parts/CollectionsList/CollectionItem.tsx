@@ -1,16 +1,19 @@
-import { Folder, X } from 'lucide-react'
+import { Folder, GripVertical, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { getIconByName } from '@/components/ui/IconPicker'
 import type { Bookmark, Collection } from '@/lib/types'
 
-import BookmarkRow from '@/components/parts/BookmarkRow'
+import BookmarkRow, { BOOKMARK_DRAG_TYPE } from '@/components/parts/BookmarkRow'
 import ActionBtn from '@/components/ui/ActionBtn'
 import Collapsible from '@/components/ui/Collapsible'
 import IconPickerModal from '@/components/ui/IconPickerModal'
 import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
+
+export type DropZone = 'above' | 'center' | 'below'
+export type DragType = 'collection' | 'bookmark'
 
 interface CollectionItemProps {
   collection: Collection
@@ -30,6 +33,20 @@ interface CollectionItemProps {
   onIconChange?: (id: string, icon: string | undefined) => void
   containerRef: (el: HTMLDivElement | null) => void
   inputRef: (el: HTMLInputElement | null) => void
+  // Drag and drop props for collections
+  draggable?: boolean
+  isDragging?: boolean
+  dropZone?: DropZone | null
+  dropType?: DragType | null
+  onDragStart?: () => void
+  onDragOver?: (e: React.DragEvent, zone: DropZone, type: DragType) => void
+  onDragLeave?: () => void
+  onDrop?: (zone: DropZone, type: DragType, bookmarkId?: string) => void
+  onDragEnd?: () => void
+  // Bookmark drag state
+  draggedBookmarkId?: string | null
+  onBookmarkDragStart?: (bookmarkId: string) => void
+  onBookmarkDragEnd?: () => void
 }
 
 export default function CollectionItem({
@@ -49,10 +66,46 @@ export default function CollectionItem({
   onAddTags,
   onIconChange,
   containerRef,
-  inputRef
+  inputRef,
+  draggable = false,
+  isDragging = false,
+  dropZone = null,
+  dropType = null,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+  draggedBookmarkId,
+  onBookmarkDragStart,
+  onBookmarkDragEnd
 }: CollectionItemProps) {
   const [isIconModalOpen, setIsIconModalOpen] = useState(false)
   const Icon = collection.icon ? getIconByName(collection.icon) : Folder
+
+  const getDragType = (e: React.DragEvent): DragType => {
+    return e.dataTransfer.types.includes(BOOKMARK_DRAG_TYPE)
+      ? 'bookmark'
+      : 'collection'
+  }
+
+  const getZone = (e: React.DragEvent, dragType: DragType): DropZone => {
+    // Bookmarks can only drop into center (move to collection)
+    if (dragType === 'bookmark') return 'center'
+
+    const rect = e.currentTarget.getBoundingClientRect()
+    const y = e.clientY - rect.top
+    const threshold = rect.height * 0.25
+    if (y < threshold) return 'above'
+    if (y > rect.height - threshold) return 'below'
+    return 'center'
+  }
+
+  // Only show drop zone class if it's a valid drop target
+  const showDropZone = dropZone && (dropType === 'collection' || dropZone === 'center')
+  const zoneClass = showDropZone
+    ? styles[`drop${dropZone.charAt(0).toUpperCase() + dropZone.slice(1)}`]
+    : ''
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -78,8 +131,37 @@ export default function CollectionItem({
   }
 
   return (
-    <div ref={containerRef}>
-      <Collapsible
+    <div
+      ref={containerRef}
+      className={`${styles.collectionWrapper} ${isDragging ? styles.dragging : ''} ${zoneClass}`}
+      draggable={draggable}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move'
+        onDragStart?.()
+      }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        const dragType = getDragType(e)
+        const zone = getZone(e, dragType)
+        onDragOver?.(e, zone, dragType)
+      }}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => {
+        e.preventDefault()
+        const dragType = getDragType(e)
+        const zone = getZone(e, dragType)
+        const bookmarkId = e.dataTransfer.getData(BOOKMARK_DRAG_TYPE) || undefined
+        onDrop?.(zone, dragType, bookmarkId)
+      }}
+      onDragEnd={onDragEnd}
+    >
+      {draggable && (
+        <div className={styles.dragHandle}>
+          <GripVertical size={14} />
+        </div>
+      )}
+      <div className={styles.collapsibleWrapper}>
+        <Collapsible
         key={collection.id}
         icon={Icon}
         onIconClick={onIconChange ? handleIconClick : undefined}
@@ -140,11 +222,16 @@ export default function CollectionItem({
                 onEdit={onEdit ? () => onEdit(bookmark) : undefined}
                 onDelete={() => onDelete(bookmark.id)}
                 onAddTags={onAddTags}
+                draggable
+                isDragging={draggedBookmarkId === bookmark.id}
+                onDragStart={() => onBookmarkDragStart?.(bookmark.id)}
+                onDragEnd={onBookmarkDragEnd}
               />
             ))}
           </div>
         )}
-      </Collapsible>
+        </Collapsible>
+      </div>
       {onIconChange && (
         <IconPickerModal
           open={isIconModalOpen}

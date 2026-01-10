@@ -8,13 +8,14 @@ import { useTags } from '@/components/hooks/useTags'
 import { filterBookmarks } from '@/lib/bookmarkUtils'
 import {
   filterEmptyCollections,
-  flattenCollectionsWithBookmarks
+  flattenCollectionsWithBookmarks,
+  handleCollectionDrop
 } from '@/lib/collectionUtils'
 import type { Bookmark } from '@/lib/types'
 
 import BookmarkRow from '@/components/parts/BookmarkRow'
 import Collapsible from '@/components/ui/Collapsible'
-import CollectionItem from './CollectionItem'
+import CollectionItem, { type DropZone, type DragType } from './CollectionItem'
 
 import styles from './styles.module.css'
 
@@ -32,7 +33,7 @@ export default function CollectionsList({
   onAddTags
 }: CollectionsListProps) {
   const { bookmarks, updateBookmark, deleteBookmark } = useBookmarks()
-  const { collections, updateCollection } = useCollections()
+  const { collections, updateCollection, reorderCollections } = useCollections()
   const { tags } = useTags()
   const { setFlash } = useNavigation()
 
@@ -43,6 +44,17 @@ export default function CollectionsList({
   const containerRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const editingNameRef = useRef(editingName)
+
+  // Drag and drop state for collections
+  const [draggedCollectionId, setDraggedCollectionId] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState<{
+    id: string
+    zone: DropZone
+    type: DragType
+  } | null>(null)
+
+  // Drag state for bookmarks
+  const [draggedBookmarkId, setDraggedBookmarkId] = useState<string | null>(null)
 
   useEffect(() => {
     editingNameRef.current = editingName
@@ -149,6 +161,66 @@ export default function CollectionsList({
     setEditingName('')
   }
 
+  // Drag and drop handlers
+  const handleDrop = async (
+    targetId: string,
+    zone: DropZone,
+    type: DragType,
+    bookmarkId?: string
+  ) => {
+    if (type === 'bookmark' && bookmarkId) {
+      // Handle bookmark drop - move bookmark to collection
+      await handleBookmarkDrop(bookmarkId, targetId)
+      return
+    }
+
+    // Handle collection drop
+    if (!draggedCollectionId || draggedCollectionId === targetId) {
+      clearDragState()
+      return
+    }
+
+    const result = handleCollectionDrop(
+      collections,
+      draggedCollectionId,
+      targetId,
+      zone
+    )
+
+    if ('error' in result) {
+      setFlash(result.error)
+      setTimeout(() => setFlash(null), 3000)
+      clearDragState()
+      return
+    }
+
+    try {
+      await reorderCollections(result)
+      clearDragState()
+    } catch (error) {
+      setFlash(`Failed to move: ${(error as Error).message}`)
+      setTimeout(() => setFlash(null), 5000)
+      clearDragState()
+    }
+  }
+
+  const handleBookmarkDrop = async (bookmarkId: string, collectionId: string) => {
+    try {
+      await updateBookmark(bookmarkId, { collectionId })
+      clearDragState()
+    } catch (error) {
+      setFlash(`Failed to move bookmark: ${(error as Error).message}`)
+      setTimeout(() => setFlash(null), 5000)
+      clearDragState()
+    }
+  }
+
+  const clearDragState = () => {
+    setDraggedCollectionId(null)
+    setDraggedBookmarkId(null)
+    setDragOver(null)
+  }
+
   useEffect(() => {
     if (!editingCollectionId) return
 
@@ -213,6 +285,30 @@ export default function CollectionsList({
             inputRef={(el) => {
               inputRefs.current[collection.id] = el
             }}
+            // Drag and drop props for collections
+            draggable
+            isDragging={draggedCollectionId === collection.id}
+            dropZone={dragOver?.id === collection.id ? dragOver.zone : null}
+            dropType={dragOver?.id === collection.id ? dragOver.type : null}
+            onDragStart={() => setDraggedCollectionId(collection.id)}
+            onDragOver={(_, zone, type) => {
+              // Allow drop if it's a bookmark drag or a different collection drag
+              const canDrop =
+                type === 'bookmark' ||
+                (draggedCollectionId && draggedCollectionId !== collection.id)
+              if (canDrop) {
+                setDragOver({ id: collection.id, zone, type })
+              }
+            }}
+            onDragLeave={() => setDragOver(null)}
+            onDrop={(zone, type, bookmarkId) =>
+              handleDrop(collection.id, zone, type, bookmarkId)
+            }
+            onDragEnd={clearDragState}
+            // Bookmark drag props
+            draggedBookmarkId={draggedBookmarkId}
+            onBookmarkDragStart={(id) => setDraggedBookmarkId(id)}
+            onBookmarkDragEnd={clearDragState}
           />
         )
       )}
@@ -234,6 +330,10 @@ export default function CollectionsList({
                 onEdit={onEdit ? () => onEdit(bookmark) : undefined}
                 onDelete={() => handleDelete(bookmark.id)}
                 onAddTags={onAddTags}
+                draggable
+                isDragging={draggedBookmarkId === bookmark.id}
+                onDragStart={() => setDraggedBookmarkId(bookmark.id)}
+                onDragEnd={clearDragState}
               />
             ))}
           </div>

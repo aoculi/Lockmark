@@ -1,4 +1,4 @@
-import { Edit, Pin, PinOff, Plus, Trash2 } from 'lucide-react'
+import { Edit, GripVertical, Pin, PinOff, Plus, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { createTagMap, getTagNameFromMap } from '@/lib/bookmarkUtils'
@@ -10,6 +10,9 @@ import ActionBtn from '@/components/ui/ActionBtn'
 
 import styles from './styles.module.css'
 
+// Data transfer type for bookmark drags
+export const BOOKMARK_DRAG_TYPE = 'application/x-lockmark-bookmark'
+
 interface BookmarkRowProps {
   bookmark: Bookmark
   tags: Tag[]
@@ -17,6 +20,10 @@ interface BookmarkRowProps {
   onTogglePin?: () => void
   onEdit?: () => void
   onDelete?: () => void
+  draggable?: boolean
+  isDragging?: boolean
+  onDragStart?: () => void
+  onDragEnd?: () => void
 }
 
 export default function BookmarkRow({
@@ -25,7 +32,11 @@ export default function BookmarkRow({
   onAddTags,
   onTogglePin,
   onEdit,
-  onDelete
+  onDelete,
+  draggable = false,
+  isDragging = false,
+  onDragStart,
+  onDragEnd
 }: BookmarkRowProps) {
   const tagMap = useMemo(() => createTagMap(tags), [tags])
   const hostname = getHostname(bookmark.url)
@@ -42,13 +53,30 @@ export default function BookmarkRow({
 
   const remainingTags = bookmark.tags.length - 3
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData(BOOKMARK_DRAG_TYPE, bookmark.id)
+    onDragStart?.()
+  }
+
   return (
-    <a
-      href={bookmark.url}
-      target='_blank'
-      rel='noopener noreferrer'
-      className={styles.component}
+    <div
+      className={`${styles.wrapper} ${isDragging ? styles.dragging : ''}`}
+      draggable={draggable}
+      onDragStart={handleDragStart}
+      onDragEnd={onDragEnd}
     >
+      {draggable && (
+        <div className={styles.dragHandle}>
+          <GripVertical size={14} />
+        </div>
+      )}
+      <a
+        href={bookmark.url}
+        target='_blank'
+        rel='noopener noreferrer'
+        className={styles.component}
+      >
       <div className={styles.favicon}>
         <img
           src={faviconUrl}
@@ -108,5 +136,6 @@ export default function BookmarkRow({
         </div>
       </div>
     </a>
+    </div>
   )
 }
