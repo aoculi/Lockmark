@@ -2,7 +2,7 @@
   "name": "LockMark",
   "description": "A secure, privacy-focused local vault for managing and organizing your browser bookmarks.",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
