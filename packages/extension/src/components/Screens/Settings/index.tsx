@@ -1,9 +1,20 @@
 import { Loader2, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import { useAuthSession } from '@/components/hooks/providers/useAuthSessionProvider'
+import {
+  AuthSessionProvider,
+  useAuthSession
+} from '@/components/hooks/providers/useAuthSessionProvider'
+import { ManifestProvider } from '@/components/hooks/providers/useManifestProvider'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import { useSettings } from '@/components/hooks/providers/useSettingsProvider'
+import {
+  SettingsProvider,
+  useSettings
+} from '@/components/hooks/providers/useSettingsProvider'
+import {
+  UnlockStateProvider,
+  useUnlockState
+} from '@/components/hooks/providers/useUnlockStateProvider'
 import { useBookmarkExport } from '@/components/hooks/useBookmarkExport'
 import { useBookmarkImport } from '@/components/hooks/useBookmarkImport'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
@@ -54,10 +65,15 @@ const DEFAULT_FIELDS: SettingsFields = {
   useCodePin: false
 }
 
-export default function Settings() {
+function SettingsContent() {
   const { settings, isLoading, updateSettings } = useSettings()
   const { flash } = useNavigation()
   const { isAuthenticated, session } = useAuthSession()
+  const {
+    isLocked,
+    isLoading: unlockLoading,
+    canUnlockWithPin
+  } = useUnlockState()
 
   const [fields, setFields] = useState<SettingsFields>(DEFAULT_FIELDS)
   const [originalFields, setOriginalFields] =
@@ -330,10 +346,9 @@ export default function Settings() {
 
   const hasChanged = JSON.stringify(fields) !== JSON.stringify(originalFields)
 
-  if (isLoading) {
+  if (isLoading || unlockLoading) {
     return (
       <div className={styles.component}>
-        <SmartHeader />
         <div className={styles.content}>
           <div className={styles.container}>
             <Text>Loading settings...</Text>
@@ -345,6 +360,7 @@ export default function Settings() {
 
   return (
     <div className={styles.component}>
+      <SmartHeader />
       {flash && (
         <div className={styles.flash}>
           <TriangleAlert size={16} color='white' />
@@ -353,7 +369,6 @@ export default function Settings() {
           </Text>
         </div>
       )}
-      <SmartHeader />
       <div className={styles.content}>
         <div className={styles.container}>
           <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
@@ -590,5 +605,19 @@ export default function Settings() {
         description='Enter your PIN to disable PIN unlock'
       />
     </div>
+  )
+}
+
+export default function Settings() {
+  return (
+    <AuthSessionProvider>
+      <SettingsProvider>
+        <UnlockStateProvider>
+          <ManifestProvider>
+            <SettingsContent />
+          </ManifestProvider>
+        </UnlockStateProvider>
+      </SettingsProvider>
+    </AuthSessionProvider>
   )
 }

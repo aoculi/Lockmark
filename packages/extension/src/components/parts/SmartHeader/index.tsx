@@ -1,4 +1,5 @@
 import {
+  Bookmark,
   ChevronDown,
   FolderOpen,
   Library,
@@ -65,7 +66,12 @@ export default function SmartHeader() {
     action()
   }
 
-  const openSettings = () => {
+  const openPage = (page: 'settings' | 'bookmarks') => {
+    let url: string = '/settings.html'
+    if (page === 'bookmarks') {
+      url = '/app.html'
+    }
+
     const runtime =
       (typeof chrome !== 'undefined' && chrome.runtime) ||
       (typeof browser !== 'undefined' && browser.runtime)
@@ -75,14 +81,13 @@ export default function SmartHeader() {
       return
     }
 
-    const settingsUrl = runtime.getURL('/settings.html')
-
+    const pageUrl = runtime.getURL(url as any)
     if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
-      chrome.tabs.create({ url: settingsUrl })
+      chrome.tabs.create({ url: pageUrl })
     } else if (typeof browser !== 'undefined' && browser.tabs?.create) {
-      browser.tabs.create({ url: settingsUrl })
+      browser.tabs.create({ url: pageUrl })
     } else {
-      window.open(settingsUrl, '_blank')
+      window.open(pageUrl, '_blank')
     }
   }
 
@@ -125,6 +130,14 @@ export default function SmartHeader() {
         <button
           className={styles.menuItem}
           role='menuitem'
+          onClick={() => handleMenuItemClick(() => openPage('bookmarks'))}
+        >
+          <Bookmark strokeWidth={1.5} size={18} />
+          <span>Bookmarks</span>
+        </button>
+        <button
+          className={styles.menuItem}
+          role='menuitem'
           onClick={() => handleMenuItemClick(() => {})}
         >
           <FolderOpen strokeWidth={1.5} size={18} />
@@ -141,7 +154,7 @@ export default function SmartHeader() {
         <button
           className={styles.menuItem}
           role='menuitem'
-          onClick={() => handleMenuItemClick(openSettings)}
+          onClick={() => handleMenuItemClick(() => openPage('settings'))}
         >
           <Settings strokeWidth={1.5} size={18} />
           <span>Settings</span>
