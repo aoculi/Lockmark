@@ -66,8 +66,6 @@ export function NavigationProvider({
 
       if (options?.bookmark) {
         setSelectedBookmark(options.bookmark)
-      } else if (options?.tag) {
-        setSelectedBookmark(null)
       } else {
         // When no options provided, reset selection based on route to match current behavior
         if (newRoute === '/bookmark') {

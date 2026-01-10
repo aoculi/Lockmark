@@ -133,7 +133,7 @@ export default function CreateCollection() {
         defaultOpen={true}
         editable={true}
       >
-        <div>{/* Empty content for new collection */}</div>
+        <></>
       </Collapsible>
     </div>
   )
