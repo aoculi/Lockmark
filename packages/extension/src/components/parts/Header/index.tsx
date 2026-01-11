@@ -9,7 +9,8 @@ import {
   Search,
   Settings2,
   Star,
-  StarIcon
+  StarIcon,
+  Tag
 } from 'lucide-react'
 import React, { useCallback } from 'react'
 
@@ -20,7 +21,6 @@ import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { captureAllTabs } from '@/lib/pageCapture'
 import { openExtensionPage } from '@/lib/tabs'
-import type { Tag } from '@/lib/types'
 import { generateId } from '@/lib/utils'
 
 import Button from '@/components/ui/Button'
@@ -219,10 +219,18 @@ export default function Header({
               <DropdownMenu.Content>
                 {isAuthenticated && (
                   <DropdownMenu.Item onClick={() => openExtensionPage('app')}>
-                    <Bookmark strokeWidth={1} size={18} color='white' /> Bookmarks
+                    <Bookmark strokeWidth={1} size={18} color='white' />{' '}
+                    Bookmarks
                   </DropdownMenu.Item>
                 )}
-                <DropdownMenu.Item onClick={() => openExtensionPage('settings')}>
+                {isAuthenticated && (
+                  <DropdownMenu.Item onClick={() => openExtensionPage('tags')}>
+                    <Tag strokeWidth={1} size={18} color='white' /> Tags
+                  </DropdownMenu.Item>
+                )}
+                <DropdownMenu.Item
+                  onClick={() => openExtensionPage('settings')}
+                >
                   <Settings2 strokeWidth={1} size={18} color='white' /> Settings
                 </DropdownMenu.Item>
                 {isAuthenticated && <DropdownMenu.Separator />}

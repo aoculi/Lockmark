@@ -1,4 +1,11 @@
-import { Bookmark, ChevronDown, Library, LogOut, Settings } from 'lucide-react'
+import {
+  Bookmark,
+  ChevronDown,
+  Library,
+  LogOut,
+  Settings,
+  Tag
+} from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
@@ -106,7 +113,17 @@ export default function SmartHeader() {
         <button
           className={styles.menuItem}
           role='menuitem'
-          onClick={() => handleMenuItemClick(() => openExtensionPage('settings'))}
+          onClick={() => handleMenuItemClick(() => openExtensionPage('tags'))}
+        >
+          <Tag strokeWidth={1.5} size={18} />
+          <span>Tags</span>
+        </button>
+        <button
+          className={styles.menuItem}
+          role='menuitem'
+          onClick={() =>
+            handleMenuItemClick(() => openExtensionPage('settings'))
+          }
         >
           <Settings strokeWidth={1.5} size={18} />
           <span>Settings</span>
