@@ -19,6 +19,7 @@ import CreateCollection from '@/components/parts/CreateCollection'
 import HiddenToggle from '@/components/parts/HiddenToggle'
 import LockMessage from '@/components/parts/LockMessage'
 import PinnedList from '@/components/parts/PinnedList'
+import PinnedTags from '@/components/parts/PinnedTags'
 import SmartHeader from '@/components/parts/SmartHeader'
 import SmartSearch from '@/components/parts/SmartSearch'
 import TagManageModal from '@/components/parts/Tags/TagManageModal'
@@ -73,6 +74,20 @@ function AppContent() {
             selectedTags={selectedTags}
             onSearchChange={setSearchQuery}
             onSelectedTagsChange={setSelectedTags}
+          />
+          <PinnedTags
+            selectedTags={selectedTags}
+            onTagClick={(tagId) => {
+              setSelectedTags((prev) =>
+                prev.includes(tagId)
+                  ? prev.filter((id) => id !== tagId)
+                  : [...prev, tagId]
+              )
+            }}
+            onManageTags={() => {
+              setBookmarkForTags(null)
+              setShowTagManageModal(true)
+            }}
           />
           <PinnedList
             searchQuery={searchQuery}

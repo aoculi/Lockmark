@@ -1,4 +1,4 @@
-import { Edit, Search, Trash2 } from 'lucide-react'
+import { Edit, Pin, PinOff, Search, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
@@ -26,7 +26,7 @@ export default function TagManageModal({
   onClose,
   bookmark
 }: TagManageModalProps) {
-  const { tags, showHiddenTags, createTag, deleteTag } = useTags()
+  const { tags, showHiddenTags, createTag, deleteTag, togglePinTag } = useTags()
   const { updateBookmark, bookmarks } = useBookmarks()
   const { setFlash } = useNavigation()
 
@@ -88,6 +88,14 @@ export default function TagManageModal({
       } catch (error) {
         setFlash(`Failed to delete tag: ${(error as Error).message}`)
       }
+    }
+  }
+
+  const handleTogglePin = async (tag: Tag) => {
+    try {
+      await togglePinTag(tag.id)
+    } catch (error) {
+      setFlash(`Failed to update tag: ${(error as Error).message}`)
     }
   }
 
@@ -196,6 +204,12 @@ export default function TagManageModal({
                         className={styles.tagActions}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        <ActionBtn
+                          icon={tag.pinned ? PinOff : Pin}
+                          size='sm'
+                          onClick={() => handleTogglePin(tag)}
+                          title={tag.pinned ? 'Unpin tag' : 'Pin tag'}
+                        />
                         <ActionBtn
                           icon={Edit}
                           size='sm'

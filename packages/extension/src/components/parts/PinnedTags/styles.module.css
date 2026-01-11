@@ -1,0 +1,37 @@
+.component {
+  width: 100%;
+  padding: 8px 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.tagButton {
+  all: unset;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.tagButton:hover {
+  opacity: 1;
+}
+
+.tagButton.selected {
+  opacity: 1;
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
