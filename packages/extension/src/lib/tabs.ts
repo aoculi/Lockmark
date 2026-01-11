@@ -1,0 +1,96 @@
+/**
+ * Utility functions for opening extension pages in browser tabs
+ */
+
+type ExtensionPage = 'app' | 'settings'
+
+const pageUrls: Record<ExtensionPage, string> = {
+  app: '/app.html',
+  settings: '/settings.html'
+}
+
+/**
+ * Opens an extension page in a new tab in the current window.
+ * Handles both Chrome and Firefox, and works correctly in incognito mode.
+ */
+export function openExtensionPage(page: ExtensionPage): void {
+  const runtime =
+    (typeof chrome !== 'undefined' && chrome.runtime) ||
+    (typeof browser !== 'undefined' && browser.runtime)
+
+  if (!runtime) {
+    console.error('Browser runtime not available')
+    return
+  }
+
+  const pageUrl = runtime.getURL(pageUrls[page] as any)
+  if (!pageUrl) {
+    console.error(`Unable to get URL for ${page} page`)
+    return
+  }
+
+  // Get current window to open tab in same window (important for incognito)
+  if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (currentTabs) => {
+      const windowId = currentTabs?.[0]?.windowId
+      chrome.tabs.create({ url: pageUrl, ...(windowId ? { windowId } : {}) })
+    })
+  } else if (typeof browser !== 'undefined' && browser.tabs?.create) {
+    browser.tabs.query({ active: true, currentWindow: true }, (currentTabs) => {
+      const windowId = currentTabs?.[0]?.windowId
+      browser.tabs.create({ url: pageUrl, ...(windowId ? { windowId } : {}) })
+    })
+  } else {
+    window.open(pageUrl, '_blank')
+  }
+}
+
+/**
+ * Opens a URL in a new tab in the current window.
+ * Handles both Chrome and Firefox, and works correctly in incognito mode.
+ */
+export function openUrlInTab(url: string): void {
+  // Get current window to open tab in same window (important for incognito)
+  if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (currentTabs) => {
+      const windowId = currentTabs?.[0]?.windowId
+      chrome.tabs.create({ url, ...(windowId ? { windowId } : {}) })
+    })
+  } else if (typeof browser !== 'undefined' && browser.tabs?.create) {
+    browser.tabs.query({ active: true, currentWindow: true }, (currentTabs) => {
+      const windowId = currentTabs?.[0]?.windowId
+      browser.tabs.create({ url, ...(windowId ? { windowId } : {}) })
+    })
+  } else {
+    window.open(url, '_blank')
+  }
+}
+
+/**
+ * Opens multiple URLs in new tabs in the current window.
+ * Handles both Chrome and Firefox, and works correctly in incognito mode.
+ */
+export function openUrlsInTabs(urls: string[]): void {
+  if (urls.length === 0) return
+
+  // Get current window to open tabs in same window (important for incognito)
+  if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (currentTabs) => {
+      const windowId = currentTabs?.[0]?.windowId
+      urls.forEach((url) => {
+        chrome.tabs.create({ url, ...(windowId ? { windowId } : {}) })
+      })
+    })
+  } else if (typeof browser !== 'undefined' && browser.tabs?.create) {
+    browser.tabs.query({ active: true, currentWindow: true }, (currentTabs) => {
+      const windowId = currentTabs?.[0]?.windowId
+      urls.forEach((url) => {
+        browser.tabs.create({ url, ...(windowId ? { windowId } : {}) })
+      })
+    })
+  } else {
+    urls.forEach((url) => {
+      window.open(url, '_blank')
+    })
+  }
+}
