@@ -42,23 +42,37 @@ function AppContent() {
   const [showTagManageModal, setShowTagManageModal] = useState(false)
   const [bookmarkForTags, setBookmarkForTags] = useState<Bookmark | null>(null)
   const [hasInitializedFromHash, setHasInitializedFromHash] = useState(false)
+  const [shouldWaitForHash, setShouldWaitForHash] = useState(false)
 
-  // Parse URL hash for tag filter on mount (only once)
+  // Check if we have a tag hash that needs to be processed
   useEffect(() => {
-    if (hasInitializedFromHash || tags.length === 0) return
+    if (hasInitializedFromHash) return
 
     const hash = window.location.hash
     if (hash && hash.startsWith('#tag=')) {
-      const tagId = hash.substring(5) // Remove '#tag='
-      // Validate that the tag exists before adding it
+      setShouldWaitForHash(true)
+    } else {
+      setHasInitializedFromHash(true)
+    }
+  }, [hasInitializedFromHash])
+
+  // Parse URL hash for tag filter (only after tags are loaded if needed)
+  useEffect(() => {
+    if (!shouldWaitForHash || hasInitializedFromHash) return
+
+    const hash = window.location.hash
+    if (hash && hash.startsWith('#tag=')) {
+      const tagId = hash.substring(5)
       if (tagId && tags.some((tag) => tag.id === tagId)) {
         setSelectedTags([tagId])
       }
     }
     setHasInitializedFromHash(true)
-  }, [tags, hasInitializedFromHash])
+    setShouldWaitForHash(false)
+  }, [tags, hasInitializedFromHash, shouldWaitForHash])
 
-  if (isLoading || unlockLoading) {
+  // Show loading state while initializing from hash (to prevent flicker)
+  if (isLoading || unlockLoading || shouldWaitForHash) {
     return (
       <div className={styles.component}>
         <div className={styles.lockScreen}>
