@@ -1,0 +1,81 @@
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background-color: var(--background-2);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-light);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.action:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.actionSm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.actionMd {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.actionLg {
+  height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.actionIcon {
+  padding: 0;
+}
+
+.actionIcon.actionSm {
+  width: 28px;
+}
+
+.actionIcon.actionMd {
+  width: 32px;
+}
+
+.actionIcon.actionLg {
+  width: 36px;
+}
+
+.actionActive {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.actionActive:hover {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.actionDanger:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.actionBordered {
+  background-color: transparent;
+  border: 1px solid var(--border);
+}
+
+.actionBordered:hover {
+  background-color: var(--background-1);
+  border-color: var(--border-hover);
+}

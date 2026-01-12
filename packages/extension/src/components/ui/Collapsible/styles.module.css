@@ -1,0 +1,102 @@
+.component {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.headerClickable {
+  cursor: pointer;
+}
+
+.header:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+
+.chevron {
+  color: var(--text-light);
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.icon {
+  color: var(--text-light);
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.iconButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.iconButton .icon {
+  color: var(--text-light);
+  transition: color 0.15s ease;
+}
+
+.iconButton:hover .icon {
+  color: var(--text);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: var(--text-light);
+}
+
+.content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.contentOpen {
+  grid-template-rows: 1fr;
+}
+
+.contentInner {
+  overflow: hidden;
+}

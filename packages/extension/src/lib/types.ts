@@ -37,6 +37,7 @@ export interface Tag {
   name: string // display name
   color?: string // optional UI hint
   hidden?: boolean // whether tag is hidden (default: false)
+  pinned?: boolean // whether tag is pinned (default: false)
 }
 
 /**

@@ -1,14 +1,14 @@
 import {
-  BookOpenText,
+  Bookmark,
   ChevronDown,
-  Library,
   LogOut,
   Menu,
   Save,
   Search,
   Settings2,
   Star,
-  StarIcon
+  StarIcon,
+  Tag as TagIcon
 } from 'lucide-react'
 import React, { useCallback } from 'react'
 
@@ -18,26 +18,23 @@ import { useNavigation } from '@/components/hooks/providers/useNavigationProvide
 import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { captureAllTabs } from '@/lib/pageCapture'
+import { openExtensionPage } from '@/lib/tabs'
 import type { Tag } from '@/lib/types'
 import { generateId } from '@/lib/utils'
 
 import Button from '@/components/ui/Button'
 import { DropdownMenu } from '@/components/ui/DropdownMenu'
-import Text from '@/components/ui/Text'
+import Logo from '@/components/ui/Logo'
 
 import styles from './styles.module.css'
 
 export default function Header({
-  title,
-  canSwitchToVault = false,
   canSwitchToBookmark = false,
   canShowMenu = true,
   rightContent,
   searchQuery,
   onSearchChange
 }: {
-  title?: string
-  canSwitchToVault?: boolean
   canSwitchToBookmark?: boolean
   canShowMenu?: boolean
   rightContent?: React.ReactNode
@@ -135,13 +132,7 @@ export default function Header({
     <div className={styles.component}>
       <div className={styles.content}>
         <div className={styles.left}>
-          <div className={styles.leftIcon}>
-            <Library strokeWidth={2} size={20} />
-          </div>
-
-          <Text as='h1' size='2' weight='medium'>
-            {title ? title : 'LockMark'}
-          </Text>
+          <Logo />
         </div>
 
         {searchQuery !== undefined && onSearchChange && (
@@ -159,15 +150,6 @@ export default function Header({
 
         <div className={styles.right}>
           {rightContent}
-          {canSwitchToVault && isAuthenticated && (
-            <Button
-              onClick={() => navigate('/vault')}
-              variant='ghost'
-              title='Vault'
-            >
-              <BookOpenText strokeWidth={2} size={18} color='white' />
-            </Button>
-          )}
 
           {canSwitchToBookmark && isAuthenticated && (
             <>
@@ -215,67 +197,19 @@ export default function Header({
                 </Button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content>
+                {isAuthenticated && (
+                  <DropdownMenu.Item onClick={() => openExtensionPage('app')}>
+                    <Bookmark strokeWidth={1} size={18} color='white' />{' '}
+                    Bookmarks
+                  </DropdownMenu.Item>
+                )}
+                {isAuthenticated && (
+                  <DropdownMenu.Item onClick={() => openExtensionPage('tags')}>
+                    <TagIcon strokeWidth={1} size={18} color='white' /> Tags
+                  </DropdownMenu.Item>
+                )}
                 <DropdownMenu.Item
-                  onClick={() => {
-                    // Open the options page - compatible with both Chrome and Firefox
-                    try {
-                      // Get the runtime API (works for both Chrome and Firefox)
-                      const runtime =
-                        (typeof chrome !== 'undefined' && chrome.runtime) ||
-                        (typeof browser !== 'undefined' && browser.runtime)
-
-                      if (!runtime) {
-                        setFlash(
-                          'Unable to open settings page. Browser runtime not available.'
-                        )
-                        setTimeout(() => setFlash(null), 5000)
-                        return
-                      }
-
-                      // Open options page as a standalone tab (not in extension management page)
-                      try {
-                        const optionsUrl = runtime.getURL(
-                          '/settings.html' as any
-                        )
-                        if (optionsUrl) {
-                          // Use chrome.tabs.create for better control, fallback to window.open
-                          const tabs =
-                            (typeof chrome !== 'undefined' && chrome.tabs) ||
-                            (typeof browser !== 'undefined' && browser.tabs)
-                          if (tabs && typeof tabs.create === 'function') {
-                            tabs.create({ url: optionsUrl })
-                          } else {
-                            window.open(optionsUrl, '_blank')
-                          }
-                        } else {
-                          setFlash(
-                            'Unable to open settings page. Options page not found.'
-                          )
-                          setTimeout(() => setFlash(null), 5000)
-                        }
-                      } catch (error) {
-                        console.error('Error opening options page:', error)
-                        setFlash(
-                          `Unable to open settings page: ${
-                            error instanceof Error
-                              ? error.message
-                              : 'Unknown error'
-                          }`
-                        )
-                        setTimeout(() => setFlash(null), 5000)
-                      }
-                    } catch (error) {
-                      console.error('Error opening options page:', error)
-                      setFlash(
-                        `Unable to open settings page: ${
-                          error instanceof Error
-                            ? error.message
-                            : 'Unknown error'
-                        }`
-                      )
-                      setTimeout(() => setFlash(null), 5000)
-                    }
-                  }}
+                  onClick={() => openExtensionPage('settings')}
                 >
                   <Settings2 strokeWidth={1} size={18} color='white' /> Settings
                 </DropdownMenu.Item>

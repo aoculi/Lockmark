@@ -25,42 +25,29 @@ export default defineConfig({
     disabled: true
   },
 
-  manifest: (env) => {
-    const basePermissions: string[] = ['storage', 'tabs']
-
-    // Add contextMenus permission for sidebar context menu item
-    basePermissions.push('contextMenus')
-
-    const manifest: any = {
-      name: 'LockMark',
-      description: 'Secure Bookmarks Vault',
-      host_permissions: [
-        'http://127.0.0.1:3500/*',
-        'http://localhost:3500/*',
-        '<all_urls>' // Allow fetching metadata from any URL
-      ],
-      permissions: basePermissions,
-      options_ui: {
-        page: 'settings.html',
-        open_in_tab: true
+  manifest: {
+    name: 'LockMark',
+    description: 'Secure Bookmarks Vault',
+    host_permissions: ['<all_urls>'],
+    permissions: ['storage', 'tabs'],
+    options_ui: {
+      page: 'settings.html',
+      open_in_tab: true
+    },
+    content_security_policy: {
+      extension_pages:
+        "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self';"
+    },
+    browser_specific_settings: {
+      chrome: {
+        id: '@lockmark'
       },
-      content_security_policy: {
-        extension_pages:
-          "script-src 'self' http://localhost:3000 http://localhost:3001 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self';"
+      gecko: {
+        id: '@lockmark'
       },
-      browser_specific_settings: {
-        chrome: {
-          id: '@lockmark'
-        },
-        gecko: {
-          id: '@lockmark'
-        },
-        edge: {
-          id: '@lockmark'
-        }
-      } as any
-    }
-
-    return manifest
+      edge: {
+        id: '@lockmark'
+      }
+    } as any
   }
 })

@@ -18,10 +18,7 @@ export interface ImportResult {
   errors: string[]
 }
 
-export function detectBrowserType(
-  filename: string,
-  content: string
-): BrowserType {
+function detectBrowserType(filename: string, content: string): BrowserType {
   const lowerFilename = filename.toLowerCase()
   const trimmed = content.trim()
 

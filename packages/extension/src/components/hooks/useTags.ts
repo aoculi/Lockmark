@@ -11,7 +11,7 @@ export function useTags() {
   const { settings } = useSettings()
 
   const createTag = useCallback(
-    async (tag: Omit<Tag, 'id'>) => {
+    async (tag: Omit<Tag, 'id'>): Promise<Tag> => {
       if (!manifest) {
         throw new Error('Cannot create tag: manifest not loaded')
       }
@@ -36,13 +36,16 @@ export function useTags() {
         ...tag,
         id: generateId(),
         name: trimmedName,
-        hidden: tag.hidden ?? false
+        hidden: tag.hidden ?? false,
+        pinned: tag.pinned ?? false
       }
 
       await save({
         ...manifest,
         tags: [...(manifest.tags || []), newTag]
       })
+
+      return newTag
     },
     [manifest, save]
   )
@@ -62,6 +65,7 @@ export function useTags() {
         const validationData = {
           name: updates.name ?? existingTag.name,
           hidden: updates.hidden ?? existingTag.hidden,
+          pinned: 'pinned' in updates ? updates.pinned : existingTag.pinned,
           color: 'color' in updates ? updates.color : existingTag.color
         }
 
@@ -102,13 +106,34 @@ export function useTags() {
     [manifest]
   )
 
+  const togglePinTag = useCallback(
+    async (id: string) => {
+      if (!manifest) return
+
+      const existingTag = manifest.tags?.find((tag: Tag) => tag.id === id)
+      if (existingTag) {
+        await save({
+          ...manifest,
+          tags: (manifest.tags || []).map((tag: Tag) =>
+            tag.id === id ? { ...tag, pinned: !tag.pinned } : tag
+          )
+        })
+      }
+    },
+    [manifest, save]
+  )
+
+  const pinnedTags = (manifest?.tags || []).filter((tag: Tag) => tag.pinned)
+
   return {
     tags: manifest?.tags || [],
+    pinnedTags,
     showHiddenTags: settings.showHiddenTags,
     createTag,
     updateTag,
     deleteTag,
     getTag,
+    togglePinTag,
     isSaving
   }
 }

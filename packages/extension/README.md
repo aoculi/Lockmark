@@ -1,12 +1,13 @@
-# LockMark Extension - Encrypted Bookmarks UI
+# LockMark Extension
 
-React + WXT browser extension for LockMark. Everything is encrypted on the client before it reaches the API.
+React + WXT browser extension for encrypted bookmarks. Everything is encrypted client-side before reaching the API.
 
-## What this gives you
+## Features
 
-- Client-side crypto (Argon2id KDF + XChaCha20-Poly1305 + HKDF-SHA-256)
-- Works with the local LockMark API (`http://127.0.0.1:3500` by default)
-- Light UI for bookmarks, tags, and vault manifest sync with optimistic concurrency
+- **Client-side encryption**: Argon2id KDF + XChaCha20-Poly1305 + HKDF-SHA-256
+- **Local API integration**: Default `http://127.0.0.1:3500`
+- **Vault sync**: Optimistic concurrency with ETag support
+- **Bookmark & tag management**: Encrypted storage with metadata
 
 ## Requirements
 
@@ -70,12 +71,16 @@ ZIP outputs can be loaded directly into browsers for testing or side-loading.
 3. Register a new account (gets KDF params, wraps your master key).
 4. Log in and start adding bookmarks/tags; everything is encrypted before leaving the browser.
 
-## Security notes (client side)
+## Security
 
-- Argon2id KDF (512 MiB, 3 iterations) derives the User Encryption Key.
-- Master key is generated client-side, wrapped with the UEK, and only ciphertext/nonces go to the API.
-- Auto-lock/session handling uses JWT refresh + background scripts (see `entrypoints/lib/background/`).
+- **KDF**: Argon2id (512 MiB, 3 iterations) derives the User Encryption Key
+- **Master key**: Generated client-side, wrapped with UEK; only ciphertext/nonces sent to API
+- **Session handling**: JWT refresh with background scripts (`entrypoints/lib/background/`)
 
 ---
 
 Built with [WXT](https://wxt.dev).
+
+## License
+
+MIT

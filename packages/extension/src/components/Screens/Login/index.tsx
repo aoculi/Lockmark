@@ -1,97 +1,20 @@
-import { KeyRound, Loader2, Mail } from 'lucide-react'
-
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import {
-  useQueryAuth,
-  type AuthPhase
-} from '@/components/hooks/queries/useQueryAuth'
-import { useAuthForm } from '@/components/hooks/useAuthForm'
-import usePopupSize from '@/components/hooks/usePopupSize'
+import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 
-import Header from '@/components/parts/Header'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-
-import styles from './styles.module.css'
-
-function getButtonLabel(phase: AuthPhase): string {
-  switch (phase) {
-    case 'authenticating':
-      return 'Logging in...'
-    case 'fetching':
-      return 'Fetching vault...'
-    case 'unlocking':
-      return 'Unlocking...'
-    case 'decrypting':
-      return 'Decrypting vault...'
-    default:
-      return 'Unlock Vault'
-  }
-}
+import AuthForm from '@/components/AuthForm'
 
 export default function Login() {
-  usePopupSize('compact')
   const { login, phase } = useQueryAuth()
-  const { navigate, setFlash } = useNavigation()
-
-  const mutation = login
-
-  const onLoginSuccess = () => {
-    setFlash(null)
-    navigate('/vault')
-  }
-
-  const { formData, disabled, handleSubmit, handleChange } = useAuthForm({
-    onSuccess: onLoginSuccess,
-    mutation
-  })
+  const { navigate } = useNavigation()
 
   return (
-    <div className={styles.container}>
-      <Header title='Login' />
-      <div className={styles.content}>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <Input
-            size='lg'
-            placeholder='Email or username'
-            name='login'
-            autoComplete='off'
-            value={formData.login}
-            onChange={handleChange}
-            disabled={mutation.isPending}
-            autoFocus
-          >
-            <Mail size={16} />
-          </Input>
-
-          <Input
-            size='lg'
-            placeholder='Password'
-            type='password'
-            name='password'
-            value={formData.password}
-            onChange={handleChange}
-            disabled={mutation.isPending}
-          >
-            <KeyRound size={16} />
-          </Input>
-
-          <Button disabled={disabled}>
-            {mutation.isPending && <Loader2 className={styles.spinner} />}
-            {getButtonLabel(phase)}
-          </Button>
-        </form>
-
-        <div className={styles.registerLink}>
-          <Button
-            variant='ghost'
-            onClick={() => navigate('/register')}
-            color='light'
-          >
-            Not registered? Create an account
-          </Button>
-        </div>
-      </div>
-    </div>
+    <AuthForm
+      title="Sign In"
+      defaultButtonLabel="Unlock Vault"
+      linkText="Not registered? Create an account"
+      onLinkClick={() => navigate('/register')}
+      mutation={login}
+      phase={phase}
+    />
   )
 }
