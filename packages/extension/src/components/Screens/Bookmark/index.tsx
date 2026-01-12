@@ -201,7 +201,7 @@ export default function Bookmark() {
 
       <div className={styles.page}>
         <div className={styles.pageTitle}>
-          <Text as='h1' size='4' weight='medium'>
+          <Text as='h1' size='2' weight='medium'>
             {bookmark?.id ? 'Edit Bookmark' : 'New Bookmark'}
           </Text>
         </div>
