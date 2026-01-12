@@ -7,6 +7,7 @@ import { useQueryPin } from '@/components/hooks/queries/useQueryPin'
 import usePopupSize from '@/components/hooks/usePopupSize'
 import { PIN_FAILED_ATTEMPTS_THRESHOLD } from '@/lib/pin'
 
+import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
 import PinInput from '@/components/ui/PinInput'
 import Text from '@/components/ui/Text'
@@ -66,11 +67,14 @@ export default function PinUnlock() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.content}>
-        <div className={styles.header}>
-          <Text size='4'>Unlock Lockmark</Text>
-        </div>
+      <Header />
 
+      <div className={styles.content}>
+        <div className={styles.pageTitle}>
+          <Text as='h1' size='4' weight='medium'>
+            Enter PIN
+          </Text>
+        </div>
         {isLocked ? (
           <div className={styles.lockedMessage}>
             <Text size='2' align='center'>

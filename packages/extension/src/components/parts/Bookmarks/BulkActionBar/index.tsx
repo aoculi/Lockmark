@@ -1,11 +1,12 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
+import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
+import { useBookmarks } from '@/components/hooks/useBookmarks'
+
+import TagManageModal from '@/components/parts/Tags/TagManageModal'
 import ActionBtn from '@/components/ui/ActionBtn'
 import { Checkbox } from '@/components/ui/Checkbox'
-import { useBookmarks } from '@/components/hooks/useBookmarks'
-import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
-import TagManageModal from '@/components/parts/Tags/TagManageModal'
 
 import styles from './styles.module.css'
 
@@ -51,10 +52,7 @@ export default function BulkActionBar({
     <>
       <div className={styles.component}>
         <div className={styles.left}>
-          <Checkbox
-            checked={allSelected}
-            onChange={onSelectAll}
-          />
+          <Checkbox checked={allSelected} onChange={onSelectAll} />
           {selectedCount > 0 && (
             <div className={styles.actions}>
               <ActionBtn

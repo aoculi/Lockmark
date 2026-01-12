@@ -12,6 +12,7 @@ import BookmarkForm, {
 } from '@/components/parts/Bookmarks/BookmarkForm'
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
+import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
 
@@ -168,7 +169,6 @@ export default function Bookmark() {
   return (
     <div className={styles.component}>
       <Header
-        title={bookmark ? 'Edit' : 'New'}
         rightContent={
           bookmark && bookmark.id ? (
             <Button
@@ -200,6 +200,12 @@ export default function Bookmark() {
       />
 
       <div className={styles.page}>
+        <div className={styles.pageTitle}>
+          <Text as='h1' size='4' weight='medium'>
+            {bookmark?.id ? 'Edit Bookmark' : 'New Bookmark'}
+          </Text>
+        </div>
+
         <BookmarkForm
           initialData={initialFormData}
           onSubmit={handleSubmit}

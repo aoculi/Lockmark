@@ -22,11 +22,6 @@
   align-items: center;
 }
 
-.leftIcon {
-  margin-top: -2px;
-  color: var(--secondary);
-}
-
 .newBookmarkButton {
   width: 40px !important;
 }

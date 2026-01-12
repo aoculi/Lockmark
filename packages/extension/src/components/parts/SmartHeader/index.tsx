@@ -1,17 +1,10 @@
-import {
-  Bookmark,
-  ChevronDown,
-  Library,
-  LogOut,
-  Settings,
-  Tag
-} from 'lucide-react'
+import { Bookmark, ChevronDown, LogOut, Settings, Tag } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 import { useNavigation } from '@/components/hooks/providers/useNavigationProvider'
+import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 
-import Text from '@/components/ui/Text'
+import Logo from '@/components/ui/Logo'
 
 import styles from './styles.module.css'
 
@@ -76,12 +69,7 @@ export default function SmartHeader() {
         aria-expanded={isOpen}
         aria-haspopup='menu'
       >
-        <div className={styles.logo}>
-          <Library strokeWidth={2} size={24} />
-        </div>
-        <Text as='span' size='3' weight='medium'>
-          LockMark
-        </Text>
+        <Logo />
         <ChevronDown
           strokeWidth={2}
           size={16}

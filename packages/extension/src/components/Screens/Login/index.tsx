@@ -11,6 +11,7 @@ import usePopupSize from '@/components/hooks/usePopupSize'
 import Header from '@/components/parts/Header'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
 
@@ -48,8 +49,14 @@ export default function Login() {
 
   return (
     <div className={styles.container}>
-      <Header title='Login' />
+      <Header />
+
       <div className={styles.content}>
+        <div className={styles.pageTitle}>
+          <Text as='h1' size='4' weight='medium'>
+            Sign In
+          </Text>
+        </div>
         <form onSubmit={handleSubmit} className={styles.form}>
           <Input
             size='lg'

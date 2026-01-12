@@ -1,7 +1,6 @@
 import {
   Bookmark,
   ChevronDown,
-  Library,
   LogOut,
   Menu,
   Save,
@@ -20,24 +19,22 @@ import { useQueryAuth } from '@/components/hooks/queries/useQueryAuth'
 import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { captureAllTabs } from '@/lib/pageCapture'
 import { openExtensionPage } from '@/lib/tabs'
-import { generateId } from '@/lib/utils'
 import type { Tag } from '@/lib/types'
+import { generateId } from '@/lib/utils'
 
 import Button from '@/components/ui/Button'
 import { DropdownMenu } from '@/components/ui/DropdownMenu'
-import Text from '@/components/ui/Text'
+import Logo from '@/components/ui/Logo'
 
 import styles from './styles.module.css'
 
 export default function Header({
-  title,
   canSwitchToBookmark = false,
   canShowMenu = true,
   rightContent,
   searchQuery,
   onSearchChange
 }: {
-  title?: string
   canSwitchToBookmark?: boolean
   canShowMenu?: boolean
   rightContent?: React.ReactNode
@@ -135,13 +132,7 @@ export default function Header({
     <div className={styles.component}>
       <div className={styles.content}>
         <div className={styles.left}>
-          <div className={styles.leftIcon}>
-            <Library strokeWidth={2} size={20} />
-          </div>
-
-          <Text as='h1' size='2' weight='medium'>
-            {title ? title : 'LockMark'}
-          </Text>
+          <Logo />
         </div>
 
         {searchQuery !== undefined && onSearchChange && (
