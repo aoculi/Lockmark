@@ -10,6 +10,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+}
+
+.headerToggles {
+  position: absolute;
+  right: 16px;
+  display: flex;
+  gap: 8px;
 }
 
 .content {

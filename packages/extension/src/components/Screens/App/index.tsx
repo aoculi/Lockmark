@@ -26,6 +26,7 @@ import Settings from '@/components/parts/Settings'
 import SmartHeader from '@/components/parts/SmartHeader'
 import Tags from '@/components/parts/Tags'
 import Text from '@/components/ui/Text'
+import ThemeToggle from '@/components/parts/ThemeToggle'
 
 import styles from './styles.module.css'
 
@@ -115,7 +116,10 @@ function AppContent() {
     <div className={styles.component}>
       <div className={styles.header}>
         <SmartHeader />
-        <HiddenToggle />
+        <div className={styles.headerToggles}>
+          <HiddenToggle />
+          <ThemeToggle />
+        </div>
       </div>
       <div className={styles.content}>
         <div className={styles.container}>{renderContent()}</div>

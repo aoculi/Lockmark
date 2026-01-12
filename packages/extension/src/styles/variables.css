@@ -13,3 +13,19 @@
   --background-2: #2f343e;
   --background-3: #282c33;
 }
+
+[data-theme='light'] {
+  --text: #1a1a1a;
+  --text-light: #666666;
+
+  --border: #d0d0d0;
+  --border-hover: #999999;
+  --border-radius: 2px;
+
+  --primary: #6e56cf;
+  --secondary: #e5a84b;
+
+  --background-1: #f0f0f0;
+  --background-2: #e0e0e0;
+  --background-3: #ffffff;
+}
