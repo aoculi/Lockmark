@@ -1,12 +1,10 @@
 import {
   Bookmark,
-  ChevronDown,
   LogOut,
   Menu,
   Save,
   Search,
   Settings2,
-  Star,
   StarIcon,
   Tag as TagIcon
 } from 'lucide-react'
@@ -29,13 +27,11 @@ import Logo from '@/components/ui/Logo'
 import styles from './styles.module.css'
 
 export default function Header({
-  canSwitchToBookmark = false,
   canShowMenu = true,
   rightContent,
   searchQuery,
   onSearchChange
 }: {
-  canSwitchToBookmark?: boolean
   canShowMenu?: boolean
   rightContent?: React.ReactNode
   searchQuery?: string
@@ -151,44 +147,6 @@ export default function Header({
         <div className={styles.right}>
           {rightContent}
 
-          {canSwitchToBookmark && isAuthenticated && (
-            <>
-              <Button
-                asIcon={true}
-                onClick={() => navigate('/bookmark')}
-                title='New bookmark'
-                className={styles.newBookmarkButton}
-              >
-                <Star strokeWidth={2} size={18} color='white' />
-              </Button>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <Button
-                    className={styles.moreBookmarkOptionsButton}
-                    asIcon={true}
-                    title='More bookmark options'
-                  >
-                    <ChevronDown strokeWidth={2} size={13} color='white' />
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content>
-                  <DropdownMenu.Item
-                    onClick={() => navigate('/bookmark', { bookmark: 'blank' })}
-                  >
-                    <StarIcon strokeWidth={1} size={18} color='white' />
-                    New blank bookmark
-                  </DropdownMenu.Item>
-                  {isAuthenticated && (
-                    <DropdownMenu.Item onClick={handleSaveAllTabs}>
-                      <Save strokeWidth={1} size={18} color='white' /> Save all
-                      open tabs
-                    </DropdownMenu.Item>
-                  )}
-                </DropdownMenu.Content>
-              </DropdownMenu.Root>
-            </>
-          )}
-
           {canShowMenu && (
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
@@ -197,6 +155,22 @@ export default function Header({
                 </Button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content>
+                {isAuthenticated && (
+                  <DropdownMenu.Item
+                    onClick={() => navigate('/bookmark', { bookmark: 'blank' })}
+                  >
+                    <StarIcon strokeWidth={1} size={18} color='white' />
+                    New blank bookmark
+                  </DropdownMenu.Item>
+                )}
+
+                {isAuthenticated && (
+                  <DropdownMenu.Item onClick={handleSaveAllTabs}>
+                    <Save strokeWidth={1} size={18} color='white' /> Save all
+                    open tabs
+                  </DropdownMenu.Item>
+                )}
+
                 {isAuthenticated && (
                   <DropdownMenu.Item onClick={() => openExtensionPage('app')}>
                     <Bookmark strokeWidth={1} size={18} color='white' />{' '}
