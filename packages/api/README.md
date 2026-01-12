@@ -1,14 +1,14 @@
-# LockMark API - Local Encrypted Bookmarks Backend
+# LockMark API
 
-LockMark API is a Bun + Hono service that stores only ciphertext for the LockMark browser extension. It keeps authentication, vault metadata, and encrypted blobs in SQLite via Drizzle.
+Local-only, encrypted bookmarks backend. Stores only ciphertext in SQLite via Drizzle.
 
-## What this service provides
+## Features
 
-- Local-only by default (`127.0.0.1:3500`)
-- JWT sessions with revocation + 1h expiry
-- Rate-limited auth endpoints (5 attempts/min per IP and per login)
-- Optimistic concurrency with ETags/If-Match on manifests and items
-- Zero plaintext storage: encrypted manifest/items, wrapped master key, Argon2id password hashes, salts, and metadata only
+- **Local-only**: Binds to `127.0.0.1:3500` by default
+- **JWT sessions**: 1h expiry with revocation support
+- **Rate limiting**: 5 auth attempts/min per IP and per login
+- **Optimistic concurrency**: ETags/If-Match on manifests and items
+- **Zero-knowledge**: Only encrypted data, wrapped master key, and Argon2id hashes stored
 
 ## Requirements
 
@@ -61,22 +61,24 @@ bun run dev               # start API with hot reload
 bun test                  # run test suite
 ```
 
-## Data & storage model (zero-knowledge)
+## Storage model
 
-- `users`: Argon2id password hash (auth), client KDF/HKDF salts, wrapped master key blob
-- `sessions`: JWT jti mapping with expiry/revocation
-- `vaults` + `manifests`: encrypted manifest blob with ETag + version
-- `bookmarks`, `tags`, `bookmark_tags`: encrypted items, per-item DEK wrapped and versioned
+| Table | Data |
+|-------|------|
+| `users` | Argon2id hash, KDF/HKDF salts, wrapped master key |
+| `sessions` | JWT jti with expiry/revocation |
+| `vaults` + `manifests` | Encrypted manifest blob with ETag + version |
+| `bookmarks`, `tags`, `bookmark_tags` | Encrypted items, per-item DEK wrapped and versioned |
 
-All bookmark/tag data and manifests are base64-validated, size-bounded (manifest 5 MB, item 64 KB), and stored as ciphertext only.
+All data is base64-validated and size-bounded (manifest 5 MB, item 64 KB).
 
-## Security notes
+## Security
 
-- Auth hashing: Argon2id (server-side) for password verification
-- Client KDF: Argon2id (512 MiB, 3 iters) → UEK; master key wrapped client-side
-- Transport surface: binds to loopback by default; adjust `HOST`/`PORT` to expose
-- Rate limiting: auth endpoints limited per IP and per login; refresh limited per user
-- JWT: HS256, 1h default, must correspond to a non-revoked session in DB
+- **Auth hashing**: Server-side Argon2id for password verification
+- **Client KDF**: Argon2id (512 MiB, 3 iters) → UEK; master key wrapped client-side
+- **Transport**: Loopback by default; adjust `HOST`/`PORT` to expose
+- **Rate limiting**: Per IP and per login on auth; refresh limited per user
+- **JWT**: HS256, 1h default, requires non-revoked session
 
 ## Example usage (manual)
 
@@ -133,3 +135,7 @@ PUT    /tags/:id               (requires Bearer token; If-Match header)
 POST   /bookmark-tags          (requires Bearer token)
 DELETE /bookmark-tags          (requires Bearer token)
 ```
+
+## License
+
+MIT

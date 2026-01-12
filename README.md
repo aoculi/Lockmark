@@ -15,7 +15,7 @@ Inspired by Proton’s privacy-first approach (especially Proton Pass).
 ## Repository layout
 
 ```
-bookmarks/
+lockmark/
 ├── packages/
 │   ├── api/          # Bun + Hono API (SQLite + Drizzle)
 │   └── extension/    # WXT + React browser extension
@@ -52,7 +52,6 @@ bun run db:migrate
 3. Run everything
 
 ```bash
-cd /home/alex/Projects/bookmarks
 pnpm run dev      # API on 127.0.0.1:3500, extension dev server
 ```
 
@@ -84,14 +83,18 @@ curl -X POST http://127.0.0.1:3500/auth/register \
 
 ## Security at a glance
 
-- Client-side crypto: Argon2id KDF (512 MiB, 3 iterations) + XChaCha20-Poly1305 + HKDF-SHA-256; master key is wrapped with the derived UEK and only ciphertext/nonces are sent.
-- Server storage (`packages/api/src/database/schema.ts`): Argon2id password hashes, KDF/HKDF salts, wrapped master key blob, encrypted manifest/items, and metadata—no plaintext bookmarks.
-- Authentication: JWT sessions (HS256, 1h default) checked against a sessions table; tokens require non-revoked, non-expired sessions (`auth.middleware.ts`).
-- Rate limiting: auth endpoints limited to 5 attempts/min per IP and per login; refresh limited to 30 per 5 minutes (`rate-limit.middleware.ts`).
-- Network surface: binds to `127.0.0.1` by default; set `HOST`/`PORT` in `packages/api/.env` to change.
-- Integrity/DoS guards: manifest size capped at 5 MB; item size capped at 64 KB; base64 validation and optimistic concurrency via ETags (`vault.service.ts`).
+- **Client-side encryption**: Argon2id KDF (512 MiB, 3 iterations) + XChaCha20-Poly1305 + HKDF-SHA-256; master key is wrapped with the derived UEK
+- **Server storage** (`packages/api/src/database/schema.ts`): Argon2id password hashes, KDF/HKDF salts, wrapped master key blob, encrypted manifest/items, and metadata—no plaintext
+- **Authentication**: JWT sessions (HS256, 1h default) checked against a sessions table; tokens require non-revoked, non-expired sessions (`auth.middleware.ts`)
+- **Rate limiting**: auth endpoints limited to 5 attempts/min per IP and per login; refresh limited to 30 per 5 minutes (`rate-limit.middleware.ts`)
+- **Network**: binds to `127.0.0.1` by default; set `HOST`/`PORT` in `packages/api/.env` to change
+- **Limits**: manifest capped at 5 MB, items capped at 64 KB; base64 validation and optimistic concurrency via ETags (`vault.service.ts`)
 
 ## More docs
 
 - API: `packages/api/README.md`
 - Extension: `packages/extension/README.md`
+
+## License
+
+MIT
