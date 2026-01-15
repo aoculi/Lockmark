@@ -11,12 +11,11 @@ import { useBookmarks } from '@/components/hooks/useBookmarks'
 import { STORAGE_KEYS } from '@/lib/constants'
 import { setupPin, verifyPin } from '@/lib/pin'
 import {
-  clearStorageItem,
+  clearPinStore,
   getApiUrl,
+  getPinStore,
   getStorageItem,
-  setApiUrl,
-  setStorageItem,
-  type PinStoreData
+  setApiUrl
 } from '@/lib/storage'
 import type { KeystoreData } from '@/lib/unlock'
 
@@ -102,10 +101,10 @@ export default function Settings() {
         const apiUrl = await getApiUrl()
 
         if (isAuthenticated) {
-          // Check if PIN_STORE actually exists - this is the source of truth
-          const pinStore = await getStorageItem<PinStoreData>(
-            STORAGE_KEYS.PIN_STORE
-          )
+          // Check if PIN store actually exists for this user - this is the source of truth
+          const pinStore = session.userId
+            ? await getPinStore(session.userId)
+            : null
           const hasPinStore = !!pinStore
 
           // If settings say useCodePin but PIN_STORE doesn't exist, sync them
@@ -195,14 +194,8 @@ export default function Settings() {
       // Get vaultId from keystore AAD context
       const vaultId = keystoreData.aadContext.vaultId
 
-      // Create PIN store
-      const pinStore = await setupPin(
-        pin,
-        keystoreData,
-        session.userId,
-        vaultId
-      )
-      await setStorageItem(STORAGE_KEYS.PIN_STORE, pinStore)
+      // Create PIN store (setupPin now stores internally with user-specific key)
+      await setupPin(pin, keystoreData, session.userId, vaultId)
 
       // Adjust auto-lock timeout if needed
       const newTimeout =
@@ -233,8 +226,11 @@ export default function Settings() {
   }
 
   const handlePinVerifySuccess = async (pin: string) => {
-    // Get PIN store
-    const pinStore = await getStorageItem<PinStoreData>(STORAGE_KEYS.PIN_STORE)
+    // Get PIN store for this user
+    if (!session.userId) {
+      throw new Error('No user session found')
+    }
+    const pinStore = await getPinStore(session.userId)
     if (!pinStore) {
       throw new Error('No PIN configured')
     }
@@ -253,8 +249,8 @@ export default function Settings() {
     }
     setFields(newFields)
 
-    // Remove PIN store from storage
-    await clearStorageItem(STORAGE_KEYS.PIN_STORE)
+    // Remove PIN store from storage (user-specific key)
+    await clearPinStore(session.userId)
 
     // Save settings - only pass Settings properties, not fields (which includes apiUrl)
     await updateSettings({
