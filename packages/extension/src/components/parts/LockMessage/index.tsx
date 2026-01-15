@@ -15,7 +15,7 @@ export default function LockMessage({
         <div className={styles.lockContent}>
           <Lock size={32} strokeWidth={1.5} />
           <Text size='4' weight='medium'>
-            Your LockMark session is locked.
+            Your Sanctuar session is locked.
           </Text>
           <Text size='2' color='light'>
             {canUnlockWithPin

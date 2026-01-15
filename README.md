@@ -1,6 +1,6 @@
-# LockMark
+# Sanctuar
 
-LockMark is a local-first, end-to-end encrypted bookmark manager. The React/WXT browser extension encrypts everything on your device and talks to a lightweight Bun + Hono API that only stores ciphertext in SQLite.
+Sanctuar is a local-first, end-to-end encrypted bookmark manager. The React/WXT browser extension encrypts everything on your device and talks to a lightweight Bun + Hono API that only stores ciphertext in SQLite.
 
 Inspired by Proton’s privacy-first approach (especially Proton Pass).
 

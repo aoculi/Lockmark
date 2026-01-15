@@ -4,7 +4,7 @@ import Text from '@/components/ui/Text'
 
 import styles from './styles.module.css'
 
-const GITHUB_URL = 'https://github.com/aoculi/lockmark'
+const GITHUB_URL = 'https://github.com/aoculi/sanctuar'
 
 export default function Help() {
   return (
@@ -13,7 +13,7 @@ export default function Help() {
         <div className={styles.container}>
           <div className={styles.header}>
             <Text size='5' weight='medium'>
-              Getting Started with LockMark
+              Getting Started with Sanctuar
             </Text>
             <Text size='2' color='light'>
               A secure, end-to-end encrypted bookmark manager
@@ -30,7 +30,7 @@ export default function Help() {
                   1. Start the API Server
                 </Text>
                 <Text size='2' color='light'>
-                  Run the LockMark API on your local machine (default:{' '}
+                  Run the Sanctuar API on your local machine (default:{' '}
                   <code>http://127.0.0.1:3500</code>)
                 </Text>
               </div>

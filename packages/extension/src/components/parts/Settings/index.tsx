@@ -395,7 +395,7 @@ export default function Settings() {
                     onChange={(e) => updateField('apiUrl', e.target.value)}
                   />
                   <Text size='2' color='light'>
-                    The URL where your LockMark API server is running. Default
+                    The URL where your Sanctuar API server is running. Default
                     is http://127.0.0.1:3500 for local-first usage.
                   </Text>
                 </div>

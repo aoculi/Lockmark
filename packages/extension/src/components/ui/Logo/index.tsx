@@ -9,7 +9,7 @@ export default function Logo() {
     <div className={styles.logo}>
       <Library strokeWidth={2} size={24} />
       <Text as='span' size='3' weight='medium' color='text'>
-        LockMark
+        Sanctuar
       </Text>
     </div>
   )

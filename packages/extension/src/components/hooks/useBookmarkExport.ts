@@ -208,7 +208,7 @@ export function useBookmarkExport() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `lockmark-bookmarks-${new Date().toISOString().split('T')[0]}.html`
+      a.download = `sanctuar-bookmarks-${new Date().toISOString().split('T')[0]}.html`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

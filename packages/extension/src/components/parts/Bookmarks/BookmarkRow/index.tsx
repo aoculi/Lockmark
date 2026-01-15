@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/Checkbox'
 
 import styles from './styles.module.css'
 
-export const BOOKMARK_DRAG_TYPE = 'application/x-lockmark-bookmark'
+export const BOOKMARK_DRAG_TYPE = 'application/x-sanctuar-bookmark'
 
 interface BookmarkRowProps {
   bookmark: Bookmark

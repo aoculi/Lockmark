@@ -1,4 +1,4 @@
-# LockMark API
+# Sanctuar API
 
 Local-only, encrypted bookmarks backend. Stores only ciphertext in SQLite via Drizzle.
 

@@ -1,12 +1,12 @@
 {
-  "name": "LockMark",
+  "name": "Sanctuar",
   "version": "1.0.0",
   "description": "",
   "keywords": [],
   "scripts": {
     "dev": "pnpm run dev:api & pnpm run dev:ext",
     "dev:api": "pnpm --filter api dev",
-    "dev:ext": "pnpm --filter LockMark dev:firefox"
+    "dev:ext": "pnpm --filter Sanctuar dev:firefox"
   },
   "author": "",
   "license": "ISC",

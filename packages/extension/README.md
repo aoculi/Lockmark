@@ -1,4 +1,4 @@
-# LockMark Extension
+# Sanctuar Extension
 
 React + WXT browser extension for encrypted bookmarks. Everything is encrypted client-side before reaching the API.
 
@@ -13,7 +13,7 @@ React + WXT browser extension for encrypted bookmarks. Everything is encrypted c
 
 - pnpm (workspace manager)
 - Node.js 18+
-- Running LockMark API (`packages/api`) on `http://127.0.0.1:3500` or your configured host
+- Running Sanctuar API (`packages/api`) on `http://127.0.0.1:3500` or your configured host
 - Firefox Nightly or Firefox ZEN for unsigned builds (Chrome/Chromium unsigned not yet tested)
 
 ## Install dependencies

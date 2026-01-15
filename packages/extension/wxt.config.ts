@@ -26,7 +26,7 @@ export default defineConfig({
   },
 
   manifest: {
-    name: 'LockMark',
+    name: 'Sanctuar',
     description: 'Secure Bookmarks Vault',
     host_permissions: ['<all_urls>'],
     permissions: ['storage', 'tabs'],
@@ -36,13 +36,13 @@ export default defineConfig({
     },
     browser_specific_settings: {
       chrome: {
-        id: '@lockmark'
+        id: '@sanctuar'
       },
       gecko: {
-        id: '@lockmark'
+        id: '@sanctuar'
       },
       edge: {
-        id: '@lockmark'
+        id: '@sanctuar'
       }
     } as any
   }

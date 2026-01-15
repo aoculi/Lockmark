@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "lockmark-api",
+      "name": "sanctuar-api",
       "cwd": ".",
       "script": "src/index.ts",
       "exec_mode": "fork",
