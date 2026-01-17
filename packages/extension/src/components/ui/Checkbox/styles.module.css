@@ -14,14 +14,14 @@
   left: 0;
   height: 15px;
   width: 15px;
-  background-color: var(--background-3);
+  background-color: var(--input-background);
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
 }
 
 /* Hover effect */
 .checkboxContainer:hover input ~ .checkmark {
-  border-color: var(--border-hover);
+  border-color: var(--primary);
   background-color: var(--background-2);
 }
 

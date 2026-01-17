@@ -12,6 +12,8 @@
   --background-1: #57585e;
   --background-2: #2f343e;
   --background-3: #282c33;
+
+  --input-background: #16191f;
 }
 
 [data-theme='light'] {
@@ -28,4 +30,5 @@
   --background-1: #f0f0f0;
   --background-2: #eeeeee;
   --background-3: #ffffff;
+  --input-background: #f0f0f0;
 }

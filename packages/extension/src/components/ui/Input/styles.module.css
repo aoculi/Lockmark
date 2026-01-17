@@ -8,8 +8,8 @@
 
 .input {
   width: 100%;
-  background-color: var(--background-3);
-  border: 1px solid var(--border);
+  background-color: var(--input-background);
+  border: 1px solid transparent;
   border-radius: var(--border-radius);
   color: var(--text);
   transition:
@@ -20,9 +20,8 @@
   z-index: 1;
 }
 
-.input:focus {
+.input:focus, .input:hover {
   border-color: var(--primary);
-  background-color: var(--background-3);
 }
 
 .input:disabled {

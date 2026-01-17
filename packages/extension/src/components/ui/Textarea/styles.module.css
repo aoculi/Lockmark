@@ -8,8 +8,8 @@
 
 .textarea {
   width: 100%;
-  background-color: var(--background-3);
-  border: 1px solid var(--border);
+  background-color: var(--input-background);
+  border: 1px solid transparent;
   border-radius: var(--border-radius);
   color: var(--text);
   transition:
@@ -22,9 +22,8 @@
   font-family: inherit;
 }
 
-.textarea:focus {
+.textarea:focus , .textarea:hover{
   border-color: var(--primary);
-  background-color: var(--background-3);
 }
 
 .textarea:disabled {
